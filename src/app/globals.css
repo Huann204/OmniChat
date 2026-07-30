@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #1f2937;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: #0866FF;
+  --color-primary-hover: #0056e0;
+  --color-primary-gradient: #00C6FF;
+  --color-success: #10B981;
+  --color-highlight: #F59E0B;
+  --color-dark: #1F2937;
+  --font-sans: var(--font-jakarta-sans);
 }
 
+/* Light mode is forced for this landing page */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #f8fafc;
+    --foreground: #1f2937;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Premium Mesh Background */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    radial-gradient(at 100% 0%, rgba(8, 102, 255, 0.08) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(0, 198, 255, 0.05) 0px, transparent 50%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.02), 0 0 1px 1px rgba(0, 0, 0, 0.02);
+}
+
+.premium-shadow {
+  box-shadow: 0 20px 40px -15px rgba(8, 102, 255, 0.1), 0 0 1px 1px rgba(8, 102, 255, 0.05);
+}
+
+.text-gradient {
+  background-image: linear-gradient(135deg, #0866FF 0%, #00C6FF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
