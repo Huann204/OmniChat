@@ -1,12 +1,26 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useActionState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { User, Mail, Lock, ArrowRight } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
 import { FadeIn } from '@/components/ui/FadeIn';
+import { register, type AuthFormState } from '@/app/actions/auth';
+
+const initialState: AuthFormState = {};
 
 export default function RegisterPage() {
+  const [state, formAction, pending] = useActionState(register, initialState);
+
+  useEffect(() => {
+    if (state?.success) {
+      window.location.href = '/dashboard';
+    }
+  }, [state?.success]);
+
   return (
     <FadeIn>
       <div className="mb-6">
@@ -14,12 +28,20 @@ export default function RegisterPage() {
         <p className="text-slate-400 mt-1.5 text-sm font-medium">Tham gia cùng chúng tôi để bắt đầu trò chuyện.</p>
       </div>
 
-      <form className="space-y-4">
+      <form action={formAction} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="name">Họ và tên</Label>
           <div className="relative">
             <User className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-            <Input id="name" type="text" placeholder="Nguyễn Văn A" className="pl-10" />
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              placeholder="Nguyễn Văn A"
+              className="pl-10"
+              defaultValue={state?.name}
+              required
+            />
           </div>
         </div>
 
@@ -27,7 +49,15 @@ export default function RegisterPage() {
           <Label htmlFor="email">Email</Label>
           <div className="relative">
             <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-            <Input id="email" type="email" placeholder="name@example.com" className="pl-10" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="name@example.com"
+              className="pl-10"
+              defaultValue={state?.email}
+              required
+            />
           </div>
         </div>
 
@@ -35,12 +65,16 @@ export default function RegisterPage() {
           <Label htmlFor="password">Mật khẩu</Label>
           <div className="relative">
             <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-            <Input id="password" type="password" placeholder="Tạo mật khẩu" className="pl-10" />
+            <Input id="password" name="password" type="password" placeholder="Tạo mật khẩu" className="pl-10" required />
           </div>
         </div>
 
-        <Button type="submit" className="w-full mt-2 group h-10 text-sm">
-          Đăng ký
+        {state?.error && (
+          <p className="text-sm text-red-500 font-medium">{state.error}</p>
+        )}
+
+        <Button type="submit" disabled={pending} className="w-full mt-2 group h-10 text-sm">
+          {pending ? 'Đang đăng ký...' : 'Đăng ký'}
           <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>
       </form>

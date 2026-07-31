@@ -1,12 +1,28 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useActionState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { ArrowRight, Mail, Lock } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
 import { FadeIn } from '@/components/ui/FadeIn';
+import { login, type AuthFormState } from '@/app/actions/auth';
+
+const initialState: AuthFormState = {};
 
 export default function LoginPage() {
+  const [state, formAction, pending] = useActionState(login, initialState);
+
+  useEffect(() => {
+    if (state?.success) {
+      // Hard navigation (thay vì router mềm) để layout gốc (Header) render
+      // lại từ đầu với session mới, tránh bị cache RSC cũ.
+      window.location.href = '/dashboard';
+    }
+  }, [state?.success]);
+
   return (
     <FadeIn>
       <div className="mb-6">
@@ -14,12 +30,20 @@ export default function LoginPage() {
         <p className="text-slate-400 mt-1.5 text-sm font-medium">Vui lòng nhập thông tin để tiếp tục.</p>
       </div>
 
-      <form className="space-y-4">
+      <form action={formAction} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
             <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-            <Input id="email" type="email" placeholder="name@example.com" className="pl-10" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="name@example.com"
+              className="pl-10"
+              defaultValue={state?.email}
+              required
+            />
           </div>
         </div>
 
@@ -32,12 +56,16 @@ export default function LoginPage() {
           </div>
           <div className="relative">
             <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-            <Input id="password" type="password" placeholder="••••••••" className="pl-10" />
+            <Input id="password" name="password" type="password" placeholder="••••••••" className="pl-10" required />
           </div>
         </div>
 
-        <Button type="submit" className="w-full mt-2 group h-10 text-sm">
-          Đăng nhập
+        {state?.error && (
+          <p className="text-sm text-red-500 font-medium">{state.error}</p>
+        )}
+
+        <Button type="submit" disabled={pending} className="w-full mt-2 group h-10 text-sm">
+          {pending ? 'Đang đăng nhập...' : 'Đăng nhập'}
           <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>
       </form>

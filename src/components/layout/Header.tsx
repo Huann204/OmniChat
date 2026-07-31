@@ -2,11 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth-store-provider";
 import { Menu, X } from "lucide-react";
 
 export function Header() {
+  const user = useAuthStore((state) => state.user);
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -56,12 +59,29 @@ export function Header() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-primary">
-            Đăng nhập
-          </Link>
-          <Link href="/register">
-            <Button size="sm">Dùng thử miễn phí</Button>
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-primary"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                {user.name}
+              </Link>
+              <LogoutButton variant="ghost" size="sm" />
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-primary">
+                Đăng nhập
+              </Link>
+              <Link href="/register">
+                <Button size="sm">Dùng thử miễn phí</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -87,12 +107,27 @@ export function Header() {
             </Link>
           ))}
           <div className="h-px bg-slate-200 my-2" />
-          <Link href="/login" className="text-base font-medium text-slate-800 p-2 text-center">
-            Đăng nhập
-          </Link>
-          <Link href="/register">
-            <Button className="w-full">Dùng thử miễn phí</Button>
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="text-base font-medium text-slate-800 p-2 text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {user.name}
+              </Link>
+              <LogoutButton variant="outline" className="w-full" />
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-base font-medium text-slate-800 p-2 text-center">
+                Đăng nhập
+              </Link>
+              <Link href="/register">
+                <Button className="w-full">Dùng thử miễn phí</Button>
+              </Link>
+            </>
+          )}
         </div>
       )}
     </header>
