@@ -56,10 +56,12 @@ export function Header() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
-          <Link href="#" className="text-sm font-medium text-slate-600 hover:text-primary">
+          <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-primary">
             Đăng nhập
           </Link>
-          <Button size="sm">Dùng thử miễn phí</Button>
+          <Link href="/register">
+            <Button size="sm">Dùng thử miễn phí</Button>
+          </Link>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -85,10 +87,12 @@ export function Header() {
             </Link>
           ))}
           <div className="h-px bg-slate-200 my-2" />
-          <Link href="#" className="text-base font-medium text-slate-800 p-2 text-center">
+          <Link href="/login" className="text-base font-medium text-slate-800 p-2 text-center">
             Đăng nhập
           </Link>
-          <Button className="w-full">Dùng thử miễn phí</Button>
+          <Link href="/register">
+            <Button className="w-full">Dùng thử miễn phí</Button>
+          </Link>
         </div>
       )}
     </header>
