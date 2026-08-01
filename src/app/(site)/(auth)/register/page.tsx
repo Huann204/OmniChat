@@ -9,6 +9,7 @@ import { User, Mail, Lock, ArrowRight } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
 import { FadeIn } from '@/components/ui/FadeIn';
 import { register, type AuthFormState } from '@/app/actions/auth';
+import { toast } from '@/store/toast-store';
 
 const initialState: AuthFormState = {};
 
@@ -17,9 +18,20 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (state?.success) {
-      window.location.href = '/dashboard';
+      toast.success('Đăng ký thành công!');
+      // Trễ một nhịp để toast kịp hiện trước khi trang bị unload bởi hard navigation.
+      const timer = setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 600);
+      return () => clearTimeout(timer);
     }
   }, [state?.success]);
+
+  useEffect(() => {
+    if (state?.error) {
+      toast.error(state.error);
+    }
+  }, [state?.error]);
 
   return (
     <FadeIn>
