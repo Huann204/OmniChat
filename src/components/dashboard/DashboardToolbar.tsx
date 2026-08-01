@@ -1,6 +1,8 @@
 "use client";
 
+import * as React from "react";
 import { GitMerge, Plus, RotateCw, Search } from "lucide-react";
+import { AddConnectionModal } from "./AddConnectionModal";
 
 interface DashboardToolbarProps {
   search: string;
@@ -8,6 +10,8 @@ interface DashboardToolbarProps {
 }
 
 export function DashboardToolbar({ search, onSearchChange }: DashboardToolbarProps) {
+  const [connectionModalOpen, setConnectionModalOpen] = React.useState(false);
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="relative w-full sm:max-w-sm">
@@ -31,6 +35,7 @@ export function DashboardToolbar({ search, onSearchChange }: DashboardToolbarPro
         </button>
         <button
           type="button"
+          onClick={() => setConnectionModalOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-lg border bg-[#eaecf0] border-slate-200 px-3.5 py-2 text-sm font-semibold text-[#344054] transition-colors hover:bg-[#dde2eb] cursor-pointer"
         >
           <Plus className="h-4 w-4" />
@@ -44,6 +49,11 @@ export function DashboardToolbar({ search, onSearchChange }: DashboardToolbarPro
           Gộp trang
         </button>
       </div>
+
+      <AddConnectionModal
+        open={connectionModalOpen}
+        onClose={() => setConnectionModalOpen(false)}
+      />
     </div>
   );
 }
