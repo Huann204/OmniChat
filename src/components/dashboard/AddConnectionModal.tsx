@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Check, Clock, KeyRound, Layers3, Loader2, Search, SlidersHorizontal } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CONNECTION_PLATFORMS } from "@/lib/connection-platforms";
@@ -100,6 +101,7 @@ function FacebookConnectPanel({
   selected: (typeof CONNECTION_PLATFORMS)[number];
   onClose: () => void;
 }) {
+  const router = useRouter();
   const SelectedIcon = selected.icon;
   const [step, setStep] = React.useState<FacebookStep>("idle");
   const [pages, setPages] = React.useState<FacebookPageOption[]>([]);
@@ -144,6 +146,9 @@ function FacebookConnectPanel({
 
     toast.success(`Đã kết nối Page "${page?.name}" thành công`);
     onClose();
+    // Danh sách bot ở dashboard được lấy server-side (getConnectedPages);
+    // router.refresh() để tải lại ngay, không cần user tự F5.
+    router.refresh();
   }
 
   if (step === "picking" || step === "connecting") {
