@@ -15,8 +15,18 @@ interface BotDashboardProps {
 
 export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDashboardProps) {
   const [bots, setBots] = React.useState(initialBots);
+  const [prevInitialBots, setPrevInitialBots] = React.useState(initialBots);
   const [search, setSearch] = React.useState("");
   const [channelFilter, setChannelFilter] = React.useState<BotChannel | "all">("all");
+
+  // initialBots được tính lại ở server (getConnectedPages) mỗi khi
+  // router.refresh() chạy — đồng bộ vào state cục bộ để danh sách hiện Page
+  // vừa kết nối mà không cần user tự F5 trang. Đồng bộ ngay trong lúc render
+  // (thay vì trong effect) để tránh render thừa.
+  if (initialBots !== prevInitialBots) {
+    setPrevInitialBots(initialBots);
+    setBots(initialBots);
+  }
 
   const filteredBots = bots.filter((bot) => {
     const matchesChannel = channelFilter === "all" || bot.channel === channelFilter;
