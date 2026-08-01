@@ -9,31 +9,53 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 interface DashboardNavbarProps {
   userName: string;
   userEmail: string;
+  tabs?: string[];
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  className?: string;
 }
 
-export function DashboardNavbar({ userName, userEmail }: DashboardNavbarProps) {
+export function DashboardNavbar({
+  userName,
+  userEmail,
+  tabs,
+  activeTab,
+  onTabChange,
+  className,
+}: DashboardNavbarProps) {
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
 
   return (
-    <header className="bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968]">
-      <div className="mx-auto flex h-16 w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1144px] items-center gap-4">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
+    <header className={cn("bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968]", className)}>
+      <div className="mx-auto flex h-16 w-[calc(100%-2rem)] max-w-[1144px] items-center gap-4 sm:w-[calc(100%-3rem)]">
+        <Link href={tabs ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
             <img src="/logo.png" alt="OmniChat Logo" className="h-full w-full object-contain" />
           </span>
-          <span className="text-lg font-bold tracking-tight text-white">OmniChat</span>
+          <span className="hidden text-lg font-bold tracking-tight text-white sm:inline">OmniChat</span>
         </Link>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            aria-label="Thông báo"
-            className="relative flex h-9 w-9 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/15 cursor-pointer"
-          >
-            <Bell className="h-4.5 w-4.5" />
-            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-red-400" />
-          </button>
+        {tabs && (
+          <nav className="flex items-center gap-1 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => onTabChange?.(tab)}
+                className={cn(
+                  "shrink-0 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer",
+                  tab === activeTab
+                    ? "bg-slate-900 text-white"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </nav>
+        )}
 
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           {/* Avatar user */}
           <div className="relative">
             <button
@@ -65,6 +87,15 @@ export function DashboardNavbar({ userName, userEmail }: DashboardNavbarProps) {
               </>
             )}
           </div>
+
+          <button
+            type="button"
+            aria-label="Thông báo"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/15 cursor-pointer"
+          >
+            <Bell className="h-4.5 w-4.5" />
+            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-red-400" />
+          </button>
         </div>
       </div>
     </header>
