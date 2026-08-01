@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Roboto } from "next/font/google";
 import "./globals.css";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
+import { Toaster } from "@/components/ui/Toaster";
 
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-jakarta-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <AuthSessionProvider>{children}</AuthSessionProvider>
+        <Toaster />
       </body>
     </html>
   );

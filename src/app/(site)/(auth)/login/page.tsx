@@ -9,6 +9,7 @@ import { ArrowRight, Mail, Lock } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
 import { FadeIn } from '@/components/ui/FadeIn';
 import { login, type AuthFormState } from '@/app/actions/auth';
+import { toast } from '@/store/toast-store';
 
 const initialState: AuthFormState = {};
 
@@ -17,11 +18,22 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (state?.success) {
-      // Hard navigation (thay vì router mềm) để layout gốc (Header) render
-      // lại từ đầu với session mới, tránh bị cache RSC cũ.
-      window.location.href = '/dashboard';
+      toast.success('Đăng nhập thành công!');
+      // Trễ một nhịp để toast kịp hiện trước khi trang bị unload bởi hard
+      // navigation. Dùng hard navigation (thay vì router mềm) để layout gốc
+      // (Header) render lại từ đầu với session mới, tránh bị cache RSC cũ.
+      const timer = setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 600);
+      return () => clearTimeout(timer);
     }
   }, [state?.success]);
+
+  useEffect(() => {
+    if (state?.error) {
+      toast.error(state.error);
+    }
+  }, [state?.error]);
 
   return (
     <FadeIn>
