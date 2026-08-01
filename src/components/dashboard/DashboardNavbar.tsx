@@ -17,7 +17,7 @@ export function DashboardNavbar({ userName, userEmail }: DashboardNavbarProps) {
   return (
     <header className="bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968]">
       <div className="mx-auto flex h-16 w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1144px] items-center gap-4">
-        <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
             <img src="/logo.png" alt="OmniChat Logo" className="h-full w-full object-contain" />
           </span>
