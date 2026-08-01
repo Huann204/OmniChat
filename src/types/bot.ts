@@ -9,4 +9,5 @@ export interface Bot {
   isActive: boolean;
   messageCount: number;
   orderCount: number;
+  avatarUrl?: string;
 }

@@ -48,7 +48,11 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
           avatarColor
         )}
       >
-        <img src={"https://content.pancake.vn/2.1-2606/avatars/22b81c977849d009c6c17d772526a37f02902174"} alt={bot.name} className="h-full w-full object-cover rounded-[6px]" />
+        <img
+          src={bot.avatarUrl || "https://content.pancake.vn/2.1-2606/avatars/22b81c977849d009c6c17d772526a37f02902174"}
+          alt={bot.name}
+          className="h-full w-full object-cover rounded-[6px]"
+        />
       </div>
 
       <div className="min-w-0 flex-1">
