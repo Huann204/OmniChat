@@ -45,10 +45,10 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 font-roboto">
-      <DashboardNavbar userName={userName} userEmail={userEmail} />
+    <div className="min-h-screen bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968] font-roboto flex flex-col">
+      <DashboardNavbar userName={userName} userEmail={userEmail} className="!bg-none bg-transparent border-none" />
 
-      <main className="w-full py-6">
+      <main className="w-full flex-1 bg-slate-100 rounded-tl-xl pt-6 pb-12 shadow-2xl relative">
         <div className="mx-auto w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1144px] space-y-2">
           {/* Khối 1: Header + Toolbar */}
           <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[8px] md:p-5">
