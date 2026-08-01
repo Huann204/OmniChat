@@ -15,6 +15,11 @@
   --color-highlight: #F59E0B;
   --color-dark: #1F2937;
   --font-sans: var(--font-jakarta-sans);
+  --font-roboto: var(--font-roboto);
+}
+
+.font-roboto {
+  font-family: var(--font-roboto), Roboto, system-ui, sans-serif;
 }
 
 /* Light mode is forced for this landing page */
