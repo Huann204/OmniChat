@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 const ACCESS_COOKIE = 'token';
 const REFRESH_COOKIE = 'refreshToken';
 const REFRESH_GUARD_COOKIE = '__refreshed';
+// Đánh dấu "vừa gọi Express thất bại vì lý do mạng" (không phải bị từ chối).
+// Dùng để chặn vòng lặp redirect vô hạn /login <-> /dashboard khi backend
+// tạm thời không phản hồi được (network lỗi, hoặc đang cold-start).
+const UNREACHABLE_COOKIE = '__authUnreachable';
+const UNREACHABLE_MAX_AGE = 30;
 const ACCESS_MAX_AGE = 60 * 15;
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const API_URL = process.env.API_URL || 'http://localhost:3000/api';
@@ -60,7 +65,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (isAuthPage && hasSession) {
+  // Chỉ đá về /dashboard nếu KHÔNG vừa gặp lỗi mạng gần đây — tránh trường
+  // hợp verifySession() (không xác thực được vì Express không phản hồi) vừa
+  // đá user về /login, rồi proxy lại đá ngược về /dashboard dựa trên cookie
+  // vẫn còn, tạo vòng lặp vô hạn.
+  if (isAuthPage && hasSession && !request.cookies.has(UNREACHABLE_COOKIE)) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -78,6 +87,7 @@ export async function proxy(request: NextRequest) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
+        signal: AbortSignal.timeout(8000),
       });
 
       if (res.ok) {
@@ -89,18 +99,35 @@ export async function proxy(request: NextRequest) {
           path: '/',
           maxAge: 10,
         });
+        response.cookies.delete(UNREACHABLE_COOKIE);
         return response;
       }
-    } catch {
-      // Express không phản hồi được -> coi như chưa xác thực, xử lý bên dưới.
-    }
 
-    const response = isProtected
-      ? NextResponse.redirect(new URL('/login', request.url))
-      : NextResponse.next();
-    response.cookies.delete(ACCESS_COOKIE);
-    response.cookies.delete(REFRESH_COOKIE);
-    return response;
+      // Express phản hồi rõ ràng từ chối (401: refresh token sai/hết hạn/đã
+      // bị revoke) -> đây mới thực sự là phiên không hợp lệ.
+      const response = isProtected
+        ? NextResponse.redirect(new URL('/login', request.url))
+        : NextResponse.next();
+      response.cookies.delete(ACCESS_COOKIE);
+      response.cookies.delete(REFRESH_COOKIE);
+      return response;
+    } catch {
+      // Không gọi được Express (mất mạng, timeout, hoặc backend đang "ngủ"
+      // và cold-start chưa kịp phản hồi - vd. Render free tier). Đây KHÔNG
+      // phải bằng chứng phiên đăng nhập không hợp lệ, nên KHÔNG xoá cookie.
+      // Cứ để request đi tiếp với access token cũ; lần truy cập kế tiếp khi
+      // backend đã sẵn sàng sẽ tự refresh lại bình thường mà không bắt user
+      // đăng nhập lại oan. Đánh dấu "unreachable" ngắn hạn để tránh vòng lặp
+      // redirect nếu trang đích cũng không xác thực được (xem ghi chú ở
+      // nhánh isAuthPage phía trên).
+      const response = NextResponse.next();
+      response.cookies.set(UNREACHABLE_COOKIE, '1', {
+        httpOnly: true,
+        path: '/',
+        maxAge: UNREACHABLE_MAX_AGE,
+      });
+      return response;
+    }
   }
 
   return NextResponse.next();
