@@ -47,13 +47,13 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968] font-roboto flex flex-col">
-      <DashboardNavbar userName={userName} userEmail={userEmail} className="!bg-none bg-transparent border-none" />
+    <div className="flex h-screen flex-col bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968] font-roboto">
+      <DashboardNavbar userName={userName} userEmail={userEmail} className="!bg-none bg-transparent border-none shrink-0" />
 
-      <main className="w-full flex-1 bg-slate-100 pt-6 pb-12 shadow-2xl relative">
-        <div className="mx-auto w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1144px] space-y-2">
+      <main className="w-full flex-1 min-h-0 bg-slate-100 pt-6 pb-6 shadow-2xl relative">
+        <div className="mx-auto flex h-full w-[calc(100%-2rem)] max-w-[1144px] flex-col space-y-2 sm:w-[calc(100%-3rem)]">
           {/* Khối 1: Header + Toolbar */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[8px] md:p-5">
+          <div className="shrink-0 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[8px] md:p-5">
             <h1 className="mb-4 text-base font-semibold text-slate-900">Bảng điều khiển</h1>
             <DashboardToolbar
               search={search}
@@ -63,23 +63,25 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
           </div>
 
           {/* Khối 2: Tabs chọn kênh */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-[8px]">
+          <div className="shrink-0 rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-[8px]">
             <ChannelTabs bots={bots} value={channelFilter} onChange={setChannelFilter} />
           </div>
 
           {/* Khối 3: Danh sách các Bot */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[8px] md:p-5 min-h-[calc(100vh-320px)]">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredBots.map((bot, index) => (
-                <BotCard key={bot.id} bot={bot} index={index} onToggleActive={handleToggleActive} />
-              ))}
-            </div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[8px]">
+            <div className="flex-1 overflow-y-auto p-4 md:p-5">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredBots.map((bot, index) => (
+                  <BotCard key={bot.id} bot={bot} index={index} onToggleActive={handleToggleActive} />
+                ))}
+              </div>
 
-            {filteredBots.length === 0 && (
-              <p className="mt-10 text-center text-sm text-slate-400">
-                Không tìm thấy bot/trang nào khớp với bộ lọc hiện tại.
-              </p>
-            )}
+              {filteredBots.length === 0 && (
+                <p className="mt-10 text-center text-sm text-slate-400">
+                  Không tìm thấy bot/trang nào khớp với bộ lọc hiện tại.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </main>

@@ -41,7 +41,7 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setSelectedIds(new Set(pages.map((p) => p.id)));
+      setSelectedIds(new Set());
       setSearch("");
     }
   }
@@ -163,7 +163,7 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
               Không tìm thấy trang nào khớp với tìm kiếm.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredPages.map((page, index) => {
                 const active = selectedIds.has(page.id);
                 const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
@@ -173,7 +173,7 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
                     type="button"
                     onClick={() => toggleOne(page.id)}
                     className={cn(
-                      "relative flex w-full items-center gap-3 rounded-xl border p-3 pr-6 text-left transition-colors cursor-pointer sm:w-[280px]",
+                      "relative flex w-full items-center gap-3 rounded-xl border p-3 pr-6 text-left transition-colors cursor-pointer",
                       active
                         ? "border-blue-200 bg-blue-50"
                         : "border-slate-200 bg-white hover:border-slate-300"
