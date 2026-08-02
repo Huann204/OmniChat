@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, MoreVertical, Pencil, Power, Trash2 } from "lucide-react";
+import { AlertCircle, Loader2, MoreVertical, Pencil, Power, Trash2 } from "lucide-react";
 import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
@@ -28,13 +28,19 @@ interface BotCardProps {
 export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [isNavigating, setIsNavigating] = React.useState(false);
   const channel = CHANNEL_META[bot.channel];
   const ChannelIcon = channel.icon;
   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
 
   // Dùng chung cơ chế với "gộp trang" — chỉ khác là gộp đúng 1 Page — để
-  // luôn qua /livechat, không lộ id qua URL.
+  // luôn qua /livechat, không lộ id qua URL. setIsNavigating(true) chạy
+  // ngay lúc bấm (trước khi await server action) để có phản hồi tức thì —
+  // loading.tsx của /livechat chỉ hiện SAU khi navigate thực sự bắt đầu,
+  // nên phải tự hiện loading ở đây cho khoảng chờ phía trước.
   async function openInbox() {
+    if (isNavigating) return;
+    setIsNavigating(true);
     await setMergePagesCookie([bot.id]);
     router.push("/livechat");
   }
@@ -49,6 +55,11 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
       }}
       className="group relative flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-2 h-[84px] transition-all duration-150 hover:border-slate-300 hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     >
+      {isNavigating && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-white/70">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </div>
+      )}
       <div
         className={cn(
           "flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white",

@@ -5,14 +5,15 @@ import { getConnectedPages, getConversationsForPages, verifySession } from '@/li
 import type { Bot } from '@/types/bot';
 
 export default async function MultiPagesPage() {
-  const user = await verifySession();
   const requestedIds = await getMergePagesCookie();
 
   if (requestedIds.length === 0) {
     notFound();
   }
 
-  const connectedPages = await getConnectedPages();
+  // verifySession() và getConnectedPages() không phụ thuộc kết quả của nhau
+  // — chạy song song thay vì tuần tự để bớt 1 vòng round-trip API.
+  const [user, connectedPages] = await Promise.all([verifySession(), getConnectedPages()]);
   const requestedIdSet = new Set(requestedIds);
   const selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
 
