@@ -83,6 +83,7 @@ interface RawMessage {
 
 interface RawConversation {
   id: string;
+  pageId: string;
   customerName?: string;
   customerAvatarUrl?: string;
   lastMessageAt: string;
@@ -158,39 +159,42 @@ function formatTimeLabel(iso: string): string {
   });
 }
 
-// Lấy hội thoại + tin nhắn thật của 1 Page, map sang đúng shape Conversation
-// mà InboxView đang dùng.
-export const getConversationsForPage = cache(
-  async (pageId: string): Promise<Conversation[]> => {
+function mapRawConversations(raw: RawConversation[]): Conversation[] {
+  return raw.map((c) => ({
+    id: c.id,
+    pageId: c.pageId,
+    customerName: c.customerName || "Khách hàng",
+    customerAvatarUrl: c.customerAvatarUrl,
+    lastSeenLabel: "",
+    timeLabel: formatTimeLabel(c.lastMessageAt),
+    isRead: c.isRead,
+    messages: c.messages.map((m) => {
+      const { kind, text, attachmentUrl } = messageKindAndContent(m);
+      return {
+        id: m.id,
+        sender: m.sender,
+        kind,
+        text,
+        attachmentUrl,
+        time: formatClock(m.createdAt),
+      };
+    }),
+  }));
+}
+
+// Lấy hội thoại + tin nhắn của 1 hoặc nhiều Page cùng lúc (xem gộp tạm thời)
+// — dồn chung vào 1 danh sách, không lưu lại việc gộp này ở đâu cả.
+export const getConversationsForPages = cache(
+  async (pageIds: string[]): Promise<Conversation[]> => {
     const token = await getSessionToken();
-    if (!token) return [];
+    if (!token || pageIds.length === 0) return [];
 
     try {
       const data = await apiFetch<{ success: boolean; conversations: RawConversation[] }>(
-        `/conversations?pageId=${encodeURIComponent(pageId)}`,
+        `/conversations?pageIds=${encodeURIComponent(pageIds.join(","))}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      return data.conversations.map((c) => ({
-        id: c.id,
-        botId: pageId,
-        customerName: c.customerName || "Khách hàng",
-        customerAvatarUrl: c.customerAvatarUrl,
-        lastSeenLabel: "",
-        timeLabel: formatTimeLabel(c.lastMessageAt),
-        isRead: c.isRead,
-        messages: c.messages.map((m) => {
-          const { kind, text, attachmentUrl } = messageKindAndContent(m);
-          return {
-            id: m.id,
-            sender: m.sender,
-            kind,
-            text,
-            attachmentUrl,
-            time: formatClock(m.createdAt),
-          };
-        }),
-      }));
+      return mapRawConversations(data.conversations);
     } catch {
       return [];
     }

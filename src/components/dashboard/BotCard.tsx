@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, MoreVertical, Pencil, Power, Trash2 } from "lucide-react";
+import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import type { Bot } from "@/types/bot";
@@ -30,15 +31,21 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
   const channel = CHANNEL_META[bot.channel];
   const ChannelIcon = channel.icon;
   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
-  const detailHref = `/${bot.id}`;
+
+  // Dùng chung cơ chế với "gộp trang" — chỉ khác là gộp đúng 1 Page — để
+  // luôn qua /livechat, không lộ id qua URL.
+  async function openInbox() {
+    await setMergePagesCookie([bot.id]);
+    router.push("/livechat");
+  }
 
   return (
     <div
       role="link"
       tabIndex={0}
-      onClick={() => router.push(detailHref)}
+      onClick={() => void openInbox()}
       onKeyDown={(e) => {
-        if (e.key === "Enter") router.push(detailHref);
+        if (e.key === "Enter") void openInbox();
       }}
       className="group relative flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-2 h-[84px] transition-all duration-150 hover:border-slate-300 hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     >

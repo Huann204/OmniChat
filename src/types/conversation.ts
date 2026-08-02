@@ -30,7 +30,9 @@ export type ConversationTagId =
 
 export interface Conversation {
   id: string;
-  botId: string;
+  // pageId thật (Facebook) của Page mà hội thoại này thuộc về — dùng để phân
+  // biệt nguồn khi đang xem gộp nhiều Page cùng lúc (/livechat).
+  pageId: string;
   customerName: string;
   customerAvatarUrl?: string;
   lastSeenLabel: string;

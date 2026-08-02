@@ -16,12 +16,20 @@ const AVATAR_COLORS = [
   "bg-lime-600",
 ];
 
+interface PageInfo {
+  name: string;
+  avatarUrl?: string;
+}
+
 interface ConversationListProps {
   conversations: Conversation[];
   activeId: string | null;
   search: string;
   onSearchChange: (value: string) => void;
   onSelect: (id: string) => void;
+  // Chỉ truyền khi đang xem gộp nhiều Page — hiện avatar + tên Page nguồn
+  // bên dưới mỗi hội thoại để phân biệt hội thoại đến từ Page nào.
+  pagesById?: Record<string, PageInfo>;
 }
 
 export function ConversationList({
@@ -30,6 +38,7 @@ export function ConversationList({
   search,
   onSearchChange,
   onSelect,
+  pagesById,
 }: ConversationListProps) {
   const filtered = conversations.filter((c) =>
     c.customerName.toLowerCase().includes(search.trim().toLowerCase())
@@ -66,6 +75,7 @@ export function ConversationList({
           const preview = getLastMessagePreview(conversation);
           const isActive = conversation.id === activeId;
           const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
+          const page = pagesById?.[conversation.pageId];
 
           return (
             <button
@@ -122,6 +132,24 @@ export function ConversationList({
                 >
                   {preview}
                 </p>
+
+                {page && (
+                  <div className="mt-1 flex items-center gap-1.5">
+                    {page.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={page.avatarUrl}
+                        alt={page.name}
+                        className="h-4 w-4 shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[9px] font-bold text-white">
+                        {page.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="truncate text-[11px] text-slate-400">{page.name}</span>
+                  </div>
+                )}
               </div>
 
               {!conversation.isRead && (

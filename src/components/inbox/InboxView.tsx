@@ -23,6 +23,7 @@ interface NewMessageEvent {
   conversationId: string;
   conversation: {
     id: string;
+    pageId: string;
     customerName?: string;
     customerAvatarUrl?: string;
     lastMessage?: string;
@@ -43,6 +44,12 @@ interface InboxViewProps {
   userName: string;
   userEmail: string;
   initialConversations: Conversation[];
+  // Danh sách Page thật cần join room realtime — mặc định chỉ [bot.id].
+  // Truyền nhiều id khi đang xem gộp tạm thời nhiều Page cùng lúc.
+  socketPageIds?: string[];
+  // Tra cứu tên + avatar Page theo pageId — chỉ cần truyền khi xem gộp nhiều
+  // Page, để hiện rõ mỗi hội thoại thuộc Page nào.
+  pagesById?: Record<string, { name: string; avatarUrl?: string }>;
 }
 
 export function InboxView({
@@ -50,6 +57,8 @@ export function InboxView({
   userName,
   userEmail,
   initialConversations,
+  socketPageIds,
+  pagesById,
 }: InboxViewProps) {
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -57,6 +66,8 @@ export function InboxView({
   const [activeTab, setActiveTab] = React.useState("Hội thoại");
 
   const activeConversation = conversations.find((c) => c.id === activeId) ?? null;
+  const pageIds = socketPageIds ?? [bot.id];
+  const pageIdsKey = pageIds.join(",");
 
   // Đọc được activeId mới nhất bên trong callback của socket mà không phải
   // đưa activeId vào dependency của effect kết nối socket (tránh disconnect
@@ -77,7 +88,9 @@ export function InboxView({
       socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, { auth: { ticket } });
 
       socket.on("connect", () => {
-        socket?.emit("join_page", bot.id);
+        for (const id of pageIds) {
+          socket?.emit("join_page", id);
+        }
       });
 
       socket.on("new_message", (payload: NewMessageEvent) => {
@@ -100,7 +113,7 @@ export function InboxView({
           if (index === -1) {
             const newConversation: Conversation = {
               id: payload.conversation.id,
-              botId: bot.id,
+              pageId: payload.conversation.pageId,
               customerName: payload.conversation.customerName || "Khách hàng",
               customerAvatarUrl: payload.conversation.customerAvatarUrl,
               lastSeenLabel: "",
@@ -131,7 +144,11 @@ export function InboxView({
       cancelled = true;
       socket?.disconnect();
     };
-  }, [bot.id]);
+    // Chỉ reconnect khi tập hợp id thực sự đổi (so theo pageIdsKey) — dùng
+    // trực tiếp mảng pageIds bên trong effect để join, không đưa nó vào
+    // dependency (mảng luôn là instance mới mỗi render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageIdsKey]);
 
   function handleSelect(id: string) {
     setActiveId(id);
@@ -176,6 +193,7 @@ export function InboxView({
             search={search}
             onSearchChange={setSearch}
             onSelect={handleSelect}
+            pagesById={pagesById}
           />
 
           {activeConversation ? (
