@@ -3,10 +3,26 @@ import { cookies } from "next/headers";
 
 export const ACCESS_COOKIE = "token";
 export const REFRESH_COOKIE = "refreshToken";
+const USER_INFO_COOKIE = "user_info";
 const ACCESS_MAX_AGE = 60 * 15; // 15 phút, khớp JWT_ACCESS_EXPIRES_IN
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30; // 30 ngày, khớp JWT_REFRESH_EXPIRES_IN
 
-export async function createSession(accessToken: string, refreshToken: string) {
+export interface CachedUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// user_info không phải thông tin bí mật/định danh phiên (chỉ để hiển thị
+// tên/email) — cache riêng để getUser() không phải gọi /auth/me (tức query
+// Mongo) mỗi lần chuyển trang. Sống theo refresh token (30 ngày) vì name/
+// email hầu như không đổi trong 1 phiên đăng nhập; nếu sau này có tính năng
+// đổi tên/email, nhớ xoá cookie này (hoặc gọi lại createSession) để đồng bộ.
+export async function createSession(
+  accessToken: string,
+  refreshToken: string,
+  user?: CachedUser
+) {
   const cookieStore = await cookies();
   const secure = process.env.NODE_ENV === "production";
 
@@ -24,6 +40,16 @@ export async function createSession(accessToken: string, refreshToken: string) {
     path: "/",
     maxAge: REFRESH_MAX_AGE,
   });
+
+  if (user) {
+    cookieStore.set(USER_INFO_COOKIE, JSON.stringify(user), {
+      httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/",
+      maxAge: REFRESH_MAX_AGE,
+    });
+  }
 }
 
 export async function getSessionToken() {
@@ -36,8 +62,23 @@ export async function getRefreshToken() {
   return cookieStore.get(REFRESH_COOKIE)?.value;
 }
 
+// Trả về null nếu chưa có cache (phiên cũ từ trước khi có cơ chế này, hoặc
+// cookie bị xoá) — nơi gọi phải tự fallback sang gọi /auth/me.
+export async function getCachedUser(): Promise<CachedUser | null> {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get(USER_INFO_COOKIE)?.value;
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as CachedUser;
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteSession() {
   const cookieStore = await cookies();
   cookieStore.delete(ACCESS_COOKIE);
   cookieStore.delete(REFRESH_COOKIE);
+  cookieStore.delete(USER_INFO_COOKIE);
 }
