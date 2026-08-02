@@ -12,14 +12,23 @@ interface MessageThreadProps {
 }
 
 export function MessageThread({ messages, customerName, customerAvatarUrl }: MessageThreadProps) {
-  const endRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = React.useCallback(() => {
+    const el = containerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
 
   React.useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages]);
+    scrollToBottom();
+    // Chạy lại sau khi layout đã "chốt" (ví dụ vừa đổi hội thoại), phòng
+    // trường hợp trình duyệt chưa kịp tính xong chiều cao ở lần render đầu.
+    const raf = requestAnimationFrame(scrollToBottom);
+    return () => cancelAnimationFrame(raf);
+  }, [messages, scrollToBottom]);
 
   return (
-    <div className="flex-1 space-y-1 overflow-y-auto bg-[#f3f0eb] pr-6 pl-2  py-4">
+    <div ref={containerRef} className="flex-1 space-y-1 overflow-y-auto bg-[#f3f0eb] pr-6 pl-2  py-4">
       {messages.map((message, index) => {
         const next = messages[index + 1];
         const isLastInGroup = !next || next.sender !== message.sender;
@@ -30,10 +39,10 @@ export function MessageThread({ messages, customerName, customerAvatarUrl }: Mes
             customerName={customerName}
             customerAvatarUrl={customerAvatarUrl}
             showAvatar={isLastInGroup}
+            onImageLoad={scrollToBottom}
           />
         );
       })}
-      <div ref={endRef} />
     </div>
   );
 }
@@ -70,13 +79,28 @@ function MessageMeta({ name, time }: { name: string; time: string }) {
   );
 }
 
-function Avatar({ show, avatarUrl, name }: { show: boolean; avatarUrl?: string; name: string }) {
+function Avatar({
+  show,
+  avatarUrl,
+  name,
+  onImageLoad,
+}: {
+  show: boolean;
+  avatarUrl?: string;
+  name: string;
+  onImageLoad?: () => void;
+}) {
   return (
     <div className="flex h-9 w-9 shrink-0 items-center justify-center self-end">
       {show &&
         (avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarUrl} alt={name} className="h-9 w-9 rounded-full object-cover" />
+          <img
+            src={avatarUrl}
+            alt={name}
+            className="h-9 w-9 rounded-full object-cover"
+            onLoad={onImageLoad}
+          />
         ) : (
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-400">
             <User className="h-5 w-5" />
@@ -91,9 +115,10 @@ interface MessageRowProps {
   customerName: string;
   customerAvatarUrl?: string;
   showAvatar: boolean;
+  onImageLoad?: () => void;
 }
 
-function MessageRow({ message, customerName, customerAvatarUrl, showAvatar }: MessageRowProps) {
+function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onImageLoad }: MessageRowProps) {
   if (message.sender === "system") {
     return (
       <div className="flex justify-center py-2">
@@ -125,7 +150,14 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar }: Me
           isPage ? "justify-end" : "justify-start"
         )}
       >
-        {!isPage && <Avatar show={showAvatar} avatarUrl={customerAvatarUrl} name={customerName} />}
+        {!isPage && (
+          <Avatar
+            show={showAvatar}
+            avatarUrl={customerAvatarUrl}
+            name={customerName}
+            onImageLoad={onImageLoad}
+          />
+        )}
         {isPage && <MessageMeta name={senderName} time={message.time} />}
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -138,6 +170,7 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar }: Me
               ? "h-24 w-24 object-contain"
               : "max-h-[260px] max-w-[260px] rounded-2xl object-cover"
           )}
+          onLoad={onImageLoad}
         />
 
         {!isPage && <MessageMeta name={senderName} time={message.time} />}
@@ -177,7 +210,14 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar }: Me
         isPage ? "justify-end" : "justify-start"
       )}
     >
-      {!isPage && <Avatar show={showAvatar} avatarUrl={customerAvatarUrl} name={customerName} />}
+      {!isPage && (
+        <Avatar
+          show={showAvatar}
+          avatarUrl={customerAvatarUrl}
+          name={customerName}
+          onImageLoad={onImageLoad}
+        />
+      )}
       {isPage && <MessageMeta name={senderName} time={message.time} />}
 
       <div
