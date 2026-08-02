@@ -29,6 +29,7 @@ export interface Conversation {
   customerName: string;
   customerAvatarUrl?: string;
   lastSeenLabel: string;
+  timeLabel: string;
   isRead: boolean;
   messages: ConversationMessage[];
 }

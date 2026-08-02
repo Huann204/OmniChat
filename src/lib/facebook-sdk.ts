@@ -60,10 +60,9 @@ function loadSdk(): Promise<void> {
   return sdkReadyPromise;
 }
 
-// Chỉ xin pages_show_list — đủ để liệt kê Page user quản lý (kèm cả ảnh đại
-// diện Page, vì đó là dữ liệu public cơ bản của Page mà user đang là admin,
-// không cần pages_read_engagement). Quyền nhắn tin (pages_messaging) sẽ xin
-// sau khi làm tính năng nhận/gửi tin nhắn.
+// pages_show_list: liệt kê Page user quản lý (kèm ảnh đại diện, không cần
+// thêm quyền gì khác cho việc đó).
+// pages_messaging: bắt buộc để subscribe Page nhận webhook "messages".
 export async function loginWithFacebook(): Promise<string> {
   await loadSdk();
 
@@ -76,7 +75,7 @@ export async function loginWithFacebook(): Promise<string> {
           reject(new Error("Bạn đã huỷ đăng nhập hoặc chưa cấp quyền cho Facebook"));
         }
       },
-      { scope: "pages_show_list" }
+      { scope: "pages_show_list,pages_messaging" }
     );
   });
 }

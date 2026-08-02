@@ -7,9 +7,21 @@ import { Button } from "@/components/ui/Button";
 
 type InfoTab = "info" | "order";
 
-export function CustomerInfoPanel() {
+interface CustomerInfoPanelProps {
+  hasActiveConversation?: boolean;
+}
+
+export function CustomerInfoPanel({ hasActiveConversation = true }: CustomerInfoPanelProps) {
   const [tab, setTab] = React.useState<InfoTab>("info");
   const [note, setNote] = React.useState("");
+
+  if (!hasActiveConversation) {
+    return (
+      <div className="flex w-[320px] shrink-0 items-center justify-center border-l border-slate-200 bg-white">
+        <p className="text-sm text-slate-400">Chưa có thông tin khách hàng</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-[320px] shrink-0 flex-col border-l border-slate-200 bg-white">

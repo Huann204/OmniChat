@@ -23,13 +23,22 @@ export function ChatHeader({ conversation }: ChatHeaderProps) {
   return (
     <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5">
       <div className="flex items-center gap-3">
-        <span
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${avatarColorFor(
-            conversation.customerName
-          )}`}
-        >
-          {conversation.customerName.charAt(0).toUpperCase()}
-        </span>
+        {conversation.customerAvatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={conversation.customerAvatarUrl}
+            alt={conversation.customerName}
+            className="h-10 w-10 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${avatarColorFor(
+              conversation.customerName
+            )}`}
+          >
+            {conversation.customerName.charAt(0).toUpperCase()}
+          </span>
+        )}
         <div className="min-w-0">
           <h2 className="truncate text-sm font-semibold text-slate-900">{conversation.customerName}</h2>
           <p className="truncate text-xs text-slate-400">

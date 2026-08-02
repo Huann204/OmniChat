@@ -8,9 +8,10 @@ import type { ConversationMessage } from "@/types/conversation";
 interface MessageThreadProps {
   messages: ConversationMessage[];
   customerName: string;
+  customerAvatarUrl?: string;
 }
 
-export function MessageThread({ messages, customerName }: MessageThreadProps) {
+export function MessageThread({ messages, customerName, customerAvatarUrl }: MessageThreadProps) {
   const endRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -27,6 +28,7 @@ export function MessageThread({ messages, customerName }: MessageThreadProps) {
             key={message.id}
             message={message}
             customerName={customerName}
+            customerAvatarUrl={customerAvatarUrl}
             showAvatar={isLastInGroup}
           />
         );
@@ -68,14 +70,18 @@ function MessageMeta({ name, time }: { name: string; time: string }) {
   );
 }
 
-function Avatar({ show }: { show: boolean }) {
+function Avatar({ show, avatarUrl, name }: { show: boolean; avatarUrl?: string; name: string }) {
   return (
     <div className="flex h-9 w-9 shrink-0 items-center justify-center self-end">
-      {show && (
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-400">
-          <User className="h-5 w-5" />
-        </span>
-      )}
+      {show &&
+        (avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt={name} className="h-9 w-9 rounded-full object-cover" />
+        ) : (
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-400">
+            <User className="h-5 w-5" />
+          </span>
+        ))}
     </div>
   );
 }
@@ -83,10 +89,11 @@ function Avatar({ show }: { show: boolean }) {
 interface MessageRowProps {
   message: ConversationMessage;
   customerName: string;
+  customerAvatarUrl?: string;
   showAvatar: boolean;
 }
 
-function MessageRow({ message, customerName, showAvatar }: MessageRowProps) {
+function MessageRow({ message, customerName, customerAvatarUrl, showAvatar }: MessageRowProps) {
   if (message.sender === "system") {
     return (
       <div className="flex justify-center py-2">
@@ -142,7 +149,7 @@ function MessageRow({ message, customerName, showAvatar }: MessageRowProps) {
         isPage ? "justify-end" : "justify-start"
       )}
     >
-      {!isPage && <Avatar show={showAvatar} />}
+      {!isPage && <Avatar show={showAvatar} avatarUrl={customerAvatarUrl} name={customerName} />}
       {isPage && <MessageMeta name={senderName} time={message.time} />}
 
       <div
