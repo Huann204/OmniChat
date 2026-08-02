@@ -5,6 +5,7 @@ import { AlertCircle, Loader2, MoreVertical, Pencil, Power, Trash2 } from "lucid
 import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
+import { loadingBar } from "@/store/loading-bar-store";
 import type { Bot } from "@/types/bot";
 
 const AVATAR_COLORS = [
@@ -38,7 +39,12 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
   // hướng chồng nhau cho cùng 1 lần bấm (đã xác nhận bằng log request).
   function openInbox() {
     startNavigate(async () => {
-      await setMergePagesCookie([bot.id]);
+      loadingBar.start();
+      try {
+        await setMergePagesCookie([bot.id]);
+      } finally {
+        loadingBar.done();
+      }
     });
   }
 
