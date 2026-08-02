@@ -117,6 +117,34 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar }: Me
     );
   }
 
+  if (message.kind === "image" || message.kind === "sticker") {
+    return (
+      <div
+        className={cn(
+          "group flex items-center gap-1.5 py-1",
+          isPage ? "justify-end" : "justify-start"
+        )}
+      >
+        {!isPage && <Avatar show={showAvatar} avatarUrl={customerAvatarUrl} name={customerName} />}
+        {isPage && <MessageMeta name={senderName} time={message.time} />}
+
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={message.attachmentUrl}
+          alt={message.kind === "sticker" ? "Nhãn dán" : "Hình ảnh"}
+          className={cn(
+            "shadow-sm",
+            message.kind === "sticker"
+              ? "h-24 w-24 object-contain"
+              : "max-h-[260px] max-w-[260px] rounded-2xl object-cover"
+          )}
+        />
+
+        {!isPage && <MessageMeta name={senderName} time={message.time} />}
+      </div>
+    );
+  }
+
   if (message.kind === "call_outgoing" || message.kind === "call_missed") {
     const isMissed = message.kind === "call_missed";
     return (

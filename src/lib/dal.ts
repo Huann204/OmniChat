@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { apiFetch } from "./api";
 import { getSessionToken } from "./session";
 import type { Bot } from "@/types/bot";
-import type { Conversation } from "@/types/conversation";
+import type { Conversation, MessageKind } from "@/types/conversation";
 
 export interface SessionUser {
   id: string;
@@ -105,6 +105,30 @@ function messagePreviewText(msg: RawMessage): string | undefined {
   return undefined;
 }
 
+// Dùng để render TRONG khung chat — khác với messagePreviewText (chỉ dùng
+// làm dòng preview cuối trong danh sách hội thoại). Ảnh/nhãn dán phải giữ
+// nguyên URL để hiển thị thật, không collapse về text.
+const ATTACHMENT_KIND: Record<string, MessageKind> = {
+  sticker: "sticker",
+  image: "image",
+  video: "video",
+};
+
+function messageKindAndContent(
+  msg: RawMessage
+): { kind: MessageKind; text?: string; attachmentUrl?: string } {
+  const first = msg.attachments?.[0];
+  if (first) {
+    const kind = ATTACHMENT_KIND[first.type] ?? "file";
+    return {
+      kind,
+      attachmentUrl: first.url,
+      text: kind === "image" || kind === "sticker" ? undefined : ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]",
+    };
+  }
+  return { kind: "text", text: msg.text };
+}
+
 const APP_TIME_ZONE = "Asia/Ho_Chi_Minh";
 
 function formatClock(iso: string): string {
@@ -155,13 +179,17 @@ export const getConversationsForPage = cache(
         lastSeenLabel: "",
         timeLabel: formatTimeLabel(c.lastMessageAt),
         isRead: c.isRead,
-        messages: c.messages.map((m) => ({
-          id: m.id,
-          sender: m.sender,
-          kind: "text" as const,
-          text: messagePreviewText(m),
-          time: formatClock(m.createdAt),
-        })),
+        messages: c.messages.map((m) => {
+          const { kind, text, attachmentUrl } = messageKindAndContent(m);
+          return {
+            id: m.id,
+            sender: m.sender,
+            kind,
+            text,
+            attachmentUrl,
+            time: formatClock(m.createdAt),
+          };
+        }),
       }));
     } catch {
       return [];

@@ -2,6 +2,10 @@ export type MessageSender = "customer" | "page" | "system";
 
 export type MessageKind =
   | "text"
+  | "image"
+  | "sticker"
+  | "video"
+  | "file"
   | "call_request"
   | "call_outgoing"
   | "call_missed";
@@ -12,6 +16,7 @@ export interface ConversationMessage {
   kind: MessageKind;
   text?: string;
   meta?: string;
+  attachmentUrl?: string;
   time: string;
 }
 
