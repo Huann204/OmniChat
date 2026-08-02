@@ -1,9 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { io, type Socket } from "socket.io-client";
 import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { markConversationRead } from "@/app/actions/conversation";
+import { getSocketTicket } from "@/app/actions/socket";
+import { formatClock, formatTimeLabel, messageKindAndContent } from "@/lib/message-format";
 import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
 import { InboxIconRail } from "./InboxIconRail";
@@ -16,20 +19,123 @@ import { CustomerInfoPanel } from "./CustomerInfoPanel";
 
 const TABS = ["Hội thoại", "Đơn hàng", "Bài viết", "Thống kê", "Cài đặt"];
 
+interface NewMessageEvent {
+  conversationId: string;
+  conversation: {
+    id: string;
+    customerName?: string;
+    customerAvatarUrl?: string;
+    lastMessage?: string;
+    lastMessageAt: string;
+    isRead: boolean;
+  };
+  message: {
+    id: string;
+    sender: "customer" | "page";
+    text?: string;
+    attachments?: { type: string; url: string }[];
+    createdAt: string;
+  };
+}
+
 interface InboxViewProps {
   bot: Bot;
   userName: string;
   userEmail: string;
   initialConversations: Conversation[];
+  isRealPage?: boolean;
 }
 
-export function InboxView({ bot, userName, userEmail, initialConversations }: InboxViewProps) {
+export function InboxView({
+  bot,
+  userName,
+  userEmail,
+  initialConversations,
+  isRealPage = false,
+}: InboxViewProps) {
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [activeTab, setActiveTab] = React.useState("Hội thoại");
 
   const activeConversation = conversations.find((c) => c.id === activeId) ?? null;
+
+  // Đọc được activeId mới nhất bên trong callback của socket mà không phải
+  // đưa activeId vào dependency của effect kết nối socket (tránh disconnect
+  // + reconnect mỗi lần user chọn hội thoại khác).
+  const activeIdRef = React.useRef(activeId);
+  React.useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
+
+  React.useEffect(() => {
+    if (!isRealPage) return;
+
+    let socket: Socket | null = null;
+    let cancelled = false;
+
+    (async () => {
+      const ticket = await getSocketTicket();
+      if (!ticket || cancelled) return;
+
+      socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, { auth: { ticket } });
+
+      socket.on("connect", () => {
+        socket?.emit("join_page", bot.id);
+      });
+
+      socket.on("new_message", (payload: NewMessageEvent) => {
+        const { kind, text, attachmentUrl } = messageKindAndContent(
+          payload.message.text,
+          payload.message.attachments
+        );
+        const newMessage: ConversationMessage = {
+          id: payload.message.id,
+          sender: payload.message.sender,
+          kind,
+          text,
+          attachmentUrl,
+          time: formatClock(payload.message.createdAt),
+        };
+
+        setConversations((prev) => {
+          const index = prev.findIndex((c) => c.id === payload.conversationId);
+
+          if (index === -1) {
+            const newConversation: Conversation = {
+              id: payload.conversation.id,
+              botId: bot.id,
+              customerName: payload.conversation.customerName || "Khách hàng",
+              customerAvatarUrl: payload.conversation.customerAvatarUrl,
+              lastSeenLabel: "",
+              timeLabel: formatTimeLabel(payload.conversation.lastMessageAt),
+              isRead: false,
+              messages: [newMessage],
+            };
+            return [newConversation, ...prev];
+          }
+
+          const isActive = payload.conversationId === activeIdRef.current;
+          const updated = { ...prev[index] };
+          updated.messages = [...updated.messages, newMessage];
+          updated.timeLabel = formatTimeLabel(payload.conversation.lastMessageAt);
+          updated.isRead = isActive;
+
+          const rest = prev.filter((_, i) => i !== index);
+          return [updated, ...rest];
+        });
+
+        if (payload.conversationId === activeIdRef.current) {
+          void markConversationRead(payload.conversationId);
+        }
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      socket?.disconnect();
+    };
+  }, [bot.id, isRealPage]);
 
   function handleSelect(id: string) {
     setActiveId(id);

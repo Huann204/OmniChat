@@ -31,6 +31,7 @@ export default async function BotDetailPage({ params }: BotDetailPageProps) {
         userName={user.name}
         userEmail={user.email}
         initialConversations={conversations}
+        isRealPage={!!realBot}
       />
     </div>
   );
