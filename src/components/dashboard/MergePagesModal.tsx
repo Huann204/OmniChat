@@ -6,6 +6,7 @@ import { FaFacebook } from "react-icons/fa";
 import { Modal } from "@/components/ui/Modal";
 import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
+import { loadingBar } from "@/store/loading-bar-store";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 
@@ -98,7 +99,12 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
     // không cần gọi: redirect điều hướng cả trang đi, modal tự biến mất
     // theo.
     startNavigate(async () => {
-      await setMergePagesCookie(Array.from(selectedIds));
+      loadingBar.start();
+      try {
+        await setMergePagesCookie(Array.from(selectedIds));
+      } finally {
+        loadingBar.done();
+      }
     });
   }
 
