@@ -43,7 +43,6 @@ interface InboxViewProps {
   userName: string;
   userEmail: string;
   initialConversations: Conversation[];
-  isRealPage?: boolean;
 }
 
 export function InboxView({
@@ -51,7 +50,6 @@ export function InboxView({
   userName,
   userEmail,
   initialConversations,
-  isRealPage = false,
 }: InboxViewProps) {
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -69,8 +67,6 @@ export function InboxView({
   }, [activeId]);
 
   React.useEffect(() => {
-    if (!isRealPage) return;
-
     let socket: Socket | null = null;
     let cancelled = false;
 
@@ -135,7 +131,7 @@ export function InboxView({
       cancelled = true;
       socket?.disconnect();
     };
-  }, [bot.id, isRealPage]);
+  }, [bot.id]);
 
   function handleSelect(id: string) {
     setActiveId(id);

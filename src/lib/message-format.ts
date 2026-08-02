@@ -1,4 +1,4 @@
-import type { MessageKind } from "@/types/conversation";
+import type { Conversation, MessageKind } from "@/types/conversation";
 
 export interface RawAttachment {
   type: string;
@@ -74,4 +74,14 @@ export function formatTimeLabel(iso: string): string {
     month: "2-digit",
     timeZone: APP_TIME_ZONE,
   });
+}
+
+export function getLastMessagePreview(conversation: Conversation): string {
+  const last = conversation.messages[conversation.messages.length - 1];
+  if (!last) return "";
+  if (last.kind === "call_request") return "Đã gửi yêu cầu gọi điện";
+  if (last.kind === "call_outgoing") return "Cuộc gọi đi";
+  if (last.kind === "call_missed") return "Cuộc gọi bị từ chối";
+  if (last.text) return last.text;
+  return ATTACHMENT_LABELS[last.kind] ?? "";
 }

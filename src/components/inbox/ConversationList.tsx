@@ -4,7 +4,7 @@ import * as React from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types/conversation";
-import { getLastMessagePreview } from "@/lib/mock-conversations";
+import { getLastMessagePreview } from "@/lib/message-format";
 
 const AVATAR_COLORS = [
   "bg-blue-500",

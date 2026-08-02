@@ -30,7 +30,7 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
   const channel = CHANNEL_META[bot.channel];
   const ChannelIcon = channel.icon;
   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
-  const detailHref = `/dashboard/bots/${bot.id}`;
+  const detailHref = `/${bot.id}`;
 
   return (
     <div
