@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, MoreVertical, Pencil, Power, Trash2 } from "lucide-react";
 import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
@@ -26,32 +25,30 @@ interface BotCardProps {
 }
 
 export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
-  const router = useRouter();
   const [menuOpen, setMenuOpen] = React.useState(false);
-  const [isNavigating, setIsNavigating] = React.useState(false);
+  const [isNavigating, startNavigate] = React.useTransition();
   const channel = CHANNEL_META[bot.channel];
   const ChannelIcon = channel.icon;
   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
 
   // Dùng chung cơ chế với "gộp trang" — chỉ khác là gộp đúng 1 Page — để
-  // luôn qua /livechat, không lộ id qua URL. setIsNavigating(true) chạy
-  // ngay lúc bấm (trước khi await server action) để có phản hồi tức thì —
-  // loading.tsx của /livechat chỉ hiện SAU khi navigate thực sự bắt đầu,
-  // nên phải tự hiện loading ở đây cho khoảng chờ phía trước.
-  async function openInbox() {
-    if (isNavigating) return;
-    setIsNavigating(true);
-    await setMergePagesCookie([bot.id]);
-    router.push("/livechat");
+  // luôn qua /livechat, không lộ id qua URL. Action tự redirect() sau khi
+  // ghi cookie — KHÔNG tự router.push ở đây nữa: gọi router.push ngay sau
+  // 1 Server Action có mutate cookie khiến Next.js xử lý thành 2 lượt điều
+  // hướng chồng nhau cho cùng 1 lần bấm (đã xác nhận bằng log request).
+  function openInbox() {
+    startNavigate(async () => {
+      await setMergePagesCookie([bot.id]);
+    });
   }
 
   return (
     <div
       role="link"
       tabIndex={0}
-      onClick={() => void openInbox()}
+      onClick={openInbox}
       onKeyDown={(e) => {
-        if (e.key === "Enter") void openInbox();
+        if (e.key === "Enter") openInbox();
       }}
       className="group relative flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-2 h-[84px] transition-all duration-150 hover:border-slate-300 hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     >

@@ -45,8 +45,8 @@ interface ConnectedPageRaw {
   active: boolean;
 }
 
-// Chỉ có Facebook (type = 0) hiện tại — map sang Bot để dùng chung UI với
-// mock data trong lúc chưa có nguồn dữ liệu bot thật cho các kênh khác.
+// Chỉ có Facebook (type = 0) hiện tại — map sang Bot để dùng chung UI, sẵn
+// sàng mở rộng khi có nguồn dữ liệu bot thật cho các kênh khác.
 export const getConnectedPages = cache(async (): Promise<Bot[]> => {
   const token = await getSessionToken();
   if (!token) return [];
