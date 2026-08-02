@@ -77,14 +77,23 @@ export function ConversationList({
                 isActive && "bg-blue-50 hover:bg-blue-50"
               )}
             >
-              <span
-                className={cn(
-                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
-                  avatarColor
-                )}
-              >
-                {conversation.customerName.charAt(0).toUpperCase()}
-              </span>
+              {conversation.customerAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={conversation.customerAvatarUrl}
+                  alt={conversation.customerName}
+                  className="h-11 w-11 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <span
+                  className={cn(
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
+                    avatarColor
+                  )}
+                >
+                  {conversation.customerName.charAt(0).toUpperCase()}
+                </span>
+              )}
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
@@ -95,6 +104,14 @@ export function ConversationList({
                     )}
                   >
                     {conversation.customerName}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 text-xs text-slate-400",
+                      !conversation.isRead && "font-semibold text-slate-600"
+                    )}
+                  >
+                    {conversation.timeLabel}
                   </span>
                 </div>
                 <p

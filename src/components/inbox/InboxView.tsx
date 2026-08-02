@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { getConversationsForBot } from "@/lib/mock-conversations";
+import { markConversationRead } from "@/app/actions/conversation";
 import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
 import { InboxIconRail } from "./InboxIconRail";
@@ -19,13 +20,12 @@ interface InboxViewProps {
   bot: Bot;
   userName: string;
   userEmail: string;
+  initialConversations: Conversation[];
 }
 
-export function InboxView({ bot, userName, userEmail }: InboxViewProps) {
-  const [conversations, setConversations] = React.useState<Conversation[]>(() =>
-    getConversationsForBot(bot.id)
-  );
-  const [activeId, setActiveId] = React.useState<string | null>(conversations[0]?.id ?? null);
+export function InboxView({ bot, userName, userEmail, initialConversations }: InboxViewProps) {
+  const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
+  const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [activeTab, setActiveTab] = React.useState("Hội thoại");
 
@@ -34,6 +34,7 @@ export function InboxView({ bot, userName, userEmail }: InboxViewProps) {
   function handleSelect(id: string) {
     setActiveId(id);
     setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, isRead: true } : c)));
+    void markConversationRead(id);
   }
 
   function handleSend(text: string) {
@@ -81,17 +82,19 @@ export function InboxView({ bot, userName, userEmail }: InboxViewProps) {
               <MessageThread
                 messages={activeConversation.messages}
                 customerName={activeConversation.customerName}
+                customerAvatarUrl={activeConversation.customerAvatarUrl}
               />
               <QuickTagBar />
               <MessageComposer onSend={handleSend} />
             </div>
           ) : (
-            <div className="flex flex-1 items-center justify-center text-sm text-slate-400">
-              Chưa có hội thoại nào
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 text-slate-400">
+              <MessageSquareText className="h-10 w-10" strokeWidth={1.5} />
+              <p className="text-sm">Xin chọn 1 hội thoại từ danh sách bên trái</p>
             </div>
           )}
 
-          <CustomerInfoPanel />
+          <CustomerInfoPanel hasActiveConversation={!!activeConversation} />
         </div>
       </div>
     </div>

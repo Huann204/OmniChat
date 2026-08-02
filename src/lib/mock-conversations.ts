@@ -16,6 +16,7 @@ function buildFirstConversation(botId: string): Conversation {
     botId,
     customerName: "Nguyen Van Huan",
     lastSeenLabel: "Phương Thảo đã xem",
+    timeLabel: "23:08 hôm qua",
     isRead: true,
     messages: [
       { id: "m1", sender: "system", kind: "text", text: "Hôm qua", time: "" },
@@ -55,12 +56,15 @@ function buildSimpleConversation(botId: string, index: number): Conversation {
     "Sản phẩm này còn màu đen không?",
   ];
   const preview = previews[index % previews.length];
+  const timeLabels = ["09:15", "Hôm qua", "2 ngày trước", "Thứ 2", "09:41", "1 tuần trước"];
+  const timeLabel = timeLabels[index % timeLabels.length];
 
   return {
     id: `${botId}-c${index + 2}`,
     botId,
     customerName: name,
     lastSeenLabel: index % 3 === 0 ? "Đã xem" : "Đã gửi",
+    timeLabel,
     isRead: index % 2 !== 0,
     messages: [
       { id: `${botId}-c${index + 2}-m1`, sender: "customer", kind: "text", text: preview, time: "09:1" + index },

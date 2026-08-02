@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { apiFetch } from "./api";
 import { getSessionToken } from "./session";
 import type { Bot } from "@/types/bot";
+import type { Conversation } from "@/types/conversation";
 
 export interface SessionUser {
   id: string;
@@ -71,3 +72,86 @@ export const getConnectedPages = cache(async (): Promise<Bot[]> => {
     return [];
   }
 });
+
+interface RawMessage {
+  id: string;
+  sender: "customer" | "page";
+  text?: string;
+  attachments?: { type: string; url: string }[];
+  createdAt: string;
+}
+
+interface RawConversation {
+  id: string;
+  customerName?: string;
+  customerAvatarUrl?: string;
+  lastMessageAt: string;
+  isRead: boolean;
+  messages: RawMessage[];
+}
+
+const ATTACHMENT_LABELS: Record<string, string> = {
+  sticker: "[Nhãn dán]",
+  image: "[Hình ảnh]",
+  video: "[Video]",
+  audio: "[Tin nhắn thoại]",
+  file: "[Tệp đính kèm]",
+};
+
+function messagePreviewText(msg: RawMessage): string | undefined {
+  if (msg.text) return msg.text;
+  const first = msg.attachments?.[0];
+  if (first) return ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]";
+  return undefined;
+}
+
+function formatClock(iso: string): string {
+  return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatTimeLabel(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) return formatClock(iso);
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return "Hôm qua";
+
+  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+}
+
+// Lấy hội thoại + tin nhắn thật của 1 Page, map sang đúng shape Conversation
+// mà InboxView đang dùng (vốn được thiết kế theo mock-conversations.ts).
+export const getConversationsForPage = cache(
+  async (pageId: string): Promise<Conversation[]> => {
+    const token = await getSessionToken();
+    if (!token) return [];
+
+    try {
+      const data = await apiFetch<{ success: boolean; conversations: RawConversation[] }>(
+        `/conversations?pageId=${encodeURIComponent(pageId)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      return data.conversations.map((c) => ({
+        id: c.id,
+        botId: pageId,
+        customerName: c.customerName || "Khách hàng",
+        customerAvatarUrl: c.customerAvatarUrl,
+        lastSeenLabel: "",
+        timeLabel: formatTimeLabel(c.lastMessageAt),
+        isRead: c.isRead,
+        messages: c.messages.map((m) => ({
+          id: m.id,
+          sender: m.sender,
+          kind: "text" as const,
+          text: messagePreviewText(m),
+          time: formatClock(m.createdAt),
+        })),
+      }));
+    } catch {
+      return [];
+    }
+  }
+);
