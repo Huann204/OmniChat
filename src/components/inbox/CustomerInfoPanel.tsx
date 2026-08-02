@@ -24,7 +24,7 @@ export function CustomerInfoPanel({ hasActiveConversation = true }: CustomerInfo
   }
 
   return (
-    <div className="flex w-[320px] shrink-0 flex-col border-l border-slate-200 bg-white">
+    <div className="flex w-[27%] shrink-0 flex-col border-l border-slate-200 bg-white">
       <div className="flex border-b border-slate-200">
         <button
           type="button"
