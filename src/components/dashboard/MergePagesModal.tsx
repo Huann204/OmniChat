@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { CheckSquare, GitMerge, Plus, Search, SlidersHorizontal, Square } from "lucide-react";
+import { CheckSquare, GitMerge, Loader2, Plus, Search, SlidersHorizontal, Square } from "lucide-react";
 import { FaFacebook } from "react-icons/fa";
 import { Modal } from "@/components/ui/Modal";
 import { setMergePagesCookie } from "@/app/actions/mergeView";
@@ -32,6 +32,7 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
   const [search, setSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [prevOpen, setPrevOpen] = React.useState(open);
+  const [isNavigating, setIsNavigating] = React.useState(false);
 
   const pages = bots;
 
@@ -93,9 +94,13 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
 
   async function handleConfirm() {
     // Không lưu lại việc gộp ở đâu cả — chỉ chuyển danh sách Page đã chọn qua
-    // 1 cookie tạm (httpOnly, sống 5 phút, chỉ gửi kèm request tới
+    // 1 cookie tạm (httpOnly, sống 1 ngày, chỉ gửi kèm request tới
     // /livechat) rồi điều hướng sang khung chat gộp với URL sạch, không
     // lộ id qua query string. Có thể gộp lại tổ hợp khác bất cứ lúc nào.
+    // setIsNavigating(true) chạy trước khi await để có phản hồi ngay lúc
+    // bấm, không đợi tới lúc navigate mới thấy gì đó xảy ra.
+    if (isNavigating) return;
+    setIsNavigating(true);
     const ids = Array.from(selectedIds);
     await setMergePagesCookie(ids);
     onClose();
@@ -257,10 +262,14 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={selectedIds.size < 2}
+            disabled={selectedIds.size < 2 || isNavigating}
             className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <GitMerge className="h-4 w-4" />
+            {isNavigating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <GitMerge className="h-4 w-4" />
+            )}
             Vào chế độ gộp trang
           </button>
         </div>
