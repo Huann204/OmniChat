@@ -105,20 +105,33 @@ function messagePreviewText(msg: RawMessage): string | undefined {
   return undefined;
 }
 
+const APP_TIME_ZONE = "Asia/Ho_Chi_Minh";
+
 function formatClock(iso: string): string {
-  return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: APP_TIME_ZONE,
+  });
+}
+
+function dateKey(date: Date): string {
+  return date.toLocaleDateString("en-CA", { timeZone: APP_TIME_ZONE });
 }
 
 function formatTimeLabel(iso: string): string {
   const date = new Date(iso);
   const now = new Date();
-  if (date.toDateString() === now.toDateString()) return formatClock(iso);
+  if (dateKey(date) === dateKey(now)) return formatClock(iso);
 
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return "Hôm qua";
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  if (dateKey(date) === dateKey(yesterday)) return "Hôm qua";
 
-  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+  return date.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: APP_TIME_ZONE,
+  });
 }
 
 // Lấy hội thoại + tin nhắn thật của 1 Page, map sang đúng shape Conversation
