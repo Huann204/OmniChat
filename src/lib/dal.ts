@@ -159,7 +159,7 @@ function formatTimeLabel(iso: string): string {
 }
 
 // Lấy hội thoại + tin nhắn thật của 1 Page, map sang đúng shape Conversation
-// mà InboxView đang dùng (vốn được thiết kế theo mock-conversations.ts).
+// mà InboxView đang dùng.
 export const getConversationsForPage = cache(
   async (pageId: string): Promise<Conversation[]> => {
     const token = await getSessionToken();

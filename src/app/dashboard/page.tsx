@@ -1,5 +1,4 @@
 import { BotDashboard } from '@/components/dashboard/BotDashboard';
-import { mockBots } from '@/lib/mock-bots';
 import { getConnectedPages, verifySession } from '@/lib/dal';
 
 export default async function DashboardPage() {
@@ -8,7 +7,7 @@ export default async function DashboardPage() {
 
   return (
     <BotDashboard
-      bots={[...connectedPages, ...mockBots]}
+      bots={connectedPages}
       userName={user.name}
       userEmail={user.email}
     />

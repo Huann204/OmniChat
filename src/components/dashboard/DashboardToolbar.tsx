@@ -7,9 +7,10 @@ import { AddConnectionModal } from "./AddConnectionModal";
 interface DashboardToolbarProps {
   search: string;
   onSearchChange: (value: string) => void;
+  onOpenMerge: () => void;
 }
 
-export function DashboardToolbar({ search, onSearchChange }: DashboardToolbarProps) {
+export function DashboardToolbar({ search, onSearchChange, onOpenMerge }: DashboardToolbarProps) {
   const [connectionModalOpen, setConnectionModalOpen] = React.useState(false);
 
   return (
@@ -43,6 +44,7 @@ export function DashboardToolbar({ search, onSearchChange }: DashboardToolbarPro
         </button>
         <button
           type="button"
+          onClick={onOpenMerge}
           className="inline-flex items-center gap-1.5 rounded-lg bg-[#eaecf0] px-3.5 py-2 text-sm font-semibold text-[#344054] transition-colors hover:bg-[#dde2eb] cursor-pointer"
         >
           <GitMerge className="h-4 w-4" />

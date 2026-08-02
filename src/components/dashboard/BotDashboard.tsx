@@ -5,6 +5,7 @@ import { BotCard } from "./BotCard";
 import { ChannelTabs } from "./ChannelTabs";
 import { DashboardNavbar } from "./DashboardNavbar";
 import { DashboardToolbar } from "./DashboardToolbar";
+import { MergePagesModal } from "./MergePagesModal";
 import type { Bot, BotChannel } from "@/types/bot";
 
 interface BotDashboardProps {
@@ -18,6 +19,7 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
   const [prevInitialBots, setPrevInitialBots] = React.useState(initialBots);
   const [search, setSearch] = React.useState("");
   const [channelFilter, setChannelFilter] = React.useState<BotChannel | "all">("all");
+  const [mergeModalOpen, setMergeModalOpen] = React.useState(false);
 
   // initialBots được tính lại ở server (getConnectedPages) mỗi khi
   // router.refresh() chạy — đồng bộ vào state cục bộ để danh sách hiện Page
@@ -53,7 +55,11 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
           {/* Khối 1: Header + Toolbar */}
           <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[8px] md:p-5">
             <h1 className="mb-4 text-base font-semibold text-slate-900">Bảng điều khiển</h1>
-            <DashboardToolbar search={search} onSearchChange={setSearch} />
+            <DashboardToolbar
+              search={search}
+              onSearchChange={setSearch}
+              onOpenMerge={() => setMergeModalOpen(true)}
+            />
           </div>
 
           {/* Khối 2: Tabs chọn kênh */}
@@ -77,6 +83,12 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
           </div>
         </div>
       </main>
+
+      <MergePagesModal
+        open={mergeModalOpen}
+        onClose={() => setMergeModalOpen(false)}
+        bots={bots}
+      />
     </div>
   );
 }

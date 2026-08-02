@@ -14,6 +14,9 @@ const API_URL = process.env.API_URL || 'http://localhost:3000/api';
 
 const protectedPrefixes = ['/dashboard'];
 const authPaths = ['/login', '/register'];
+// Trang chủ + 2 trang auth là public duy nhất ở cấp root — bất kỳ segment gốc
+// nào khác (vd. /[pageId] của trang chi tiết bot) đều coi là cần đăng nhập.
+const publicRootPaths = ['/', ...authPaths];
 
 function isExpiredOrInvalid(accessToken: string | undefined): boolean {
   if (!accessToken) return true;
@@ -55,7 +58,11 @@ export async function proxy(request: NextRequest) {
   const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
 
-  const isProtected = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
+  // Route gốc dạng /pageId (1 segment, không phải trang public) — vd. trang
+  // chi tiết bot /[pageId] — cũng cần đăng nhập như /dashboard/*.
+  const isRootDynamicRoute = /^\/[^/]+$/.test(pathname) && !publicRootPaths.includes(pathname);
+  const isProtected =
+    protectedPrefixes.some((prefix) => pathname.startsWith(prefix)) || isRootDynamicRoute;
   const isAuthPage = authPaths.includes(pathname);
   const hasSession = Boolean(refreshToken);
 
@@ -134,5 +141,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  // Chạy trên mọi route trừ nội bộ Next (_next), api, và file tĩnh (favicon,
+  // ảnh trong /public,...) — để bao được route gốc /[pageId] mới mà không
+  // chặn nhầm asset. Logic isProtected/isAuthPage phía trên mới quyết định
+  // route nào thực sự cần đăng nhập.
+  matcher: ['/((?!_next/static|_next/image|api|favicon.ico|.*\\..*).*)'],
 };
