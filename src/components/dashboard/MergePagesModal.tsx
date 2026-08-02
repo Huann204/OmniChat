@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { CheckSquare, GitMerge, Loader2, Plus, Search, SlidersHorizontal, Square } from "lucide-react";
 import { FaFacebook } from "react-icons/fa";
 import { Modal } from "@/components/ui/Modal";
@@ -28,11 +27,10 @@ interface MergePagesModalProps {
 }
 
 export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
-  const router = useRouter();
   const [search, setSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [prevOpen, setPrevOpen] = React.useState(open);
-  const [isNavigating, setIsNavigating] = React.useState(false);
+  const [isNavigating, startNavigate] = React.useTransition();
 
   const pages = bots;
 
@@ -92,19 +90,16 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
     });
   }
 
-  async function handleConfirm() {
+  function handleConfirm() {
     // Không lưu lại việc gộp ở đâu cả — chỉ chuyển danh sách Page đã chọn qua
     // 1 cookie tạm (httpOnly, sống 1 ngày, chỉ gửi kèm request tới
-    // /livechat) rồi điều hướng sang khung chat gộp với URL sạch, không
-    // lộ id qua query string. Có thể gộp lại tổ hợp khác bất cứ lúc nào.
-    // setIsNavigating(true) chạy trước khi await để có phản hồi ngay lúc
-    // bấm, không đợi tới lúc navigate mới thấy gì đó xảy ra.
-    if (isNavigating) return;
-    setIsNavigating(true);
-    const ids = Array.from(selectedIds);
-    await setMergePagesCookie(ids);
-    onClose();
-    router.push("/livechat");
+    // /livechat). Action tự redirect() sau khi ghi cookie — không tự
+    // router.push ở đây (xem giải thích ở BotCard.tsx). onClose() cũng
+    // không cần gọi: redirect điều hướng cả trang đi, modal tự biến mất
+    // theo.
+    startNavigate(async () => {
+      await setMergePagesCookie(Array.from(selectedIds));
+    });
   }
 
   return (
