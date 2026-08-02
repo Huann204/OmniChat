@@ -17,7 +17,7 @@ export function CustomerInfoPanel({ hasActiveConversation = true }: CustomerInfo
 
   if (!hasActiveConversation) {
     return (
-      <div className="flex w-[320px] shrink-0 items-center justify-center border-l border-slate-200 bg-white">
+      <div className="flex w-[27%] shrink-0 items-center justify-center border-l border-slate-200 bg-white">
         <p className="text-sm text-slate-400">Chưa có thông tin khách hàng</p>
       </div>
     );
