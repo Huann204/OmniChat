@@ -1,9 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { CheckSquare, GitMerge, Plus, Search, SlidersHorizontal, Square } from "lucide-react";
 import { FaFacebook } from "react-icons/fa";
 import { Modal } from "@/components/ui/Modal";
+import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
@@ -26,11 +28,12 @@ interface MergePagesModalProps {
 }
 
 export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
+  const router = useRouter();
   const [search, setSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [prevOpen, setPrevOpen] = React.useState(open);
 
-  const pages = React.useMemo(() => bots.filter((b) => b.channel === "facebook"), [bots]);
+  const pages = bots;
 
   // Reset lại lựa chọn mỗi lần mở modal, tránh giữ state cũ từ lần gộp trước.
   // Đồng bộ ngay trong lúc render (thay vì effect) để tránh render thừa —
@@ -88,9 +91,15 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
     });
   }
 
-  function handleConfirm() {
-    toast.info(`Đã chọn ${selectedIds.size} trang để gộp — tính năng đang được phát triển`);
+  async function handleConfirm() {
+    // Không lưu lại việc gộp ở đâu cả — chỉ chuyển danh sách Page đã chọn qua
+    // 1 cookie tạm (httpOnly, sống 5 phút, chỉ gửi kèm request tới
+    // /livechat) rồi điều hướng sang khung chat gộp với URL sạch, không
+    // lộ id qua query string. Có thể gộp lại tổ hợp khác bất cứ lúc nào.
+    const ids = Array.from(selectedIds);
+    await setMergePagesCookie(ids);
     onClose();
+    router.push("/livechat");
   }
 
   return (
