@@ -1,4 +1,5 @@
 import type { Conversation } from "@/types/conversation";
+import { ATTACHMENT_LABELS } from "@/lib/message-format";
 
 const CUSTOMER_NAMES = [
   "Nguyen Van Huan",
@@ -86,5 +87,6 @@ export function getLastMessagePreview(conversation: Conversation): string {
   if (last.kind === "call_request") return "Đã gửi yêu cầu gọi điện";
   if (last.kind === "call_outgoing") return "Cuộc gọi đi";
   if (last.kind === "call_missed") return "Cuộc gọi bị từ chối";
-  return last.text ?? "";
+  if (last.text) return last.text;
+  return ATTACHMENT_LABELS[last.kind] ?? "";
 }
