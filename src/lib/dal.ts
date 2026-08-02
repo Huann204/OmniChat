@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { apiFetch } from "./api";
-import { getSessionToken } from "./session";
+import { getCachedUser, getSessionToken } from "./session";
 import type { Bot } from "@/types/bot";
 import type { Conversation, MessageKind } from "@/types/conversation";
 
@@ -12,7 +12,15 @@ export interface SessionUser {
   email: string;
 }
 
+// Ưu tiên đọc từ cookie user_info (ghi lúc login/register, xem session.ts)
+// — tránh gọi /auth/me (tức query Mongo qua protect middleware) mỗi lần
+// chuyển trang. Chỉ gọi /auth/me khi chưa có cache (phiên cũ từ trước khi
+// có cơ chế này, hoặc cookie bị xoá) — các API khác vẫn tự xác thực JWT
+// riêng nên bỏ qua bước gọi /auth/me ở đây không làm giảm bảo mật.
 export const getUser = cache(async (): Promise<SessionUser | null> => {
+  const cached = await getCachedUser();
+  if (cached) return cached;
+
   const token = await getSessionToken();
   if (!token) return null;
 

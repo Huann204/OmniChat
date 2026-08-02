@@ -44,7 +44,7 @@ export async function login(
     };
   }
 
-  await createSession(data.accessToken, data.refreshToken);
+  await createSession(data.accessToken, data.refreshToken, data.user);
   revalidatePath("/", "layout");
   // Không dùng redirect() ở đây: điều hướng "mềm" của Next có thể tái sử dụng
   // bản render đã cache của layout gốc (Header) từ trước khi đăng nhập. Trang
@@ -81,7 +81,7 @@ export async function register(
     };
   }
 
-  await createSession(data.accessToken, data.refreshToken);
+  await createSession(data.accessToken, data.refreshToken, data.user);
   revalidatePath("/", "layout");
   return { success: true };
 }
