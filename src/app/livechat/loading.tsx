@@ -5,14 +5,14 @@ export default async function LivechatLoading() {
   const user = await getCachedUser();
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968] font-roboto">
+    <div className="flex h-screen flex-col bg-[rgb(80,109,173)] font-roboto">
       <header className="shrink-0">
         <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center gap-4 sm:w-[calc(100%-3rem)]">
           <div className="flex shrink-0 items-center gap-2 mr-6">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
+              eslint-disable-next-line @next/next/no-img-element
               <img src="/logo.png" alt="OmniChat Logo" className="h-full w-full object-contain" />
-            </span>
+            </span> */}
             <span className="hidden text-lg font-bold tracking-tight text-white sm:inline">
               OmniChat
             </span>

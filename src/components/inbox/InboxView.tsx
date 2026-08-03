@@ -198,7 +198,7 @@ export function InboxView({
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968]">
+    <div className="flex h-screen flex-col bg-[rgb(80,109,173)]">
       <DashboardNavbar
         userName={userName}
         userEmail={userEmail}

@@ -5,14 +5,14 @@ export default async function DashboardLoading() {
   const user = await getCachedUser();
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968] font-roboto flex flex-col">
-      <header className="bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968]">
+    <div className="min-h-screen bg-[rgb(80,109,173)] font-roboto flex flex-col">
+      <header className="bg-[rgb(80,109,173)]">
         <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center sm:w-[calc(100%-3rem)]">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
+            
             <img src="/logo.png" alt="OmniChat Logo" className="h-full w-full object-contain" />
-          </span>
-          <span className="hidden pl-2 text-lg font-bold tracking-tight text-white sm:inline">
+          </span> */}
+          <span className="hidden text-lg font-bold tracking-tight text-white sm:inline">
             OmniChat
           </span>
 
