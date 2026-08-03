@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User } from "lucide-react";
+import { Loader2, Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ConversationMessage } from "@/types/conversation";
 
@@ -9,10 +9,29 @@ interface MessageThreadProps {
   messages: ConversationMessage[];
   customerName: string;
   customerAvatarUrl?: string;
+  hasMoreMessages?: boolean;
+  onLoadMore?: () => Promise<void>;
 }
 
-export function MessageThread({ messages, customerName, customerAvatarUrl }: MessageThreadProps) {
+// Cuộn lên gần sát đầu (trong khoảng này) mới coi là "muốn xem thêm tin cũ".
+const LOAD_MORE_SCROLL_THRESHOLD = 80;
+
+export function MessageThread({
+  messages,
+  customerName,
+  customerAvatarUrl,
+  hasMoreMessages = false,
+  onLoadMore,
+}: MessageThreadProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+  // true khi đang neo ở đáy khung chat — chỉ tự cuộn xuống lúc ảnh load
+  // xong trong trường hợp này, tránh giật màn hình khi đang xem tin nhắn cũ.
+  const isNearBottomRef = React.useRef(true);
+  // Đánh dấu lần `messages` đổi sắp tới là do vừa tải thêm tin cũ (chèn vào
+  // đầu mảng) — lúc đó phải giữ nguyên vị trí đang xem, không cuộn xuống đáy.
+  const justLoadedMoreRef = React.useRef(false);
+  const prevScrollHeightRef = React.useRef<number | null>(null);
 
   const scrollToBottom = React.useCallback(() => {
     const el = containerRef.current;
@@ -20,6 +39,16 @@ export function MessageThread({ messages, customerName, customerAvatarUrl }: Mes
   }, []);
 
   React.useEffect(() => {
+    const el = containerRef.current;
+    if (justLoadedMoreRef.current && el && prevScrollHeightRef.current != null) {
+      // Bù đúng phần chiều cao vừa chèn thêm vào đầu — giữ tin nhắn đang
+      // xem ở đúng vị trí thay vì bị đẩy tuột xuống.
+      el.scrollTop = el.scrollHeight - prevScrollHeightRef.current;
+      justLoadedMoreRef.current = false;
+      prevScrollHeightRef.current = null;
+      return;
+    }
+
     scrollToBottom();
     // Chạy lại sau khi layout đã "chốt" (ví dụ vừa đổi hội thoại), phòng
     // trường hợp trình duyệt chưa kịp tính xong chiều cao ở lần render đầu.
@@ -27,8 +56,36 @@ export function MessageThread({ messages, customerName, customerAvatarUrl }: Mes
     return () => cancelAnimationFrame(raf);
   }, [messages, scrollToBottom]);
 
+  function handleScroll() {
+    const el = containerRef.current;
+    if (!el) return;
+
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+
+    if (!hasMoreMessages || !onLoadMore || isLoadingMore) return;
+    if (el.scrollTop > LOAD_MORE_SCROLL_THRESHOLD) return;
+
+    setIsLoadingMore(true);
+    justLoadedMoreRef.current = true;
+    prevScrollHeightRef.current = el.scrollHeight;
+    onLoadMore().finally(() => setIsLoadingMore(false));
+  }
+
+  function handleImageLoad() {
+    if (isNearBottomRef.current) scrollToBottom();
+  }
+
   return (
-    <div ref={containerRef} className="flex-1 space-y-1 overflow-y-auto bg-[#f3f0eb] pr-6 pl-2  py-4">
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className="flex-1 space-y-1 overflow-y-auto bg-[#f3f0eb] pr-6 pl-2  py-4"
+    >
+      {isLoadingMore && (
+        <div className="flex justify-center py-2">
+          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+        </div>
+      )}
       {messages.map((message, index) => {
         const next = messages[index + 1];
         const isLastInGroup = !next || next.sender !== message.sender;
@@ -39,7 +96,7 @@ export function MessageThread({ messages, customerName, customerAvatarUrl }: Mes
             customerName={customerName}
             customerAvatarUrl={customerAvatarUrl}
             showAvatar={isLastInGroup}
-            onImageLoad={scrollToBottom}
+            onImageLoad={handleImageLoad}
           />
         );
       })}

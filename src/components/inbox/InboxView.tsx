@@ -4,7 +4,7 @@ import * as React from "react";
 import { io, type Socket } from "socket.io-client";
 import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { markConversationRead } from "@/app/actions/conversation";
+import { getOlderMessages, markConversationRead } from "@/app/actions/conversation";
 import { getSocketTicket } from "@/app/actions/socket";
 import { formatClock, formatTimeLabel, messageKindAndContent } from "@/lib/message-format";
 import type { Bot } from "@/types/bot";
@@ -105,6 +105,7 @@ export function InboxView({
           text,
           attachmentUrl,
           time: formatClock(payload.message.createdAt),
+          createdAt: payload.message.createdAt,
         };
 
         setConversations((prev) => {
@@ -119,6 +120,7 @@ export function InboxView({
               lastSeenLabel: "",
               timeLabel: formatTimeLabel(payload.conversation.lastMessageAt),
               isRead: false,
+              hasMoreMessages: false,
               messages: [newMessage],
             };
             return [newConversation, ...prev];
@@ -164,10 +166,33 @@ export function InboxView({
       kind: "text",
       text,
       time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+      createdAt: new Date().toISOString(),
     };
     setConversations((prev) =>
       prev.map((c) =>
         c.id === activeConversation.id ? { ...c, messages: [...c.messages, newMessage] } : c
+      )
+    );
+  }
+
+  // Tải thêm tin nhắn cũ hơn khi cuộn lên đầu khung chat — cursor lấy từ
+  // tin nhắn cũ nhất ĐANG có ở client (đầu mảng messages).
+  async function handleLoadMoreMessages(conversationId: string) {
+    const conversation = conversations.find((c) => c.id === conversationId);
+    if (!conversation || conversation.messages.length === 0) return;
+
+    const oldest = conversation.messages[0];
+    const { messages: olderMessages, hasMore } = await getOlderMessages(
+      conversationId,
+      oldest.createdAt,
+      oldest.id
+    );
+
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === conversationId
+          ? { ...c, messages: [...olderMessages, ...c.messages], hasMoreMessages: hasMore }
+          : c
       )
     );
   }
@@ -203,6 +228,8 @@ export function InboxView({
                 messages={activeConversation.messages}
                 customerName={activeConversation.customerName}
                 customerAvatarUrl={activeConversation.customerAvatarUrl}
+                hasMoreMessages={activeConversation.hasMoreMessages}
+                onLoadMore={() => handleLoadMoreMessages(activeConversation.id)}
               />
               <QuickTagBar />
               <MessageComposer onSend={handleSend} />
