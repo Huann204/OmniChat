@@ -53,9 +53,15 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 10px;
+}
+
+/* Chỉ hiện thanh cuộn khi hover vào đúng vùng đang cuộn — mặc định trong
+   suốt (ẩn), tránh chiếm chỗ/gây rối mắt lúc không tương tác. */
+*:hover::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   /* slate-300 */
-  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
