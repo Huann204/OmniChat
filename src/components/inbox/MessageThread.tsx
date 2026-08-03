@@ -79,7 +79,7 @@ export function MessageThread({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 space-y-1 overflow-y-auto bg-[#f3f0eb] pr-[2px] pl-2  py-4"
+      className="flex-1 space-y-1 overflow-x-hidden overflow-y-auto bg-[#f3f0eb] pr-[2px] pl-2  py-4"
     >
       {isLoadingMore && (
         <div className="flex justify-center py-2">
