@@ -1,4 +1,9 @@
-export default function LivechatLoading() {
+import { Bell } from "lucide-react";
+import { getCachedUser } from "@/lib/session";
+
+export default async function LivechatLoading() {
+  const user = await getCachedUser();
+
   return (
     <div className="flex h-screen flex-col bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968] font-roboto">
       <header className="shrink-0">
@@ -27,10 +32,26 @@ export default function LivechatLoading() {
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3">
-              <span className="h-8 w-8 rounded-full bg-white/20 animate-pulse" />
-              <span className="hidden h-4 w-24 rounded bg-white/20 animate-pulse sm:inline" />
+              {user ? (
+                <>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-700">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="hidden truncate max-w-[8rem] text-sm text-white sm:inline">
+                    {user.name}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="h-8 w-8 rounded-full bg-white/20 animate-pulse" />
+                  <span className="hidden h-4 w-24 rounded bg-white/20 animate-pulse sm:inline" />
+                </>
+              )}
             </div>
-            <div className="h-9 w-9 rounded-full bg-white/20 animate-pulse" />
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-full text-white/90">
+              <Bell className="h-4.5 w-4.5" />
+              <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-red-400" />
+            </div>
           </div>
         </div>
       </header>
