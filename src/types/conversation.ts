@@ -21,6 +21,10 @@ export interface ConversationMessage {
   // ISO timestamp gốc — dùng làm cursor phân trang khi tải thêm tin nhắn cũ
   // hơn (before/beforeId), khác với `time` vốn chỉ để hiển thị (đã format).
   createdAt: string;
+  // Chỉ có ý nghĩa với tin của Page tự gửi (đang hiện optimistic trước khi
+  // server xác nhận) — undefined nghĩa là tin đã xác nhận từ trước (tải từ
+  // DB, hoặc do khách/nơi khác gửi), coi như "sent".
+  status?: "sending" | "sent" | "failed";
 }
 
 export type ConversationTagId =

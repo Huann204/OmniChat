@@ -4,9 +4,10 @@ import * as React from "react";
 import { io, type Socket } from "socket.io-client";
 import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { getOlderMessages, markConversationRead } from "@/app/actions/conversation";
+import { getOlderMessages, markConversationRead, sendMessage } from "@/app/actions/conversation";
 import { getSocketTicket } from "@/app/actions/socket";
 import { formatClock, formatTimeLabel, messageKindAndContent } from "@/lib/message-format";
+import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
 import { InboxIconRail } from "./InboxIconRail";
@@ -36,6 +37,10 @@ interface NewMessageEvent {
     text?: string;
     attachments?: { type: string; url: string }[];
     createdAt: string;
+    // id tạm phía mình tự sinh lúc gửi — server echo lại nguyên văn (xem
+    // NewMessageEvent trong realtime/socket.ts) để đối chiếu, biết đây là
+    // tin CHÍNH MÌNH vừa gửi (đã hiện optimistic rồi) hay tin mới thật sự.
+    clientId?: string;
   };
 }
 
@@ -126,8 +131,18 @@ export function InboxView({
             return [newConversation, ...prev];
           }
 
+          const conversation = prev[index];
+          // Echo của chính tin mình vừa gửi — đã hiện optimistic (và tự
+          // chuyển "sent") ở handleSend rồi, bỏ qua không thêm trùng.
+          if (
+            payload.message.clientId &&
+            conversation.messages.some((m) => m.id === payload.message.clientId)
+          ) {
+            return prev;
+          }
+
           const isActive = payload.conversationId === activeIdRef.current;
-          const updated = { ...prev[index] };
+          const updated = { ...conversation };
           updated.messages = [...updated.messages, newMessage];
           updated.timeLabel = formatTimeLabel(payload.conversation.lastMessageAt);
           updated.isRead = isActive;
@@ -158,21 +173,50 @@ export function InboxView({
     void markConversationRead(id);
   }
 
-  function handleSend(text: string) {
+  // Hiện ngay 1 tin "đang gửi" (optimistic) bằng clientId tự sinh — khi tin
+  // thật dội về qua socket, handler ở trên sẽ nhận ra (khớp clientId) và bỏ
+  // qua, không thêm trùng. Ở đây chỉ cần tự đổi trạng thái sending -> sent
+  // /failed dựa theo kết quả gọi API.
+  async function handleSend(text: string) {
     if (!activeConversation) return;
-    const newMessage: ConversationMessage = {
-      id: `${activeConversation.id}-${Date.now()}`,
+    const conversationId = activeConversation.id;
+    const clientId = `temp-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+
+    const optimisticMessage: ConversationMessage = {
+      id: clientId,
       sender: "page",
       kind: "text",
       text,
-      time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-      createdAt: new Date().toISOString(),
+      time: formatClock(now),
+      createdAt: now,
+      status: "sending",
     };
+
+    setConversations((prev) => {
+      const index = prev.findIndex((c) => c.id === conversationId);
+      if (index === -1) return prev;
+      const updated = { ...prev[index], messages: [...prev[index].messages, optimisticMessage] };
+      const rest = prev.filter((_, i) => i !== index);
+      return [updated, ...rest];
+    });
+
+    const { error } = await sendMessage(conversationId, text, clientId);
+
     setConversations((prev) =>
       prev.map((c) =>
-        c.id === activeConversation.id ? { ...c, messages: [...c.messages, newMessage] } : c
+        c.id === conversationId
+          ? {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === clientId ? { ...m, status: error ? "failed" : "sent" } : m
+              ),
+            }
+          : c
       )
     );
+
+    if (error) toast.error(error);
   }
 
   // Tải thêm tin nhắn cũ hơn khi cuộn lên đầu khung chat — cursor lấy từ

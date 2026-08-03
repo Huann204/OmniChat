@@ -1,6 +1,6 @@
 "use server";
 
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 import { formatClock, messageKindAndContent } from "@/lib/message-format";
 import { getSessionToken } from "@/lib/session";
 import type { ConversationMessage } from "@/types/conversation";
@@ -61,5 +61,30 @@ export async function getOlderMessages(
     };
   } catch {
     return { messages: [], hasMore: false };
+  }
+}
+
+// Gửi tin nhắn văn bản trả lời khách qua Facebook. clientId là id tạm client
+// tự sinh cho tin đang hiện optimistic — server echo lại đúng id đó qua
+// socket để client đối chiếu, tránh hiện trùng khi tin thật dội về.
+export async function sendMessage(
+  conversationId: string,
+  text: string,
+  clientId: string
+): Promise<{ error?: string }> {
+  const token = await getSessionToken();
+  if (!token) return { error: "Chưa đăng nhập" };
+
+  try {
+    await apiFetch(`/conversations/${conversationId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ text, clientId }),
+    });
+    return {};
+  } catch (err) {
+    return {
+      error: err instanceof ApiError ? err.message : "Không gửi được tin nhắn",
+    };
   }
 }

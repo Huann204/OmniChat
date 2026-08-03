@@ -4,17 +4,23 @@ import * as React from "react";
 import { Phone, StickyNote, Paperclip, Image as ImageIcon, MessageSquareText, Send, HelpCircle } from "lucide-react";
 
 interface MessageComposerProps {
-  onSend: (text: string) => void;
+  onSend: (text: string) => void | Promise<void>;
 }
 
 export function MessageComposer({ onSend }: MessageComposerProps) {
   const [value, setValue] = React.useState("");
+  const [isSending, setIsSending] = React.useState(false);
 
-  function handleSend() {
+  async function handleSend() {
     const trimmed = value.trim();
-    if (!trimmed) return;
-    onSend(trimmed);
+    if (!trimmed || isSending) return;
     setValue("");
+    setIsSending(true);
+    try {
+      await onSend(trimmed);
+    } finally {
+      setIsSending(false);
+    }
   }
 
   return (
@@ -51,8 +57,9 @@ export function MessageComposer({ onSend }: MessageComposerProps) {
           <button
             type="button"
             onClick={handleSend}
+            disabled={isSending}
             aria-label="Gửi tin nhắn"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="h-4.5 w-4.5" />
           </button>
