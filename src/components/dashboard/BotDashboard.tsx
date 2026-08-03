@@ -47,7 +47,7 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968] font-roboto">
+    <div className="flex h-screen flex-col bg-[rgb(80,109,173)] font-roboto">
       <DashboardNavbar userName={userName} userEmail={userEmail} className="!bg-none bg-transparent border-none shrink-0" />
 
       <main className="w-full flex-1 min-h-0 bg-slate-100 pt-6 pb-6 shadow-2xl relative">

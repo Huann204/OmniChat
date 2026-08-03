@@ -26,12 +26,12 @@ export function DashboardNavbar({
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
 
   return (
-    <header className={cn("bg-gradient-to-r from-[#123B54] via-[#1B6E5C] to-[#2FA968]", className)}>
+    <header className={cn("bg-[rgb(80,109,173)]", className)}>
       <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center gap-4 sm:w-[calc(100%-3rem)]">
         <Link href={tabs ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2 mr-6">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
+          {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
             <img src="/logo.png" alt="OmniChat Logo" className="h-full w-full object-contain" />
-          </span>
+          </span> */}
           <span className="hidden text-lg font-bold tracking-tight text-white sm:inline">OmniChat</span>
         </Link>
 
@@ -45,7 +45,7 @@ export function DashboardNavbar({
                 className={cn(
                   "shrink-0 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors cursor-pointer",
                   tab === activeTab
-                    ? "bg-slate-900 text-white"
+                    ? "bg-white/20 text-white"
                     : "text-white/80 hover:bg-white/10 hover:text-white"
                 )}
               >
