@@ -96,6 +96,7 @@ interface RawConversation {
   customerAvatarUrl?: string;
   lastMessageAt: string;
   isRead: boolean;
+  hasMoreMessages: boolean;
   messages: RawMessage[];
 }
 
@@ -176,6 +177,7 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
     lastSeenLabel: "",
     timeLabel: formatTimeLabel(c.lastMessageAt),
     isRead: c.isRead,
+    hasMoreMessages: c.hasMoreMessages,
     messages: c.messages.map((m) => {
       const { kind, text, attachmentUrl } = messageKindAndContent(m);
       return {
@@ -185,6 +187,7 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
         text,
         attachmentUrl,
         time: formatClock(m.createdAt),
+        createdAt: m.createdAt,
       };
     }),
   }));

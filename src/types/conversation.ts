@@ -18,6 +18,9 @@ export interface ConversationMessage {
   meta?: string;
   attachmentUrl?: string;
   time: string;
+  // ISO timestamp gốc — dùng làm cursor phân trang khi tải thêm tin nhắn cũ
+  // hơn (before/beforeId), khác với `time` vốn chỉ để hiển thị (đã format).
+  createdAt: string;
 }
 
 export type ConversationTagId =
@@ -39,4 +42,7 @@ export interface Conversation {
   timeLabel: string;
   isRead: boolean;
   messages: ConversationMessage[];
+  // Còn tin nhắn cũ hơn chưa tải hay không — dùng để quyết định có tải thêm
+  // khi cuộn lên đầu khung chat hay không.
+  hasMoreMessages: boolean;
 }
