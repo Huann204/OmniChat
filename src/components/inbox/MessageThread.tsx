@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User } from "lucide-react";
+import { Check, Loader2, Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ConversationMessage } from "@/types/conversation";
 
@@ -79,7 +79,7 @@ export function MessageThread({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 space-y-1 overflow-y-auto bg-[#f3f0eb] pr-6 pl-2  py-4"
+      className="flex-1 space-y-1 overflow-y-auto bg-[#f3f0eb] pr-[2px] pl-2  py-4"
     >
       {isLoadingMore && (
         <div className="flex justify-center py-2">
@@ -285,6 +285,23 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
       >
         {message.text}
       </div>
+
+      {isPage && (
+        <span className="mb-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+          {message.status === "sending" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+          ) : message.status === "failed" ? (
+            <span
+              className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-100 text-[9px] font-bold text-red-500"
+              title="Gửi thất bại"
+            >
+              !
+            </span>
+          ) : (
+            <Check className="h-3.5 w-3.5 text-slate-400" />
+          )}
+        </span>
+      )}
 
       {!isPage && <MessageMeta name={senderName} time={message.time} />}
     </div>
