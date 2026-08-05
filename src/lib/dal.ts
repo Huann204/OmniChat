@@ -126,13 +126,20 @@ const ATTACHMENT_KIND: Record<string, MessageKind> = {
 
 function messageKindAndContent(
   msg: RawMessage
-): { kind: MessageKind; text?: string; attachmentUrl?: string } {
+): { kind: MessageKind; text?: string; attachmentUrls?: string[] } {
   const first = msg.attachments?.[0];
   if (first) {
     const kind = ATTACHMENT_KIND[first.type] ?? "file";
+    // Ảnh có thể nhiều cái gộp chung 1 tin nhắn (message.attachments dạng
+    // mảng) — gom hết url ảnh lại để hiện chung 1 bong bóng. Sticker/video/
+    // file luôn chỉ có đúng 1 attachment.
+    const urls =
+      kind === "image"
+        ? (msg.attachments ?? []).filter((a) => a.type === "image").map((a) => a.url)
+        : [first.url];
     return {
       kind,
-      attachmentUrl: first.url,
+      attachmentUrls: urls,
       text: kind === "image" || kind === "sticker" ? undefined : ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]",
     };
   }
@@ -179,13 +186,13 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
     isRead: c.isRead,
     hasMoreMessages: c.hasMoreMessages,
     messages: c.messages.map((m) => {
-      const { kind, text, attachmentUrl } = messageKindAndContent(m);
+      const { kind, text, attachmentUrls } = messageKindAndContent(m);
       return {
         id: m.id,
         sender: m.sender,
         kind,
         text,
-        attachmentUrl,
+        attachmentUrls,
         time: formatClock(m.createdAt),
         createdAt: m.createdAt,
       };

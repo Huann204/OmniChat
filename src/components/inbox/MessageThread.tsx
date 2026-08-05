@@ -200,6 +200,12 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
   }
 
   if (message.kind === "image" || message.kind === "sticker") {
+    const urls = message.attachmentUrls ?? [];
+    // Nhiều ảnh gộp chung 1 tin nhắn (message.attachments dạng mảng của
+    // Facebook) — hiện thành lưới nhỏ trong cùng 1 bong bóng thay vì 1 ảnh
+    // lớn. Sticker luôn chỉ có đúng 1 ảnh nên không rơi vào nhánh này.
+    const isMultiImage = message.kind === "image" && urls.length > 1;
+
     return (
       <div
         className={cn(
@@ -217,18 +223,33 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
         )}
         {isPage && <MessageMeta name={senderName} time={message.time} />}
 
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={message.attachmentUrl}
-          alt={message.kind === "sticker" ? "Nhãn dán" : "Hình ảnh"}
-          className={cn(
-            "shadow-sm",
-            message.kind === "sticker"
-              ? "h-24 w-24 object-contain"
-              : "max-h-[260px] max-w-[260px] rounded-2xl object-cover"
-          )}
-          onLoad={onImageLoad}
-        />
+        {isMultiImage ? (
+          <div className="flex max-w-[260px] flex-wrap gap-1">
+            {urls.map((url, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={url}
+                alt={`Hình ảnh ${i + 1}`}
+                className="h-[128px] w-[128px] rounded-xl object-cover shadow-sm"
+                onLoad={onImageLoad}
+              />
+            ))}
+          </div>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={urls[0]}
+            alt={message.kind === "sticker" ? "Nhãn dán" : "Hình ảnh"}
+            className={cn(
+              "shadow-sm",
+              message.kind === "sticker"
+                ? "h-24 w-24 object-contain"
+                : "max-h-[260px] max-w-[260px] rounded-2xl object-cover"
+            )}
+            onLoad={onImageLoad}
+          />
+        )}
 
         {!isPage && <MessageMeta name={senderName} time={message.time} />}
       </div>

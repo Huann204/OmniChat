@@ -99,7 +99,7 @@ export function InboxView({
       });
 
       socket.on("new_message", (payload: NewMessageEvent) => {
-        const { kind, text, attachmentUrl } = messageKindAndContent(
+        const { kind, text, attachmentUrls } = messageKindAndContent(
           payload.message.text,
           payload.message.attachments
         );
@@ -108,7 +108,7 @@ export function InboxView({
           sender: payload.message.sender,
           kind,
           text,
-          attachmentUrl,
+          attachmentUrls,
           time: formatClock(payload.message.createdAt),
           createdAt: payload.message.createdAt,
         };
@@ -173,50 +173,83 @@ export function InboxView({
     void markConversationRead(id);
   }
 
-  // Hiện ngay 1 tin "đang gửi" (optimistic) bằng clientId tự sinh — khi tin
+  // Hiện ngay các tin "đang gửi" (optimistic) bằng clientId tự sinh — khi tin
   // thật dội về qua socket, handler ở trên sẽ nhận ra (khớp clientId) và bỏ
   // qua, không thêm trùng. Ở đây chỉ cần tự đổi trạng thái sending -> sent
   // /failed dựa theo kết quả gọi API.
-  async function handleSend(text: string) {
+  //
+  // text và imageUrls là 2 tin nhắn RIÊNG BIỆT nếu cả 2 cùng có — nhưng nếu
+  // chọn nhiều ảnh, cả nhóm ảnh đó gộp chung 1 tin (message.attachments dạng
+  // mảng của Facebook), không tách thành nhiều tin/bong bóng riêng.
+  async function handleSend(text: string, imageUrls: string[]) {
     if (!activeConversation) return;
     const conversationId = activeConversation.id;
-    const clientId = `temp-${crypto.randomUUID()}`;
     const now = new Date().toISOString();
 
-    const optimisticMessage: ConversationMessage = {
-      id: clientId,
+    const parts: { clientId: string; text?: string; imageUrls?: string[] }[] = [];
+    if (text) parts.push({ clientId: `temp-${crypto.randomUUID()}`, text });
+    if (imageUrls.length > 0) parts.push({ clientId: `temp-${crypto.randomUUID()}`, imageUrls });
+    if (parts.length === 0) return;
+
+    const optimisticMessages: ConversationMessage[] = parts.map((part) => ({
+      id: part.clientId,
       sender: "page",
-      kind: "text",
-      text,
+      kind: part.imageUrls ? "image" : "text",
+      text: part.text,
+      attachmentUrls: part.imageUrls,
       time: formatClock(now),
       createdAt: now,
       status: "sending",
-    };
+    }));
 
     setConversations((prev) => {
       const index = prev.findIndex((c) => c.id === conversationId);
       if (index === -1) return prev;
-      const updated = { ...prev[index], messages: [...prev[index].messages, optimisticMessage] };
+      const updated = { ...prev[index], messages: [...prev[index].messages, ...optimisticMessages] };
       const rest = prev.filter((_, i) => i !== index);
       return [updated, ...rest];
     });
 
-    const { error } = await sendMessage(conversationId, text, clientId);
+    const result = await sendMessage(conversationId, parts);
+
+    if ("error" in result) {
+      toast.error(result.error);
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === conversationId
+            ? {
+                ...c,
+                messages: c.messages.map((m) =>
+                  parts.some((p) => p.clientId === m.id) ? { ...m, status: "failed" } : m
+                ),
+              }
+            : c
+        )
+      );
+      return;
+    }
+
+    const statusByClientId = new Map(
+      result.results.map((r) => [r.clientId, r.error ? "failed" : "sent"] as const)
+    );
 
     setConversations((prev) =>
       prev.map((c) =>
         c.id === conversationId
           ? {
               ...c,
-              messages: c.messages.map((m) =>
-                m.id === clientId ? { ...m, status: error ? "failed" : "sent" } : m
-              ),
+              messages: c.messages.map((m) => {
+                const status = statusByClientId.get(m.id);
+                return status ? { ...m, status } : m;
+              }),
             }
           : c
       )
     );
 
-    if (error) toast.error(error);
+    result.results.forEach((r) => {
+      if (r.error) toast.error(r.error);
+    });
   }
 
   // Tải thêm tin nhắn cũ hơn khi cuộn lên đầu khung chat — cursor lấy từ

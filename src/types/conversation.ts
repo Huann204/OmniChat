@@ -16,7 +16,9 @@ export interface ConversationMessage {
   kind: MessageKind;
   text?: string;
   meta?: string;
-  attachmentUrl?: string;
+  // Có thể nhiều ảnh trong 1 tin nhắn (Facebook gộp qua message.attachments
+  // dạng mảng) — sticker/video/file luôn chỉ có đúng 1 phần tử.
+  attachmentUrls?: string[];
   time: string;
   // ISO timestamp gốc — dùng làm cursor phân trang khi tải thêm tin nhắn cũ
   // hơn (before/beforeId), khác với `time` vốn chỉ để hiển thị (đã format).
