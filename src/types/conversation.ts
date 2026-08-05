@@ -27,6 +27,11 @@ export interface ConversationMessage {
   // server xác nhận) — undefined nghĩa là tin đã xác nhận từ trước (tải từ
   // DB, hoặc do khách/nơi khác gửi), coi như "sent".
   status?: "sending" | "sent" | "failed";
+  // Chỉ có khi hội thoại là nhóm (Conversation.isGroup) và tin do 1 thành
+  // viên khác gửi — tên/avatar riêng của đúng người đó, khác với
+  // customerName/customerAvatarUrl (tên/avatar của cả nhóm).
+  senderName?: string;
+  senderAvatarUrl?: string;
 }
 
 export type ConversationTagId =
@@ -44,6 +49,9 @@ export interface Conversation {
   pageId: string;
   customerName: string;
   customerAvatarUrl?: string;
+  // true nếu đây là hội thoại nhóm (hiện chỉ Zalo có) — customerName/
+  // customerAvatarUrl lúc đó là tên/avatar của NHÓM, không phải 1 khách.
+  isGroup?: boolean;
   lastSeenLabel: string;
   timeLabel: string;
   isRead: boolean;

@@ -33,6 +33,8 @@ interface RawMessage {
   sender: "customer" | "page";
   text?: string;
   attachments?: { type: string; url: string }[];
+  senderName?: string;
+  senderAvatarUrl?: string;
   createdAt: string;
 }
 
@@ -62,6 +64,8 @@ export async function getOlderMessages(
           kind,
           text,
           attachmentUrls,
+          senderName: m.senderName,
+          senderAvatarUrl: m.senderAvatarUrl,
           time: formatClock(m.createdAt),
           createdAt: m.createdAt,
         };

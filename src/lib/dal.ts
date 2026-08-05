@@ -127,6 +127,8 @@ interface RawMessage {
   sender: "customer" | "page";
   text?: string;
   attachments?: { type: string; url: string }[];
+  senderName?: string;
+  senderAvatarUrl?: string;
   createdAt: string;
 }
 
@@ -135,6 +137,7 @@ interface RawConversation {
   pageId: string;
   customerName?: string;
   customerAvatarUrl?: string;
+  isGroup?: boolean;
   lastMessageAt: string;
   isRead: boolean;
   hasMoreMessages: boolean;
@@ -222,6 +225,7 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
     pageId: c.pageId,
     customerName: c.customerName || "Khách hàng",
     customerAvatarUrl: c.customerAvatarUrl,
+    isGroup: c.isGroup,
     lastSeenLabel: "",
     timeLabel: formatTimeLabel(c.lastMessageAt),
     isRead: c.isRead,
@@ -234,6 +238,8 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
         kind,
         text,
         attachmentUrls,
+        senderName: m.senderName,
+        senderAvatarUrl: m.senderAvatarUrl,
         time: formatClock(m.createdAt),
         createdAt: m.createdAt,
       };
