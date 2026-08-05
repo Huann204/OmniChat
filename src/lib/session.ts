@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 export const ACCESS_COOKIE = "token";
 export const REFRESH_COOKIE = "refreshToken";
 const USER_INFO_COOKIE = "user_info";
+export const SHOP_COOKIE = "current_shop_id";
 const ACCESS_MAX_AGE = 60 * 15; // 15 phút, khớp JWT_ACCESS_EXPIRES_IN
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30; // 30 ngày, khớp JWT_REFRESH_EXPIRES_IN
 
@@ -21,7 +22,8 @@ export interface CachedUser {
 export async function createSession(
   accessToken: string,
   refreshToken: string,
-  user?: CachedUser
+  user?: CachedUser,
+  shopId?: string
 ) {
   const cookieStore = await cookies();
   const secure = process.env.NODE_ENV === "production";
@@ -50,6 +52,30 @@ export async function createSession(
       maxAge: REFRESH_MAX_AGE,
     });
   }
+
+  if (shopId) {
+    await setCurrentShopId(shopId);
+  }
+}
+
+// Shop đang active — sống theo cả phiên đăng nhập (giống user_info), không
+// phải theo access token ngắn hạn, vì đổi shop không nên bắt đăng nhập lại.
+export async function setCurrentShopId(shopId: string) {
+  const cookieStore = await cookies();
+  const secure = process.env.NODE_ENV === "production";
+
+  cookieStore.set(SHOP_COOKIE, shopId, {
+    httpOnly: true,
+    secure,
+    sameSite: "lax",
+    path: "/",
+    maxAge: REFRESH_MAX_AGE,
+  });
+}
+
+export async function getCurrentShopId(): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  return cookieStore.get(SHOP_COOKIE)?.value;
 }
 
 export async function getSessionToken() {
@@ -81,4 +107,5 @@ export async function deleteSession() {
   cookieStore.delete(ACCESS_COOKIE);
   cookieStore.delete(REFRESH_COOKIE);
   cookieStore.delete(USER_INFO_COOKIE);
+  cookieStore.delete(SHOP_COOKIE);
 }
