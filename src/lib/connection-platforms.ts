@@ -35,6 +35,14 @@ export const CONNECTION_PLATFORMS: ConnectionPlatform[] = [
     description:
       "Mở khoá mục tiêu mua hàng qua tin nhắn trên Ads Manager, tự động tối ưu quảng cáo Facebook với CAPI.",
   },
+    {
+    key: "zalo-personal",
+    label: "Zalo Cá nhân",
+    icon: SiZalo,
+    badgeBg: "#0068FF",
+    accent: "#0068FF",
+    description: "Quét mã QR để kết nối tài khoản Zalo cá nhân, nhận và trả lời tin nhắn ngay trong hộp thư chung.",
+  },
   {
     key: "instagram",
     label: "Instagram",
@@ -117,6 +125,7 @@ export const CONNECTION_PLATFORMS: ConnectionPlatform[] = [
     icon: SiZalo,
     badgeBg: "#0068FF",
     accent: "#0068FF",
+    beta: true,
     description: "Kết nối Official Account để nhắn tin và chăm sóc khách hàng qua Zalo.",
   },
 ];
