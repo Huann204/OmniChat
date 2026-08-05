@@ -48,7 +48,10 @@ export function messageKindAndContent(
     return {
       kind,
       attachmentUrls: urls,
-      text: kind === "image" || kind === "sticker" ? undefined : ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]",
+      // Ảnh/sticker có thể kèm chú thích (gõ chữ + gửi ảnh cùng 1 tin) —
+      // giữ lại `text` thật nếu có, chỉ fallback nhãn chung ("[Video]"...)
+      // cho các loại đính kèm không tự mang theo text hiển thị được.
+      text: kind === "image" || kind === "sticker" ? text || undefined : ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]",
     };
   }
   return { kind: "text", text };

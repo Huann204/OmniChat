@@ -228,33 +228,48 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
         )}
         {isPage && <MessageMeta name={senderName} time={message.time} />}
 
-        {isMultiImage ? (
-          <div className="flex max-w-[260px] flex-wrap gap-1">
-            {urls.map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={i}
-                src={url}
-                alt={`Hình ảnh ${i + 1}`}
-                className="h-[128px] w-[128px] rounded-xl object-cover shadow-sm"
-                onLoad={onImageLoad}
-              />
-            ))}
-          </div>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={urls[0]}
-            alt={message.kind === "sticker" ? "Nhãn dán" : "Hình ảnh"}
-            className={cn(
-              "shadow-sm",
-              message.kind === "sticker"
-                ? "h-24 w-24 object-contain"
-                : "max-h-[260px] max-w-[260px] rounded-2xl object-cover"
-            )}
-            onLoad={onImageLoad}
-          />
-        )}
+        <div className={cn("flex flex-col gap-1", isPage ? "items-end" : "items-start")}>
+          {isMultiImage ? (
+            <div className="flex max-w-[260px] flex-wrap gap-1">
+              {urls.map((url, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={i}
+                  src={url}
+                  alt={`Hình ảnh ${i + 1}`}
+                  className="h-[128px] w-[128px] rounded-xl object-cover shadow-sm"
+                  onLoad={onImageLoad}
+                />
+              ))}
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={urls[0]}
+              alt={message.kind === "sticker" ? "Nhãn dán" : "Hình ảnh"}
+              className={cn(
+                "shadow-sm",
+                message.kind === "sticker"
+                  ? "h-24 w-24 object-contain"
+                  : "max-h-[260px] max-w-[260px] rounded-2xl object-cover"
+              )}
+              onLoad={onImageLoad}
+            />
+          )}
+
+          {/* Chú thích đi kèm ảnh (gõ chữ + gửi ảnh cùng 1 tin) — Facebook
+              hầu như không có, chỉ Zalo mới thấy nhưng xử lý chung được. */}
+          {message.text && (
+            <div
+              className={cn(
+                "max-w-sm rounded-2xl px-4 py-2 text-sm shadow-sm",
+                isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
+              )}
+            >
+              {message.text}
+            </div>
+          )}
+        </div>
 
         {!isPage && <MessageMeta name={senderName} time={message.time} />}
       </div>

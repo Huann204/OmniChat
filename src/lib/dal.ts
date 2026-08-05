@@ -184,7 +184,9 @@ function messageKindAndContent(
     return {
       kind,
       attachmentUrls: urls,
-      text: kind === "image" || kind === "sticker" ? undefined : ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]",
+      // Ảnh/sticker có thể kèm chú thích (gõ chữ + gửi ảnh cùng 1 tin) —
+      // giữ lại text thật của tin nhắn nếu có.
+      text: kind === "image" || kind === "sticker" ? msg.text || undefined : ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]",
     };
   }
   return { kind: "text", text: msg.text };
