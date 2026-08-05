@@ -7,7 +7,7 @@ import { MediaPickerModal } from "@/components/media/MediaPickerModal";
 import type { MediaItem } from "@/types/media";
 
 interface MessageComposerProps {
-  onSend: (text: string) => void | Promise<void>;
+  onSend: (text: string, imageUrls: string[]) => void | Promise<void>;
 }
 
 const PLACEHOLDER_ICONS = [Phone, StickyNote, Paperclip, MessageSquareText];
@@ -22,18 +22,12 @@ export function MessageComposer({ onSend }: MessageComposerProps) {
     const trimmedText = value.trim();
     if ((!trimmedText && attachedImages.length === 0) || isSending) return;
 
-    // Pipeline gửi tin hiện tại (onSend -> sendMessage action -> Facebook Send API)
-    // chỉ hỗ trợ text, chưa có API gửi ảnh đính kèm riêng — nên URL của các ảnh
-    // đã chọn được nối vào cuối nội dung gửi, gửi đi như 1 tin nhắn text.
-    const textToSend = [trimmedText, ...attachedImages.map((item) => item.url)]
-      .filter(Boolean)
-      .join(" ");
-
+    const imageUrls = attachedImages.map((item) => item.url);
     setValue("");
     setAttachedImages([]);
     setIsSending(true);
     try {
-      await onSend(textToSend);
+      await onSend(trimmedText, imageUrls);
     } finally {
       setIsSending(false);
     }
