@@ -18,14 +18,14 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "OmniChat | Nền tảng quản lý tin nhắn và AI Chatbot",
+  title: "Hchat | Nền tảng quản lý tin nhắn và AI Chatbot",
   description: "Quản lý tất cả tin nhắn khách hàng trong một nơi. Tự động hóa bán hàng với AI Chatbot thông minh trên Facebook, Zalo, Instagram, WhatsApp, và Website.",
   openGraph: {
-    title: "OmniChat | Nền tảng quản lý tin nhắn và AI Chatbot",
+    title: "Hchat | Nền tảng quản lý tin nhắn và AI Chatbot",
     description: "Quản lý tất cả tin nhắn khách hàng trong một nơi. Tự động hóa bán hàng với AI Chatbot thông minh.",
     type: "website",
     locale: "vi_VN",
-    url: "https://omnichat.vn",
+    url: "https://hchat.vn",
   }
 };
 

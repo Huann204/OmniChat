@@ -10,10 +10,10 @@ export default async function DashboardLoading() {
         <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center sm:w-[calc(100%-3rem)]">
           {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
             
-            <img src="/logo.png" alt="OmniChat Logo" className="h-full w-full object-contain" />
+            <img src="/logo.png" alt="Hchat Logo" className="h-full w-full object-contain" />
           </span> */}
           <span className="hidden text-lg font-bold tracking-tight text-white sm:inline">
-            OmniChat
+            Hchat
           </span>
 
           <div className="ml-auto flex shrink-0 items-center gap-2">

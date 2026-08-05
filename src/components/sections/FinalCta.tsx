@@ -10,10 +10,10 @@ export function FinalCta() {
       
       <div className="relative z-10 flex flex-col items-center text-center max-w-3xl mx-auto py-12 md:py-20">
         <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter mb-6">
-          Sẵn sàng tăng doanh số với <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0866FF] to-[#00C6FF]">OmniChat?</span>
+          Sẵn sàng tăng doanh số với <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0866FF] to-[#00C6FF]">Hchat?</span>
         </h2>
         <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl leading-relaxed">
-          Tham gia cùng 10.000+ doanh nghiệp đang tăng trưởng với OmniChat. Bắt đầu miễn phí ngay hôm nay, không cần thẻ tín dụng.
+          Tham gia cùng 10.000+ doanh nghiệp đang tăng trưởng với Hchat. Bắt đầu miễn phí ngay hôm nay, không cần thẻ tín dụng.
         </p>
         <Button 
           size="lg" 

@@ -29,8 +29,8 @@ export function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-1 flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="OmniChat Logo" className="h-8 w-auto" />
-              <span className="text-xl font-bold text-slate-900 tracking-tight">OmniChat</span>
+              <img src="/logo.png" alt="Hchat Logo" className="h-8 w-auto" />
+              <span className="text-xl font-bold text-slate-900 tracking-tight">Hchat</span>
             </Link>
             <p className="text-sm text-slate-500 mt-2">
               Nền tảng quản lý tin nhắn đa kênh và chatbot AI dành cho doanh nghiệp tại Việt Nam.
@@ -67,7 +67,7 @@ export function Footer() {
 
         <div className="mt-16 pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500">
-            © 2025 OmniChat. All rights reserved.
+            © 2025 Hchat. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-slate-500">
             <Link href="#" className="hover:text-slate-900">Chính sách bảo mật</Link>

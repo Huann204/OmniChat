@@ -11,10 +11,10 @@ export default async function LivechatLoading() {
           <div className="flex shrink-0 items-center gap-2 mr-6">
             {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
               eslint-disable-next-line @next/next/no-img-element
-              <img src="/logo.png" alt="OmniChat Logo" className="h-full w-full object-contain" />
+              <img src="/logo.png" alt="Hchat Logo" className="h-full w-full object-contain" />
             </span> */}
             <span className="hidden text-lg font-bold tracking-tight text-white sm:inline">
-              OmniChat
+              Hchat
             </span>
           </div>
 
