@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, Clock, KeyRound, Layers3, Loader2, Search, SlidersHorizontal } from "lucide-react";
+import { io, type Socket } from "socket.io-client";
+import { Check, Clock, KeyRound, Layers3, Loader2, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CONNECTION_PLATFORMS } from "@/lib/connection-platforms";
 import { cn } from "@/lib/utils";
 import { toast } from "@/store/toast-store";
 import { loginWithFacebook } from "@/lib/facebook-sdk";
+import { getSocketTicket } from "@/app/actions/socket";
 import {
   connectFacebookPage,
   listFacebookPages,
@@ -84,6 +86,8 @@ export function AddConnectionModal({ open, onClose }: AddConnectionModalProps) {
           <PendingActivationPanel />
         ) : selected?.key === "facebook" ? (
           <FacebookConnectPanel selected={selected} onClose={onClose} />
+        ) : selected?.key === "zalo-personal" ? (
+          <ZaloConnectPanel selected={selected} onClose={onClose} />
         ) : selected ? (
           <ConnectPlatformPanel selected={selected} onConnect={handleConnect} />
         ) : null}
@@ -266,6 +270,152 @@ function FacebookConnectPanel({
           )}
           Kết nối với {selected.label}
         </button>
+      </div>
+    </div>
+  );
+}
+
+interface ZaloLoginQrEvent {
+  image: string;
+}
+interface ZaloLoginScannedEvent {
+  displayName: string;
+  avatar: string;
+}
+interface ZaloLoginSuccessEvent {
+  page: { id: string; name: string; picture?: string };
+}
+interface ZaloLoginErrorEvent {
+  message: string;
+}
+
+type ZaloLoginState =
+  | { step: "connecting" }
+  | { step: "qr"; image: string; scannedBy?: ZaloLoginScannedEvent }
+  | { step: "success" }
+  | { step: "error"; message: string };
+
+function ZaloConnectPanel({
+  selected,
+  onClose,
+}: {
+  selected: (typeof CONNECTION_PLATFORMS)[number];
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const SelectedIcon = selected.icon;
+  const [state, setState] = React.useState<ZaloLoginState>({ step: "connecting" });
+  const socketRef = React.useRef<Socket | null>(null);
+
+  const startLogin = React.useCallback(async () => {
+    let socket = socketRef.current;
+    if (!socket) {
+      const ticket = await getSocketTicket();
+      if (!ticket) {
+        setState({ step: "error", message: "Không tạo được kết nối, vui lòng thử lại" });
+        return;
+      }
+
+      socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, { auth: { ticket } });
+      socketRef.current = socket;
+
+      socket.on("zalo_login_qr", (payload: ZaloLoginQrEvent) => {
+        setState({ step: "qr", image: payload.image });
+      });
+      socket.on("zalo_login_scanned", (payload: ZaloLoginScannedEvent) => {
+        setState((prev) =>
+          prev.step === "qr" ? { ...prev, scannedBy: payload } : prev
+        );
+      });
+      socket.on("zalo_login_success", (payload: ZaloLoginSuccessEvent) => {
+        setState({ step: "success" });
+        toast.success(`Đã kết nối Zalo "${payload.page.name}" thành công`);
+        onClose();
+        router.refresh();
+      });
+      socket.on("zalo_login_declined", () => {
+        setState({ step: "error", message: "Đã từ chối đăng nhập trên điện thoại" });
+      });
+      socket.on("zalo_login_expired", () => {
+        setState({ step: "error", message: "Mã QR đã hết hạn" });
+      });
+      socket.on("zalo_login_error", (payload: ZaloLoginErrorEvent) => {
+        setState({ step: "error", message: payload.message });
+      });
+      socket.on("connect", () => socket?.emit("start_zalo_login"));
+    } else {
+      socket.emit("start_zalo_login");
+    }
+  }, [onClose, router]);
+
+  React.useEffect(() => {
+    (async () => {
+      await startLogin();
+    })();
+    return () => {
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="shrink-0 border-b border-slate-200 px-6 py-3.5">
+        <p className="text-sm font-semibold text-slate-900">
+          Thêm tài khoản {selected.label}
+        </p>
+      </div>
+
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-10 text-center">
+        {state.step === "connecting" && (
+          <>
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-slate-500">Đang khởi tạo mã QR...</p>
+          </>
+        )}
+
+        {state.step === "qr" && (
+          <>
+            <h3 className="text-lg font-semibold text-slate-900">
+              Quét mã QR bằng Zalo trên điện thoại
+            </h3>
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={state.image} alt="Mã QR đăng nhập Zalo" className="h-48 w-48" />
+            </div>
+            <p className="max-w-sm text-sm text-slate-500">
+              {state.scannedBy
+                ? `Đã quét bởi ${state.scannedBy.displayName} — vui lòng xác nhận trên điện thoại`
+                : "Mở Zalo trên điện thoại → Quét QR → chọn mã này"}
+            </p>
+          </>
+        )}
+
+        {state.step === "error" && (
+          <>
+            <div className="flex items-center gap-2">
+              <span
+                className="flex h-11 w-11 items-center justify-center rounded-full"
+                style={{ background: selected.badgeBg }}
+              >
+                <SelectedIcon className="h-5 w-5 text-white" />
+              </span>
+            </div>
+            <p className="max-w-sm text-sm text-red-500">{state.message}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setState({ step: "connecting" });
+                startLogin();
+              }}
+              className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              <RefreshCw className="h-4 w-4" style={{ color: selected.accent }} />
+              Lấy mã QR mới
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

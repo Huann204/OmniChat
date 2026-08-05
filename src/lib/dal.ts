@@ -82,8 +82,20 @@ interface ConnectedPageRaw {
   active: boolean;
 }
 
-// Chỉ có Facebook (type = 0) hiện tại — map sang Bot để dùng chung UI, sẵn
-// sàng mở rộng khi có nguồn dữ liệu bot thật cho các kênh khác.
+// Khớp CHANNEL_TYPE_* trong server/src/models/connectedPage.model.ts — không
+// có package dùng chung giữa 2 repo nên phải giữ đồng bộ thủ công.
+const CHANNEL_TYPE_FACEBOOK = 0;
+const CHANNEL_TYPE_ZALO_PERSONAL = 1;
+
+function channelFromType(type: number): Bot["channel"] {
+  if (type === CHANNEL_TYPE_ZALO_PERSONAL) return "zalo";
+  if (type === CHANNEL_TYPE_FACEBOOK) return "facebook";
+  return "facebook";
+}
+
+// Endpoint tên "/facebook/..." nhưng thực chất trả về mọi Page đã kết nối
+// của Shop hiện tại bất kể kênh nào (xem facebook.controller.ts#listConnectedPages)
+// — map sang Bot để dùng chung 1 UI dashboard cho mọi kênh.
 export const getConnectedPages = cache(async (): Promise<Bot[]> => {
   const token = await getSessionToken();
   if (!token) return [];
@@ -98,8 +110,8 @@ export const getConnectedPages = cache(async (): Promise<Bot[]> => {
       id: p.id,
       pageId: p.pageId,
       name: p.name,
-      channel: "facebook" as const,
-      profileUrl: `https://facebook.com/${p.pageId}`,
+      channel: channelFromType(p.type),
+      profileUrl: p.type === CHANNEL_TYPE_FACEBOOK ? `https://facebook.com/${p.pageId}` : "",
       isActive: p.active,
       messageCount: 0,
       orderCount: 0,
