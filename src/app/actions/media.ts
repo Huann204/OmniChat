@@ -1,8 +1,16 @@
 "use server";
 
 import { ApiError, apiFetch } from "@/lib/api";
-import { getSessionToken } from "@/lib/session";
+import { getCurrentShopId, getSessionToken } from "@/lib/session";
 import type { MediaItem } from "@/types/media";
+
+async function authHeaders(token: string) {
+  const shopId = await getCurrentShopId();
+  return {
+    Authorization: `Bearer ${token}`,
+    ...(shopId ? { "X-Shop-Id": shopId } : {}),
+  };
+}
 
 interface ListMediaResult {
   items: MediaItem[];
@@ -25,7 +33,7 @@ export async function listMedia(params: {
   try {
     const data = await apiFetch<{ success: boolean } & ListMediaResult>(
       `/media?${query.toString()}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: await authHeaders(token) }
     );
     return data;
   } catch {
@@ -40,7 +48,7 @@ export async function deleteMedia(id: string): Promise<{ error?: string }> {
   try {
     await apiFetch(`/media/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: await authHeaders(token),
     });
     return {};
   } catch (err) {

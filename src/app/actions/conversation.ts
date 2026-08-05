@@ -2,8 +2,16 @@
 
 import { ApiError, apiFetch } from "@/lib/api";
 import { formatClock, messageKindAndContent } from "@/lib/message-format";
-import { getSessionToken } from "@/lib/session";
+import { getCurrentShopId, getSessionToken } from "@/lib/session";
 import type { ConversationMessage } from "@/types/conversation";
+
+async function authHeaders(token: string) {
+  const shopId = await getCurrentShopId();
+  return {
+    Authorization: `Bearer ${token}`,
+    ...(shopId ? { "X-Shop-Id": shopId } : {}),
+  };
+}
 
 export async function markConversationRead(conversationId: string) {
   const token = await getSessionToken();
@@ -12,7 +20,7 @@ export async function markConversationRead(conversationId: string) {
   try {
     await apiFetch(`/conversations/${conversationId}/read`, {
       method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: await authHeaders(token),
     });
   } catch {
     // Không chặn UI nếu lưu trạng thái đọc thất bại — không quan trọng bằng
@@ -41,7 +49,7 @@ export async function getOlderMessages(
   try {
     const data = await apiFetch<{ success: boolean; hasMore: boolean; messages: RawMessage[] }>(
       `/conversations/${conversationId}/messages?before=${encodeURIComponent(before)}&beforeId=${encodeURIComponent(beforeId)}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: await authHeaders(token) }
     );
 
     return {
@@ -96,7 +104,7 @@ export async function sendMessage(
       results: SendMessagePartResult[];
     }>(`/conversations/${conversationId}/messages`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: await authHeaders(token),
       body: JSON.stringify({ parts }),
     });
     return { results: data.results };

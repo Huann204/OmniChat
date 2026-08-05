@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { ShopSwitcherMenu } from "@/components/dashboard/ShopSwitcherMenu";
 
 interface DashboardNavbarProps {
   userName: string;
@@ -56,18 +57,20 @@ export function DashboardNavbar({
         )}
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <ShopSwitcherMenu />
+
           {/* Avatar user */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setUserMenuOpen((v) => !v)}
               aria-label="Mở menu tài khoản"
+              title={userName}
               className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-white/15 cursor-pointer"
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-700">
                 {userName.charAt(0).toUpperCase()}
               </span>
-              <span className="hidden text-sm  text-white sm:inline">{userName}</span>
             </button>
             {userMenuOpen && (
               <>

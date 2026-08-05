@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { apiFetch } from "./api";
-import { getCachedUser, getSessionToken } from "./session";
+import { getCachedUser, getCurrentShopId, getSessionToken } from "./session";
 import type { Bot } from "@/types/bot";
 import type { Conversation, MessageKind } from "@/types/conversation";
 
@@ -43,6 +43,35 @@ export const verifySession = cache(async (): Promise<SessionUser> => {
   return user;
 });
 
+export interface ShopSummary {
+  id: string;
+  name: string;
+  role: "owner" | "admin" | "member";
+}
+
+export const getMyShops = cache(async (): Promise<ShopSummary[]> => {
+  const token = await getSessionToken();
+  if (!token) return [];
+
+  try {
+    const data = await apiFetch<{ success: boolean; shops: ShopSummary[] }>(
+      "/shops/mine",
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data.shops;
+  } catch {
+    return [];
+  }
+});
+
+// Gộp vào headers của call cần Shop đang active — chỉ Next.js server gọi
+// thẳng Express nên header này an toàn để đính kèm ở đây (không phải client
+// browser tự set).
+async function shopHeader(): Promise<Record<string, string>> {
+  const shopId = await getCurrentShopId();
+  return shopId ? { "X-Shop-Id": shopId } : {};
+}
+
 interface ConnectedPageRaw {
   id: string;
   type: number;
@@ -62,7 +91,7 @@ export const getConnectedPages = cache(async (): Promise<Bot[]> => {
   try {
     const data = await apiFetch<{ success: boolean; pages: ConnectedPageRaw[] }>(
       "/facebook/pages/connected",
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
     );
 
     return data.pages.map((p) => ({
@@ -210,7 +239,7 @@ export const getConversationsForPages = cache(
     try {
       const data = await apiFetch<{ success: boolean; conversations: RawConversation[] }>(
         `/conversations?pageIds=${encodeURIComponent(pageIds.join(","))}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
       );
       return mapRawConversations(data.conversations);
     } catch {

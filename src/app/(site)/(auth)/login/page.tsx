@@ -23,7 +23,7 @@ export default function LoginPage() {
       // navigation. Dùng hard navigation (thay vì router mềm) để layout gốc
       // (Header) render lại từ đầu với session mới, tránh bị cache RSC cũ.
       const timer = setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = state.redirectTo ?? '/dashboard';
       }, 600);
       return () => clearTimeout(timer);
     }

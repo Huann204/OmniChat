@@ -1,7 +1,7 @@
 "use server";
 
 import { ApiError, apiFetch } from "@/lib/api";
-import { getSessionToken } from "@/lib/session";
+import { getCurrentShopId, getSessionToken } from "@/lib/session";
 
 export interface FacebookPageOption {
   pageId: string;
@@ -23,7 +23,11 @@ export interface ConnectedFacebookPage {
 async function authHeader() {
   const token = await getSessionToken();
   if (!token) throw new Error("Chưa đăng nhập");
-  return { Authorization: `Bearer ${token}` };
+  const shopId = await getCurrentShopId();
+  return {
+    Authorization: `Bearer ${token}`,
+    ...(shopId ? { "X-Shop-Id": shopId } : {}),
+  };
 }
 
 export async function listFacebookPages(

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionToken } from "@/lib/session";
+import { getCurrentShopId, getSessionToken } from "@/lib/session";
 
 const API_URL = process.env.API_URL || "http://localhost:3000/api";
 
@@ -13,11 +13,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
   }
 
+  const shopId = await getCurrentShopId();
   const incoming = await request.formData();
 
   const res = await fetch(`${API_URL}/media/upload`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(shopId ? { "X-Shop-Id": shopId } : {}),
+    },
     body: incoming,
   });
 
