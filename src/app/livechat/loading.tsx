@@ -22,7 +22,7 @@ export default async function LivechatLoading() {
             {["Hội thoại", "Đơn hàng", "Bài viết", "Thống kê", "Cài đặt"].map((tab, i) => (
               <div
                 key={tab}
-                className={`shrink-0 rounded-lg px-3.5 py-2 text-sm font-medium ${i === 0 ? "bg-slate-900 text-white" : "text-white/80"
+                className={`shrink-0 rounded-lg px-3.5 py-2 text-sm font-medium ${i === 0 ? "bg-white/20 text-white" : "text-white/80"
                   }`}
               >
                 {tab}

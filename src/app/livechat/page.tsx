@@ -1,24 +1,56 @@
-import { notFound } from 'next/navigation';
-import { getMergePagesCookie } from '@/app/actions/mergeView';
-import { InboxView } from '@/components/inbox/InboxView';
-import { getConnectedPages, getConversationsForPages, verifySession } from '@/lib/dal';
-import type { Bot } from '@/types/bot';
+import { getMergePagesCookie } from "@/app/actions/mergeView";
+import { InboxView } from "@/components/inbox/InboxView";
+import { getConnectedPages, getConversationsForPages, verifySession } from "@/lib/dal";
+import type { Bot } from "@/types/bot";
+
+// Dùng khi Shop chưa kết nối Page nào — không có Page thật nào để lấy
+// id/tên/avatar, nhưng vẫn cần 1 Bot hợp lệ để InboxView render đúng khung
+// (giống hệt trạng thái "0 hội thoại" bình thường, không phải màn riêng).
+const EMPTY_BOT: Bot = {
+  id: "",
+  pageId: "",
+  name: "Chưa kết nối Page",
+  channel: "facebook",
+  profileUrl: "",
+  isActive: false,
+  messageCount: 0,
+  orderCount: 0,
+};
 
 export default async function MultiPagesPage() {
-  const requestedIds = await getMergePagesCookie();
+  // Không phụ thuộc kết quả của nhau — chạy song song thay vì tuần tự để
+  // bớt vòng round-trip.
+  const [user, connectedPages, requestedIds] = await Promise.all([
+    verifySession(),
+    getConnectedPages(),
+    getMergePagesCookie(),
+  ]);
 
-  if (requestedIds.length === 0) {
-    notFound();
+  const requestedIdSet = new Set(requestedIds);
+  let selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
+
+  // Cookie trống, hoặc trỏ tới Page không còn thuộc Shop đang active (vd vừa
+  // đổi Shop) — mặc định lấy TOÀN BỘ Page hiện có (giống hành vi "Gộp trang"
+  // mặc định khi bấm tab từ Dashboard) thay vì chặn cứng bằng 404.
+  if (selectedPages.length === 0) {
+    selectedPages = connectedPages;
   }
 
-  // verifySession() và getConnectedPages() không phụ thuộc kết quả của nhau
-  // — chạy song song thay vì tuần tự để bớt 1 vòng round-trip API.
-  const [user, connectedPages] = await Promise.all([verifySession(), getConnectedPages()]);
-  const requestedIdSet = new Set(requestedIds);
-  const selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
-
+  // Chưa kết nối Page nào — vẫn hiện đủ khung livechat (rail, danh sách hội
+  // thoại, khung chat), chỉ danh sách hội thoại rỗng, không phải 404.
   if (selectedPages.length === 0) {
-    notFound();
+    return (
+      <div className="font-roboto">
+        <InboxView
+          bot={EMPTY_BOT}
+          userName={user.name}
+          userEmail={user.email}
+          initialConversations={[]}
+          socketPageIds={[]}
+          pagesById={{}}
+        />
+      </div>
+    );
   }
 
   const conversations = await getConversationsForPages(selectedPages.map((p) => p.id));

@@ -1,11 +1,15 @@
 "use client";
 
 import * as React from "react";
+import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { BotCard } from "./BotCard";
 import { ChannelTabs } from "./ChannelTabs";
 import { DashboardNavbar } from "./DashboardNavbar";
 import { DashboardToolbar } from "./DashboardToolbar";
 import { MergePagesModal } from "./MergePagesModal";
+import { NAV_TABS } from "@/lib/nav-tabs";
+import { loadingBar } from "@/store/loading-bar-store";
+import { toast } from "@/store/toast-store";
 import type { Bot, BotChannel } from "@/types/bot";
 
 interface BotDashboardProps {
@@ -20,6 +24,32 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
   const [search, setSearch] = React.useState("");
   const [channelFilter, setChannelFilter] = React.useState<BotChannel | "all">("all");
   const [mergeModalOpen, setMergeModalOpen] = React.useState(false);
+  // Không có tab nào active sẵn ở Dashboard — các tab (Hội thoại/Đơn hàng/...)
+  // là khu vực làm việc của livechat, chỉ nên sáng lên khi thật sự đang ở đó
+  // (đã bấm sang /livechat), không phải ngay khi vừa vào Dashboard.
+  const [activeTab, setActiveTab] = React.useState<string | undefined>(undefined);
+  const [, startTabTransition] = React.useTransition();
+
+  // Chỉ "Hội thoại" là tab đã có thật (đưa sang /livechat, mặc định gộp
+  // TOÀN BỘ Page hiện có — giống hệt "Gộp trang" nhưng không cần tự chọn,
+  // setMergePagesCookie tự redirect() sau khi ghi cookie). Đơn hàng/Bài
+  // viết/Thống kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không
+  // điều hướng đi đâu cả.
+  function handleTabChange(tab: string) {
+    if (tab !== NAV_TABS[0]) {
+      toast.info("Tính năng đang được phát triển");
+      return;
+    }
+    setActiveTab(tab);
+    startTabTransition(async () => {
+      loadingBar.start();
+      try {
+        await setMergePagesCookie(bots.map((b) => b.id));
+      } finally {
+        loadingBar.done();
+      }
+    });
+  }
 
   // initialBots được tính lại ở server (getConnectedPages) mỗi khi
   // router.refresh() chạy — đồng bộ vào state cục bộ để danh sách hiện Page
@@ -48,7 +78,14 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
 
   return (
     <div className="flex h-screen flex-col bg-[rgb(80,109,173)] font-roboto">
-      <DashboardNavbar userName={userName} userEmail={userEmail} className="!bg-none bg-transparent border-none shrink-0" />
+      <DashboardNavbar
+        userName={userName}
+        userEmail={userEmail}
+        tabs={NAV_TABS}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        className="!bg-none bg-transparent border-none shrink-0"
+      />
 
       <main className="w-full flex-1 min-h-0 bg-slate-100 pt-6 pb-6 shadow-2xl relative">
         <div className="mx-auto flex h-full w-[calc(100%-2rem)] max-w-[1144px] flex-col space-y-2 sm:w-[calc(100%-3rem)]">
