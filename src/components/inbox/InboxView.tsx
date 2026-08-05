@@ -7,6 +7,7 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { getOlderMessages, markConversationRead, sendMessage } from "@/app/actions/conversation";
 import { getSocketTicket } from "@/app/actions/socket";
 import { formatClock, formatTimeLabel, messageKindAndContent } from "@/lib/message-format";
+import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
@@ -17,8 +18,6 @@ import { MessageThread } from "./MessageThread";
 import { QuickTagBar } from "./QuickTagBar";
 import { MessageComposer } from "./MessageComposer";
 import { CustomerInfoPanel } from "./CustomerInfoPanel";
-
-const TABS = ["Hội thoại", "Đơn hàng", "Bài viết", "Thống kê", "Cài đặt"];
 
 interface NewMessageEvent {
   conversationId: string;
@@ -68,7 +67,18 @@ export function InboxView({
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
-  const [activeTab, setActiveTab] = React.useState("Hội thoại");
+  const [activeTab, setActiveTab] = React.useState<string>(NAV_TABS[0]);
+
+  // Chỉ "Hội thoại" (đang xem ở đây) là tab đã có thật — Đơn hàng/Bài
+  // viết/Thống kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không
+  // đổi tab (không có nội dung gì để chuyển sang).
+  function handleTabChange(tab: string) {
+    if (tab !== NAV_TABS[0]) {
+      toast.info("Tính năng đang được phát triển");
+      return;
+    }
+    setActiveTab(tab);
+  }
 
   const activeConversation = conversations.find((c) => c.id === activeId) ?? null;
   const pageIds = socketPageIds ?? [bot.id];
@@ -279,9 +289,9 @@ export function InboxView({
       <DashboardNavbar
         userName={userName}
         userEmail={userEmail}
-        tabs={TABS}
+        tabs={NAV_TABS}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         className="!bg-none bg-transparent border-none shadow-none"
       />
 

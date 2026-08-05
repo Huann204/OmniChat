@@ -114,7 +114,7 @@ export function ShopSwitcherMenu() {
                       disabled={switchingId === shop.id}
                       onClick={() => handleSwitch(shop)}
                       className={cn(
-                        "grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-x-4 px-4 py-2.5 text-left transition-colors disabled:cursor-wait",
+                        "grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-x-4 px-4 py-2.5 text-left transition-colors disabled:cursor-pointer disabled:opacity-60",
                         isCurrent ? "bg-primary/5" : "hover:bg-slate-50"
                       )}
                     >

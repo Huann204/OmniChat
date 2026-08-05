@@ -10,7 +10,7 @@ import { ShopSwitcherMenu } from "@/components/dashboard/ShopSwitcherMenu";
 interface DashboardNavbarProps {
   userName: string;
   userEmail: string;
-  tabs?: string[];
+  tabs?: readonly string[];
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   className?: string;
