@@ -68,7 +68,7 @@ export function ChannelIntegration() {
         </FadeIn>
         <FadeIn delay={0.2}>
           <p className="text-lg md:text-xl text-slate-600">
-            Không còn bỏ sót tin nhắn. OmniChat gom tất cả hội thoại về một nền tảng duy nhất, giúp đội ngũ hỗ trợ nhanh hơn 300%.
+            Không còn bỏ sót tin nhắn. Hchat gom tất cả hội thoại về một nền tảng duy nhất, giúp đội ngũ hỗ trợ nhanh hơn 300%.
           </p>
         </FadeIn>
       </div>

@@ -40,8 +40,8 @@ export function Header() {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 md:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" alt="OmniChat Logo" className="h-8 w-auto" />
-          <span className="text-xl font-bold text-slate-900 tracking-tight">OmniChat</span>
+          <img src="/logo.png" alt="Hchat Logo" className="h-8 w-auto" />
+          <span className="text-xl font-bold text-slate-900 tracking-tight">Hchat</span>
         </Link>
 
         {/* Desktop Nav */}

@@ -49,7 +49,7 @@ export function AiAssistant() {
             
             <FadeIn delay={0.2}>
               <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed max-w-xl">
-                Tích hợp sức mạnh của OpenAI để tự động hóa quy trình chăm sóc khách hàng. Chatbot OmniChat hiểu ý định khách hàng và tư vấn tự nhiên như người thật.
+                Tích hợp sức mạnh của OpenAI để tự động hóa quy trình chăm sóc khách hàng. Chatbot Hchat hiểu ý định khách hàng và tư vấn tự nhiên như người thật.
               </p>
             </FadeIn>
             

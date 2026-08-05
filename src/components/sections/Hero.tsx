@@ -13,7 +13,7 @@ export function Hero() {
         <FadeIn delay={0.1}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/80 border border-blue-100/50 text-primary text-sm font-semibold mb-2">
             <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
-            OmniChat AI 2.0 đã ra mắt
+            Hchat AI 2.0 đã ra mắt
             <ArrowRight className="h-4 w-4 ml-1" />
           </div>
         </FadeIn>
@@ -26,7 +26,7 @@ export function Hero() {
         
         <FadeIn delay={0.3}>
           <p className="text-lg md:text-xl text-slate-600 max-w-2xl leading-relaxed">
-            OmniChat kết nối Facebook, Zalo, Instagram, WhatsApp và Website. Tự động hóa bán hàng với AI Chatbot thông minh, tăng x3 tỷ lệ chốt đơn.
+            Hchat kết nối Facebook, Zalo, Instagram, WhatsApp và Website. Tự động hóa bán hàng với AI Chatbot thông minh, tăng x3 tỷ lệ chốt đơn.
           </p>
         </FadeIn>
         
