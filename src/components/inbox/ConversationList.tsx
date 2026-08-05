@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types/conversation";
 import { getLastMessagePreview } from "@/lib/message-format";
@@ -107,13 +107,21 @@ export function ConversationList({
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={cn(
-                      "truncate text-sm text-slate-900",
-                      !conversation.isRead && "font-bold"
+                  <span className="flex min-w-0 items-center gap-1">
+                    {conversation.isGroup && (
+                      <Users
+                        className="h-3.5 w-3.5 shrink-0 text-slate-400"
+                        aria-label="Hội thoại nhóm"
+                      />
                     )}
-                  >
-                    {conversation.customerName}
+                    <span
+                      className={cn(
+                        "truncate text-sm text-slate-900",
+                        !conversation.isRead && "font-bold"
+                      )}
+                    >
+                      {conversation.customerName}
+                    </span>
                   </span>
                   <span
                     className={cn(

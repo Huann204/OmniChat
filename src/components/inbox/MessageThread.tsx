@@ -185,7 +185,12 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
   }
 
   const isPage = message.sender === "page";
-  const senderName = isPage ? "Bạn" : customerName;
+  // Nhóm (nhiều người gửi khác nhau): dùng tên/avatar riêng của đúng người
+  // đã gửi tin này nếu có (message.senderName/senderAvatarUrl) — chỉ Zalo
+  // nhóm mới có, còn 1-1/Facebook thì các field này undefined nên tự rơi về
+  // customerName/customerAvatarUrl như cũ, không đổi hành vi.
+  const senderName = isPage ? "Bạn" : message.senderName ?? customerName;
+  const senderAvatarUrl = isPage ? undefined : message.senderAvatarUrl ?? customerAvatarUrl;
 
   if (message.kind === "call_request") {
     return (
@@ -216,8 +221,8 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
         {!isPage && (
           <Avatar
             show={showAvatar}
-            avatarUrl={customerAvatarUrl}
-            name={customerName}
+            avatarUrl={senderAvatarUrl}
+            name={senderName}
             onImageLoad={onImageLoad}
           />
         )}
@@ -291,8 +296,8 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
       {!isPage && (
         <Avatar
           show={showAvatar}
-          avatarUrl={customerAvatarUrl}
-          name={customerName}
+          avatarUrl={senderAvatarUrl}
+          name={senderName}
           onImageLoad={onImageLoad}
         />
       )}

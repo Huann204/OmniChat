@@ -26,6 +26,7 @@ interface NewMessageEvent {
     pageId: string;
     customerName?: string;
     customerAvatarUrl?: string;
+    isGroup?: boolean;
     lastMessage?: string;
     lastMessageAt: string;
     isRead: boolean;
@@ -35,6 +36,9 @@ interface NewMessageEvent {
     sender: "customer" | "page";
     text?: string;
     attachments?: { type: string; url: string }[];
+    // Chỉ có khi hội thoại là nhóm và tin do 1 thành viên khác gửi.
+    senderName?: string;
+    senderAvatarUrl?: string;
     createdAt: string;
     // id tạm phía mình tự sinh lúc gửi — server echo lại nguyên văn (xem
     // NewMessageEvent trong realtime/socket.ts) để đối chiếu, biết đây là
@@ -119,6 +123,8 @@ export function InboxView({
           kind,
           text,
           attachmentUrls,
+          senderName: payload.message.senderName,
+          senderAvatarUrl: payload.message.senderAvatarUrl,
           time: formatClock(payload.message.createdAt),
           createdAt: payload.message.createdAt,
         };
@@ -132,6 +138,7 @@ export function InboxView({
               pageId: payload.conversation.pageId,
               customerName: payload.conversation.customerName || "Khách hàng",
               customerAvatarUrl: payload.conversation.customerAvatarUrl,
+              isGroup: payload.conversation.isGroup,
               lastSeenLabel: "",
               timeLabel: formatTimeLabel(payload.conversation.lastMessageAt),
               isRead: false,
