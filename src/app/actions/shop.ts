@@ -56,7 +56,9 @@ export async function switchShop(shopId: string) {
   if (!token) return;
 
   try {
-    await apiFetch<ShopResponse>(`/shops/${shopId}/switch`, {
+    // Backend chỉ trả { success } — shopId frontend đã có sẵn từ tham số,
+    // không cần API trả lại thông tin Shop (xem shop.controller.ts#switchShop).
+    await apiFetch<{ success: boolean }>(`/shops/${shopId}/switch`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
