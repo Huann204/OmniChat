@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Loader2, Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User } from "lucide-react";
+import { Check, Loader2, Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ConversationMessage } from "@/types/conversation";
 
@@ -25,6 +25,18 @@ export function MessageThread({
 }: MessageThreadProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+  // Ảnh đang xem to (lightbox) — bấm vào bất kỳ ảnh/sticker nào trong khung
+  // chat sẽ mở overlay này, null = đang đóng.
+  const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!lightboxUrl) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightboxUrl(null);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxUrl]);
   // true khi đang neo ở đáy khung chat — chỉ tự cuộn xuống lúc ảnh load
   // xong trong trường hợp này, tránh giật màn hình khi đang xem tin nhắn cũ.
   const isNearBottomRef = React.useRef(true);
@@ -97,9 +109,33 @@ export function MessageThread({
             customerAvatarUrl={customerAvatarUrl}
             showAvatar={isLastInGroup}
             onImageLoad={handleImageLoad}
+            onImageClick={setLightboxUrl}
           />
         );
       })}
+
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            type="button"
+            aria-label="Đóng"
+            onClick={() => setLightboxUrl(null)}
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxUrl}
+            alt="Xem ảnh cỡ lớn"
+            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -173,9 +209,19 @@ interface MessageRowProps {
   customerAvatarUrl?: string;
   showAvatar: boolean;
   onImageLoad?: () => void;
+  // Bấm vào ảnh/sticker trong tin nhắn — mở xem cỡ lớn (lightbox), xem
+  // MessageThread.
+  onImageClick?: (url: string) => void;
 }
 
-function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onImageLoad }: MessageRowProps) {
+function MessageRow({
+  message,
+  customerName,
+  customerAvatarUrl,
+  showAvatar,
+  onImageLoad,
+  onImageClick,
+}: MessageRowProps) {
   if (message.sender === "system") {
     return (
       <div className="flex justify-center py-2">
@@ -237,8 +283,9 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
                   key={i}
                   src={url}
                   alt={`Hình ảnh ${i + 1}`}
-                  className="h-[128px] w-[128px] rounded-xl object-cover shadow-sm"
+                  className="h-[128px] w-[128px] cursor-pointer rounded-xl object-cover shadow-sm"
                   onLoad={onImageLoad}
+                  onClick={() => onImageClick?.(url)}
                 />
               ))}
             </div>
@@ -248,12 +295,13 @@ function MessageRow({ message, customerName, customerAvatarUrl, showAvatar, onIm
               src={urls[0]}
               alt={message.kind === "sticker" ? "Nhãn dán" : "Hình ảnh"}
               className={cn(
-                "shadow-sm",
+                "cursor-pointer shadow-sm",
                 message.kind === "sticker"
                   ? "h-24 w-24 object-contain"
                   : "max-h-[260px] max-w-[260px] rounded-2xl object-cover"
               )}
               onLoad={onImageLoad}
+              onClick={() => onImageClick?.(urls[0])}
             />
           )}
 
