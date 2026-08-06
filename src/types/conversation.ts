@@ -47,6 +47,10 @@ export interface Conversation {
   // pageId thật (Facebook) của Page mà hội thoại này thuộc về — dùng để phân
   // biệt nguồn khi đang xem gộp nhiều Page cùng lúc (/livechat).
   pageId: string;
+  // Kênh của hội thoại — khớp CHANNEL_TYPE_* trong
+  // server/src/models/connectedPage.model.ts (0 = Facebook, 1 = Zalo cá
+  // nhân), lấy thẳng từ Conversation.type ở backend.
+  type: number;
   customerName: string;
   customerAvatarUrl?: string;
   // true nếu đây là hội thoại nhóm (hiện chỉ Zalo có) — customerName/

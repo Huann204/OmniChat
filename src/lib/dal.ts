@@ -135,6 +135,7 @@ interface RawMessage {
 interface RawConversation {
   id: string;
   pageId: string;
+  type: number;
   customerName?: string;
   customerAvatarUrl?: string;
   isGroup?: boolean;
@@ -225,6 +226,7 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
   return raw.map((c) => ({
     id: c.id,
     pageId: c.pageId,
+    type: c.type,
     customerName: c.customerName || "Khách hàng",
     customerAvatarUrl: c.customerAvatarUrl,
     isGroup: c.isGroup,
