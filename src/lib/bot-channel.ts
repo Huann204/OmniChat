@@ -1,26 +1,26 @@
+import React from "react";
 import type { ComponentType, SVGProps } from "react";
 import { BotChannel } from "@/types/bot";
-import { FaFacebookMessenger, FaWhatsapp } from "react-icons/fa";
-import { MessageCircle } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 
 export const CHANNEL_META: Record<
   BotChannel,
   {
     label: string;
-    icon: ComponentType<SVGProps<SVGSVGElement>>;
+    icon: ComponentType<any>;
     badgeBg: string;
     badgeText: string;
   }
 > = {
   facebook: {
     label: "Facebook",
-    icon: FaFacebookMessenger,
+    icon: ({ className }: { className?: string }) => React.createElement('img', { src: '/facebook.png', alt: 'Facebook', className }),
     badgeBg: "bg-[#0866FF]",
     badgeText: "text-white",
   },
   zalo: {
     label: "Zalo",
-    icon: MessageCircle,
+    icon: ({ className }: { className?: string }) => React.createElement('img', { src: '/zalo.png', alt: 'Zalo', className }),
     badgeBg: "bg-[#0068FF]",
     badgeText: "text-white",
   },

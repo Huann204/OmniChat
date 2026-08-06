@@ -70,7 +70,7 @@ export default async function MultiPagesPage() {
         ? `${selectedPages.length} trang đã gộp`
         : selectedPages[0].pageId,
     name: selectedPages.length > 1 ? `${selectedPages.length} trang đã gộp` : selectedPages[0].name,
-    channel: "facebook",
+    channel: selectedPages[0]?.channel || "facebook",
     profileUrl: selectedPages[0].profileUrl,
     isActive: selectedPages.some((p) => p.isActive),
     messageCount: 0,

@@ -70,7 +70,7 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
         )}
       >
         <img
-          src={bot.avatarUrl || "https://content.pancake.vn/2.1-2606/avatars/22b81c977849d009c6c17d772526a37f02902174"}
+          src={bot.avatarUrl || "/logo.png"}
           alt={bot.name}
           className="h-full w-full object-cover rounded-[6px]"
         />
