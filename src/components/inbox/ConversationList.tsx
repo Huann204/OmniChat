@@ -179,7 +179,7 @@ export function ConversationList({
                     {/* Logo nền tảng (Facebook/Zalo) — đẩy sát góc phải cùng
                         hàng với avatar + tên Page, theo Conversation.type. */}
                     {channelMeta && (
-                      <channelMeta.icon className="ml-auto h-3.5 w-3.5 shrink-0 object-cover" />
+                      <channelMeta.icon className="ml-auto h-3.5 w-3.5 shrink-0 rounded-full object-cover" />
                     )}
                   </div>
                 )}
