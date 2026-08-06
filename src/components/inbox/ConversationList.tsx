@@ -3,8 +3,17 @@
 import * as React from "react";
 import { Search, SlidersHorizontal, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CHANNEL_META } from "@/lib/bot-channel";
 import type { Conversation } from "@/types/conversation";
 import { getLastMessagePreview } from "@/lib/message-format";
+
+// Khớp CHANNEL_TYPE_* trong server/src/models/connectedPage.model.ts — không
+// có package dùng chung giữa 2 repo nên phải giữ đồng bộ thủ công (xem
+// channelFromType trong lib/dal.ts, cùng quy ước).
+const CHANNEL_META_BY_TYPE = {
+  0: CHANNEL_META.facebook,
+  1: CHANNEL_META.zalo,
+} as const;
 
 const AVATAR_COLORS = [
   "bg-blue-500",
@@ -76,6 +85,8 @@ export function ConversationList({
           const isActive = conversation.id === activeId;
           const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
           const page = pagesById?.[conversation.pageId];
+          const channelMeta =
+            CHANNEL_META_BY_TYPE[conversation.type as keyof typeof CHANNEL_META_BY_TYPE];
 
           return (
             <button
@@ -87,23 +98,30 @@ export function ConversationList({
                 isActive && "bg-blue-50 hover:bg-blue-50"
               )}
             >
-              {conversation.customerAvatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={conversation.customerAvatarUrl}
-                  alt={conversation.customerName}
-                  className="h-11 w-11 shrink-0 rounded-full object-cover"
-                />
-              ) : (
-                <span
-                  className={cn(
-                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
-                    avatarColor
-                  )}
-                >
-                  {conversation.customerName.charAt(0).toUpperCase()}
-                </span>
-              )}
+              <div className="relative shrink-0">
+                {conversation.customerAvatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={conversation.customerAvatarUrl}
+                    alt={conversation.customerName}
+                    className="h-11 w-11 rounded-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className={cn(
+                      "flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white",
+                      avatarColor
+                    )}
+                  >
+                    {conversation.customerName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+
+                {/* Chấm đỏ báo chưa đọc — góc dưới bên phải avatar. */}
+                {!conversation.isRead && (
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 ring-2 ring-white" />
+                )}
+              </div>
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
@@ -143,26 +161,30 @@ export function ConversationList({
 
                 {page && (
                   <div className="mt-1 flex items-center gap-1.5">
-                    {page.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={page.avatarUrl}
-                        alt={page.name}
-                        className="h-4 w-4 shrink-0 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[9px] font-bold text-white">
-                        {page.name.charAt(0).toUpperCase()}
-                      </span>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      {page.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={page.avatarUrl}
+                          alt={page.name}
+                          className="h-4 w-4 shrink-0 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[9px] font-bold text-white">
+                          {page.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                      <span className="truncate text-[11px] text-slate-400">{page.name}</span>
+                    </div>
+                    {/* Logo nền tảng (Facebook/Zalo) — đẩy sát góc phải cùng
+                        hàng với avatar + tên Page, theo Conversation.type. */}
+                    {channelMeta && (
+                      <channelMeta.icon className="ml-auto h-3.5 w-3.5 shrink-0 rounded-full object-cover" />
                     )}
-                    <span className="truncate text-[11px] text-slate-400">{page.name}</span>
                   </div>
                 )}
               </div>
 
-              {!conversation.isRead && (
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
-              )}
             </button>
           );
         })}

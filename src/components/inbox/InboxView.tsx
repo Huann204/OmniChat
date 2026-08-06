@@ -24,6 +24,7 @@ interface NewMessageEvent {
   conversation: {
     id: string;
     pageId: string;
+    type: number;
     customerName?: string;
     customerAvatarUrl?: string;
     isGroup?: boolean;
@@ -136,6 +137,7 @@ export function InboxView({
             const newConversation: Conversation = {
               id: payload.conversation.id,
               pageId: payload.conversation.pageId,
+              type: payload.conversation.type,
               customerName: payload.conversation.customerName || "Khách hàng",
               customerAvatarUrl: payload.conversation.customerAvatarUrl,
               isGroup: payload.conversation.isGroup,
