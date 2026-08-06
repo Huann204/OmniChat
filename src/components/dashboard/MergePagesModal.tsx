@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { CheckSquare, GitMerge, Loader2, Plus, Search, SlidersHorizontal, Square } from "lucide-react";
-import { FaFacebook } from "react-icons/fa";
 import { Modal } from "@/components/ui/Modal";
 import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
+import { CHANNEL_META } from "@/lib/bot-channel";
 import { loadingBar } from "@/store/loading-bar-store";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
@@ -173,6 +173,9 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
               {filteredPages.map((page, index) => {
                 const active = selectedIds.has(page.id);
                 const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
+                const channelMeta = CHANNEL_META[page.channel];
+                const ChannelIcon = channelMeta?.icon;
+                
                 return (
                   <button
                     key={page.id}
@@ -208,7 +211,9 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
                         {page.name}
                       </span>
                       <span className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
-                        <FaFacebook className="h-3.5 w-3.5 shrink-0 text-[#0866FF]" />
+                        {ChannelIcon && (
+                          <ChannelIcon className={cn("h-3.5 w-3.5 shrink-0", channelMeta.badgeBg.replace("bg-", "text-"))} />
+                        )}
                         <span className="truncate">{page.pageId}</span>
                       </span>
                     </span>

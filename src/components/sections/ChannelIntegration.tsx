@@ -1,27 +1,27 @@
 import { Section } from "@/components/ui/Section";
 import { Card } from "@/components/ui/Card";
 import { FadeIn } from "@/components/ui/FadeIn";
-import { FaFacebookMessenger, FaInstagram, FaWhatsapp, FaTelegramPlane, FaGoogle } from "react-icons/fa";
-import { MessageCircle, Globe } from "lucide-react";
+import { FaInstagram, FaWhatsapp, FaTelegramPlane, FaGoogle } from "react-icons/fa";
+import { Globe } from "lucide-react";
 
 export function ChannelIntegration() {
   const channels = [
     {
       name: "Facebook Messenger",
       description: "Chăm sóc khách hàng từ Fanpage",
-      icon: <FaFacebookMessenger className="h-8 w-8 text-[#1877F2]" />,
+      icon: <img src="/facebook.png" alt="Facebook" className="h-8 w-8 object-contain" />,
       color: "hover:border-[#1877F2]/30",
     },
     {
       name: "Zalo OA",
       description: "Tương tác với khách hàng trên Zalo",
-      icon: <MessageCircle className="h-8 w-8 text-[#0068FF]" />,
+      icon: <img src="/zalo.png" alt="Zalo" className="h-8 w-8 object-contain" />,
       color: "hover:border-[#0068FF]/30",
     },
     {
       name: "Zalo Personal",
       description: "Quản lý tin nhắn Zalo cá nhân",
-      icon: <MessageCircle className="h-8 w-8 text-[#0068FF]" />,
+      icon: <img src="/zalo.png" alt="Zalo" className="h-8 w-8 object-contain" />,
       color: "hover:border-[#0068FF]/30",
     },
     {
