@@ -75,7 +75,7 @@ export function ConversationList({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {filtered.length === 0 && (
           <p className="mt-10 text-center text-sm text-slate-400">Chưa có hội thoại nào</p>
         )}
