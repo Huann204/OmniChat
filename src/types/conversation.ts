@@ -1,3 +1,5 @@
+import type { ConversationTag } from "./conversationTag";
+
 export type MessageSender = "customer" | "page" | "system";
 
 export type MessageKind =
@@ -34,14 +36,6 @@ export interface ConversationMessage {
   senderAvatarUrl?: string;
 }
 
-export type ConversationTagId =
-  | "checking"
-  | "question"
-  | "purchase"
-  | "shipped"
-  | "out_of_stock"
-  | "returned";
-
 export interface Conversation {
   id: string;
   // pageId thật (Facebook) của Page mà hội thoại này thuộc về — dùng để phân
@@ -56,6 +50,9 @@ export interface Conversation {
   // true nếu đây là hội thoại nhóm (hiện chỉ Zalo có) — customerName/
   // customerAvatarUrl lúc đó là tên/avatar của NHÓM, không phải 1 khách.
   isGroup?: boolean;
+  // Thẻ đang gắn cho hội thoại này (nhãn tự tạo theo Shop, xem
+  // /settings/tags) — 1 hội thoại có thể mang nhiều thẻ cùng lúc.
+  tags: ConversationTag[];
   lastSeenLabel: string;
   timeLabel: string;
   isRead: boolean;
