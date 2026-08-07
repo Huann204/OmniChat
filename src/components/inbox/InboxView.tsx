@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
@@ -74,6 +75,7 @@ export function InboxView({
   socketPageIds,
   pagesById,
 }: InboxViewProps) {
+  const router = useRouter();
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
@@ -83,6 +85,10 @@ export function InboxView({
   // viết/Thống kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không
   // đổi tab (không có nội dung gì để chuyển sang).
   function handleTabChange(tab: string) {
+    if (tab === "Cài đặt") {
+      router.push("/settings");
+      return;
+    }
     if (tab !== NAV_TABS[0]) {
       toast.info("Tính năng đang được phát triển");
       return;
