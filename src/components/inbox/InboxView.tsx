@@ -102,6 +102,13 @@ export function InboxView({
     activeIdRef.current = activeId;
   }, [activeId]);
 
+  // Âm thanh báo tin nhắn mới — tạo 1 lần, phát lại (không tạo mới mỗi lần)
+  // để không phải tải lại file mỗi khi có tin đến.
+  const notificationSoundRef = React.useRef<HTMLAudioElement | null>(null);
+  React.useEffect(() => {
+    notificationSoundRef.current = new Audio("/nhacchuong.mp3");
+  }, []);
+
   React.useEffect(() => {
     let socket: Socket | null = null;
     let cancelled = false;
@@ -119,6 +126,15 @@ export function InboxView({
       });
 
       socket.on("new_message", (payload: NewMessageEvent) => {
+        // Phát âm thanh cho MỌI tin nhắn khách gửi tới (kể cả hội thoại đang
+        // mở sẵn) — khác toast (chỉ báo khi KHÔNG mở sẵn, xem bên dưới), vì
+        // âm thanh không gây rối màn hình như toast. .catch() bỏ qua lỗi
+        // NotAllowedError nếu trình duyệt chặn autoplay do chưa có tương tác
+        // nào của người dùng trong trang.
+        if (payload.message.sender === "customer") {
+          notificationSoundRef.current?.play().catch(() => {});
+        }
+
         const { kind, text, attachmentUrls } = messageKindAndContent(
           payload.message.text,
           payload.message.attachments
