@@ -23,10 +23,10 @@ export function QuickTagBar({ tags, activeTagIds, onToggleTag }: QuickTagBarProp
             type="button"
             onClick={() => onToggleTag?.(tag.id)}
             style={{ backgroundColor: tag.color }}
-            className="flex min-w-[84px] flex-1 basis-24 items-center justify-center gap-1.5 py-1.5 text-center text-xs font-semibold text-white transition-opacity cursor-pointer hover:opacity-90"
+            className="relative flex min-w-[84px] flex-1 basis-24 items-center justify-center px-4 py-1.5 text-center text-xs font-semibold text-white transition-opacity cursor-pointer hover:opacity-90"
           >
-            {isActive && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white" />}
-            {tag.label}
+            {isActive && <span className="absolute left-2.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-white" />}
+            <span className="truncate">{tag.label}</span>
           </button>
         );
       })}
