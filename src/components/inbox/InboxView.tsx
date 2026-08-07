@@ -347,23 +347,40 @@ export function InboxView({
     );
   }
 
-  // Bật/tắt 1 thẻ cho hội thoại đang mở — tự tính lại mảng tagId mới (thêm
-  // nếu chưa có, bỏ nếu đã có) rồi gửi NGUYÊN mảng lên (xem
-  // setConversationTags — API gán lại toàn bộ, không phải add/remove riêng).
+  // Bật/tắt 1 thẻ cho hội thoại đang mở — cập nhật UI (QuickTagBar +
+  // badge dưới ConversationList) NGAY, không đợi API xong mới hiện (optimistic),
+  // rồi mới gọi setConversationTags chạy nền. Lỗi thì tự lùi lại trạng thái cũ.
   async function handleToggleTag(tagId: string) {
     if (!activeConversation) return;
     const conversationId = activeConversation.id;
-    const currentIds = activeConversation.tags.map((t) => t.id);
-    const nextIds = currentIds.includes(tagId)
-      ? currentIds.filter((id) => id !== tagId)
-      : [...currentIds, tagId];
+    const tagInCatalog = conversationTags?.find((t) => t.id === tagId);
+    if (!tagInCatalog) return;
 
-    const result = await setConversationTags(conversationId, nextIds);
+    const previousTags = activeConversation.tags;
+    const hasTag = previousTags.some((t) => t.id === tagId);
+    const optimisticTags = hasTag
+      ? previousTags.filter((t) => t.id !== tagId)
+      : [...previousTags, tagInCatalog];
+
+    setConversations((prev) =>
+      prev.map((c) => (c.id === conversationId ? { ...c, tags: optimisticTags } : c))
+    );
+
+    const result = await setConversationTags(
+      conversationId,
+      optimisticTags.map((t) => t.id)
+    );
+
     if ("error" in result) {
       toast.error(result.error);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conversationId ? { ...c, tags: previousTags } : c))
+      );
       return;
     }
 
+    // Đồng bộ lại với dữ liệu thật từ server (phòng trường hợp tagId gửi lên
+    // bị backend lọc bỏ, vd id lạ/không thuộc Shop).
     setConversations((prev) =>
       prev.map((c) => (c.id === conversationId ? { ...c, tags: result.tags } : c))
     );
