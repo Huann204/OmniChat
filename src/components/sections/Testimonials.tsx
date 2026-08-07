@@ -5,25 +5,25 @@ import { Star } from "lucide-react";
 export function Testimonials() {
   const testimonials = [
     {
-      name: "Nguyễn Văn A",
+      name: "Nguyễn Quốc Tuấn",
       role: "CEO",
       company: "Thời trang X",
-      content: "Nhờ OmniChat, chúng tôi tiết kiệm được 40% thời gian trực page và tăng 25% tỷ lệ chốt đơn nhờ tính năng gửi tin nhắn hàng loạt.",
-      avatar: "A"
+      content: "Nhờ Hchat, chúng tôi tiết kiệm được 40% thời gian trực page và tăng 25% tỷ lệ chốt đơn nhờ tính năng gửi tin nhắn hàng loạt.",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200"
     },
     {
-      name: "Trần Thị B",
+      name: "Trần Minh Anh",
       role: "Marketing Manager",
       company: "Spa Y",
-      content: "AI Chatbot của OmniChat thực sự thông minh. Khách hàng đặt lịch tự động mà không cần nhân viên can thiệp vào nửa đêm.",
-      avatar: "B"
+      content: "AI Chatbot của Hchat thực sự thông minh. Khách hàng đặt lịch tự động mà không cần nhân viên can thiệp vào nửa đêm.",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200"
     },
     {
-      name: "Lê Văn C",
+      name: "Lê Hoàng Nam",
       role: "Founder",
       company: "Giáo dục Z",
       content: "Quản lý nhiều kênh Zalo và Facebook trên cùng một màn hình giúp tôi không bị lỡ bất kỳ tin nhắn nào của phụ huynh.",
-      avatar: "C"
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
     }
   ];
 
@@ -31,10 +31,10 @@ export function Testimonials() {
     <Section className="bg-slate-50">
       <div className="text-center max-w-3xl mx-auto mb-16">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-4">
-          Doanh nghiệp nói gì về OmniChat
+          Doanh nghiệp nói gì về Hchat
         </h2>
         <p className="text-lg text-slate-600">
-          Hàng ngàn doanh nghiệp đã chuyển đổi số thành công cùng OmniChat.
+          Hàng ngàn doanh nghiệp đã chuyển đổi số thành công cùng Hchat.
         </p>
       </div>
 
@@ -50,9 +50,11 @@ export function Testimonials() {
               "{item.content}"
             </p>
             <div className="flex items-center gap-4 mt-auto">
-              <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
-                {item.avatar}
-              </div>
+              <img
+                src={item.avatar}
+                alt={item.name}
+                className="h-12 w-12 rounded-full object-cover border border-slate-200 shadow-sm"
+              />
               <div>
                 <h4 className="font-semibold text-slate-900">{item.name}</h4>
                 <p className="text-sm text-slate-500">{item.role}, {item.company}</p>
