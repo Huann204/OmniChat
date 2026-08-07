@@ -159,40 +159,65 @@ export function ConversationList({
                   {preview}
                 </p>
 
-                {conversation.tags.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {conversation.tags.map((tag) => (
-                      <span
-                        key={tag.id}
-                        style={{ backgroundColor: tag.color }}
-                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white"
-                      >
-                        {tag.label}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {page && (
+                {(page || conversation.tags.length > 0) && (
                   <div className="mt-1 flex items-center gap-1.5">
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      {page.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={page.avatarUrl}
-                          alt={page.name}
-                          className="h-4 w-4 shrink-0 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[9px] font-bold text-white">
-                          {page.name.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                      <span className="truncate text-[11px] text-slate-400">{page.name}</span>
-                    </div>
-                    {/* Logo nền tảng (Facebook/Zalo) — đẩy sát góc phải cùng
-                        hàng với avatar + tên Page, theo Conversation.type. */}
-                    {channelMeta && (
+                    {page && (
+                      <div className="flex min-w-0 shrink-0 items-center gap-1.5">
+                        {page.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={page.avatarUrl}
+                            alt={page.name}
+                            className="h-4 w-4 shrink-0 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[9px] font-bold text-white">
+                            {page.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                        <span className="truncate text-[11px] text-slate-400 max-w-[80px]">{page.name}</span>
+                      </div>
+                    )}
+
+                    {page && conversation.tags.length > 0 && (
+                      <div className="h-3 w-px shrink-0 bg-slate-200" />
+                    )}
+
+                    {conversation.tags.length > 0 && (
+                      <div className="flex min-w-0 flex-1 items-center gap-1">
+                        {conversation.tags.slice(0, 1).map((tag) => (
+                          <span
+                            key={tag.id}
+                            style={{ backgroundColor: tag.color }}
+                            className="truncate rounded-full px-2 py-0.5 text-[10px] font-semibold text-white max-w-[80px]"
+                          >
+                            {tag.label}
+                          </span>
+                        ))}
+                        {conversation.tags.length > 1 && (
+                          <div className="group/more relative flex shrink-0 items-center">
+                            <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                              +{conversation.tags.length - 1}
+                            </span>
+                            <div className="pointer-events-none absolute bottom-full left-1/2 z-[999] mb-2 hidden w-max max-w-[200px] -translate-x-1/2 flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl group-hover/more:flex">
+                              {/* Mũi tên chỉ xuống */}
+                              <div className="absolute -bottom-1 left-1/2 -ml-1 h-2 w-2 rotate-45 border-b border-r border-slate-200 bg-white"></div>
+                              {conversation.tags.map((tag) => (
+                                <span
+                                  key={tag.id}
+                                  style={{ backgroundColor: tag.color }}
+                                  className="relative z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white"
+                                >
+                                  {tag.label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {page && channelMeta && (
                       <channelMeta.icon className="ml-auto h-3.5 w-3.5 shrink-0 rounded-full object-cover" />
                     )}
                   </div>
