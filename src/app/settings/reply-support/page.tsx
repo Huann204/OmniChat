@@ -1,15 +1,30 @@
 "use client";
 
 import * as React from "react";
-import { Copy, Download, ListChecks, Plus, Search, Trash2, Upload } from "lucide-react";
+import Image from "next/image";
+import {
+  Copy,
+  Download,
+  Image as ImageIcon,
+  ListChecks,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { MediaPickerModal } from "@/components/media/MediaPickerModal";
 import { toast } from "@/store/toast-store";
+import type { MediaItem } from "@/types/media";
 
 interface QuickReply {
   id: string;
   shortcut: string;
   message: string;
+  images: MediaItem[];
 }
 
 const INITIAL_QUICK_REPLIES: QuickReply[] = [
@@ -17,6 +32,7 @@ const INITIAL_QUICK_REPLIES: QuickReply[] = [
     id: "1",
     shortcut: "cskh",
     message: "Cảm ơn bạn đã liên hệ, shop sẽ phản hồi trong ít phút nữa ạ!",
+    images: [],
   },
 ];
 
@@ -33,6 +49,11 @@ export default function ReplySupportSettingsPage() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [shortcutInput, setShortcutInput] = React.useState("");
   const [messageInput, setMessageInput] = React.useState("");
+  const [attachedImages, setAttachedImages] = React.useState<MediaItem[]>([]);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  // null = đang ở modal "Thêm mẫu" (tạo mới) — có id = đang sửa đúng mẫu đó
+  // (mở lại cùng modal, chỉ khác chỗ submit ghi đè thay vì thêm mới).
+  const [editingId, setEditingId] = React.useState<string | null>(null);
 
   const filtered = quickReplies.filter((q) => {
     const query = search.trim().toLowerCase();
@@ -41,8 +62,18 @@ export default function ReplySupportSettingsPage() {
   });
 
   function openAddModal() {
+    setEditingId(null);
     setShortcutInput("");
     setMessageInput("");
+    setAttachedImages([]);
+    setModalOpen(true);
+  }
+
+  function openEditModal(item: QuickReply) {
+    setEditingId(item.id);
+    setShortcutInput(item.shortcut);
+    setMessageInput(item.message);
+    setAttachedImages(item.images);
     setModalOpen(true);
   }
 
@@ -50,9 +81,31 @@ export default function ReplySupportSettingsPage() {
     e.preventDefault();
     const shortcut = shortcutInput.trim();
     const message = messageInput.trim();
-    if (!shortcut || !message) return;
-    setQuickReplies((prev) => [...prev, { id: crypto.randomUUID(), shortcut, message }]);
+    // Cho phép lưu chỉ có ảnh, không cần chữ (giống cách gửi tin nhắn ảnh
+    // trong khung chat) — chỉ bắt buộc phải có ký tự tắt để gõ gọi lại được.
+    if (!shortcut || (!message && attachedImages.length === 0)) return;
+
+    if (editingId) {
+      setQuickReplies((prev) =>
+        prev.map((q) =>
+          q.id === editingId ? { ...q, shortcut, message, images: attachedImages } : q
+        )
+      );
+    } else {
+      setQuickReplies((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), shortcut, message, images: attachedImages },
+      ]);
+    }
     setModalOpen(false);
+  }
+
+  function handlePickImages(items: MediaItem[]) {
+    setAttachedImages((prev) => [...prev, ...items]);
+  }
+
+  function removeAttachedImage(id: string) {
+    setAttachedImages((prev) => prev.filter((item) => item.id !== id));
   }
 
   function handleDelete(id: string) {
@@ -137,16 +190,67 @@ export default function ReplySupportSettingsPage() {
                       {item.shortcut}
                     </span>
                   </td>
-                  <td className="max-w-md truncate px-5 py-3 text-slate-700">{item.message}</td>
+                  <td className="max-w-md px-5 py-3 text-slate-700">
+                    <div className="flex items-center gap-2">
+                      {item.images.length > 0 && (
+                        <span className="group/thumb relative shrink-0">
+                          <span className="relative flex h-6 w-6 overflow-hidden rounded-md border border-slate-200">
+                            <Image
+                              src={item.images[0].url}
+                              alt=""
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                            {item.images.length > 1 && (
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-[9px] font-bold text-white">
+                                +{item.images.length - 1}
+                              </span>
+                            )}
+                          </span>
+
+                          {/* Xem trước cỡ lớn khi hover — hiện hết ảnh đính
+                              kèm, không chỉ ảnh đầu tiên. */}
+                          <span className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 hidden gap-1.5 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg group-hover/thumb:flex">
+                            {item.images.map((img) => (
+                              <span
+                                key={img.id}
+                                className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md"
+                              >
+                                <Image
+                                  src={img.url}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
+                                />
+                              </span>
+                            ))}
+                          </span>
+                        </span>
+                      )}
+                      <span className="truncate">{item.message}</span>
+                    </div>
+                  </td>
                   <td className="px-5 py-3 text-right">
-                    <button
-                      type="button"
-                      aria-label="Xoá mẫu"
-                      onClick={() => handleDelete(item.id)}
-                      className="cursor-pointer rounded-full p-1.5 text-slate-300 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <span className="inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        type="button"
+                        aria-label="Sửa mẫu"
+                        onClick={() => openEditModal(item)}
+                        className="cursor-pointer rounded-full p-1.5 text-slate-300 transition-colors hover:bg-primary/10 hover:text-primary"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Xoá mẫu"
+                        onClick={() => handleDelete(item.id)}
+                        className="cursor-pointer rounded-full p-1.5 text-slate-300 transition-colors hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -163,7 +267,11 @@ export default function ReplySupportSettingsPage() {
         </div>
       </div>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Thêm mẫu trả lời nhanh">
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingId ? "Sửa mẫu trả lời nhanh" : "Thêm mẫu trả lời nhanh"}
+      >
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700">Ký tự tắt</label>
@@ -184,6 +292,45 @@ export default function ReplySupportSettingsPage() {
               className="flex w-full rounded-xl border border-slate-200/60 bg-white/50 px-4 py-2 text-sm text-slate-900 shadow-sm transition-all duration-300 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary"
             />
           </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Ảnh đính kèm</label>
+            {attachedImages.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {attachedImages.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white"
+                  >
+                    <Image
+                      src={item.url}
+                      alt={item.originalFilename}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeAttachedImage(item.id)}
+                      aria-label={`Bỏ ${item.originalFilename}`}
+                      className="absolute right-0.5 top-0.5 flex h-4.5 w-4.5 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-primary hover:text-primary cursor-pointer"
+            >
+              <ImageIcon className="h-4 w-4" />
+              Chọn ảnh từ thư viện
+            </button>
+          </div>
+
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
@@ -194,14 +341,20 @@ export default function ReplySupportSettingsPage() {
             </button>
             <button
               type="submit"
-              disabled={!shortcutInput.trim() || !messageInput.trim()}
+              disabled={!shortcutInput.trim() || (!messageInput.trim() && attachedImages.length === 0)}
               className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             >
-              Lưu
+              {editingId ? "Cập nhật" : "Lưu"}
             </button>
           </div>
         </form>
       </Modal>
+
+      <MediaPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={handlePickImages}
+      />
     </div>
   );
 }
