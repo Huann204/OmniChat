@@ -17,6 +17,7 @@ import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
+import type { QuickReply } from "@/types/quickReply";
 import { InboxIconRail } from "./InboxIconRail";
 import { ConversationList } from "./ConversationList";
 import { ChatHeader } from "./ChatHeader";
@@ -65,6 +66,10 @@ interface InboxViewProps {
   // Tra cứu tên + avatar Page theo pageId — chỉ cần truyền khi xem gộp nhiều
   // Page, để hiện rõ mỗi hội thoại thuộc Page nào.
   pagesById?: Record<string, { name: string; avatarUrl?: string }>;
+  // Mẫu trả lời nhanh của Shop — gõ ký tự tắt trong khung soạn tin để chèn
+  // nhanh (xem MessageComposer). Snapshot lúc tải trang, không tự đồng bộ
+  // real-time nếu sửa ở Cài đặt trong lúc đang mở sẵn Livechat ở tab khác.
+  quickReplies?: QuickReply[];
 }
 
 export function InboxView({
@@ -74,6 +79,7 @@ export function InboxView({
   initialConversations,
   socketPageIds,
   pagesById,
+  quickReplies,
 }: InboxViewProps) {
   const router = useRouter();
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
@@ -366,7 +372,7 @@ export function InboxView({
                 onLoadMore={() => handleLoadMoreMessages(activeConversation.id)}
               />
               <QuickTagBar />
-              <MessageComposer onSend={handleSend} />
+              <MessageComposer onSend={handleSend} quickReplies={quickReplies ?? []} />
             </div>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 text-slate-400">
