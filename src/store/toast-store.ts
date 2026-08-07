@@ -8,11 +8,22 @@ export interface ToastItem {
   description?: string;
   variant: ToastVariant;
   duration: number;
+  // Có 2 field dưới đây (thông báo tin nhắn mới, xem InboxView) thì Toaster
+  // hiện avatar tròn thay icon variant, và cả card bấm được (điều hướng tới
+  // đúng hội thoại) thay vì chỉ đọc.
+  avatarUrl?: string;
+  onClick?: () => void;
 }
 
 type ToastInput =
   | string
-  | { title?: string; description?: string; duration?: number };
+  | {
+      title?: string;
+      description?: string;
+      duration?: number;
+      avatarUrl?: string;
+      onClick?: () => void;
+    };
 
 interface ToastStore {
   toasts: ToastItem[];

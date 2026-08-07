@@ -6,7 +6,12 @@ import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { getOlderMessages, markConversationRead, sendMessage } from "@/app/actions/conversation";
 import { getSocketTicket } from "@/app/actions/socket";
-import { formatClock, formatTimeLabel, messageKindAndContent } from "@/lib/message-format";
+import {
+  formatClock,
+  formatTimeLabel,
+  messageKindAndContent,
+  messagePreviewText,
+} from "@/lib/message-format";
 import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
@@ -172,6 +177,17 @@ export function InboxView({
 
         if (payload.conversationId === activeIdRef.current) {
           void markConversationRead(payload.conversationId);
+        } else if (payload.message.sender === "customer") {
+          // Chỉ báo toast cho tin của KHÁCH (không phải echo tin mình gửi) và
+          // KHÔNG phải hội thoại đang mở sẵn (đỡ làm phiền khi đang xem đúng
+          // hội thoại đó rồi) — bấm vào toast để mở thẳng hội thoại.
+          const conversationId = payload.conversationId;
+          toast({
+            title: payload.message.senderName || payload.conversation.customerName || "Khách hàng",
+            description: messagePreviewText(payload.message.text, payload.message.attachments),
+            avatarUrl: payload.message.senderAvatarUrl || payload.conversation.customerAvatarUrl,
+            onClick: () => handleSelect(conversationId),
+          });
         }
       });
     })();

@@ -48,22 +48,40 @@ function ToastCard({ toast }: { toast: ToastItem }) {
       exit={{ opacity: 0, x: 60, scale: 0.9 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
       role="status"
+      onClick={() => {
+        if (!toast.onClick) return;
+        toast.onClick();
+        remove(toast.id);
+      }}
       className={cn(
-        "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border bg-white/90 backdrop-blur-xl p-4 shadow-[0_20px_40px_-15px_rgba(8,102,255,0.15)]",
-        BORDER_STYLES[toast.variant]
+        "pointer-events-auto flex w-94 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl border bg-white/90 backdrop-blur-xl p-4 shadow-[0_20px_40px_-15px_rgba(8,102,255,0.15)]",
+        BORDER_STYLES[toast.variant],
+        toast.onClick && "cursor-pointer hover:bg-white"
       )}
     >
-      <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", ICON_STYLES[toast.variant])} />
+      {toast.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={toast.avatarUrl}
+          alt=""
+          className="mt-0.5 h-9 w-9 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", ICON_STYLES[toast.variant])} />
+      )}
       <div className="min-w-0 flex-1">
         {toast.title && (
-          <p className="text-sm font-semibold text-slate-900">{toast.title}</p>
+          <p className="truncate text-sm font-semibold text-slate-900">{toast.title}</p>
         )}
         {toast.description && (
-          <p className="mt-0.5 text-sm text-slate-600">{toast.description}</p>
+          <p className="mt-0.5 truncate text-sm text-slate-600">{toast.description}</p>
         )}
       </div>
       <button
-        onClick={() => remove(toast.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          remove(toast.id);
+        }}
         aria-label="Đóng thông báo"
         className="shrink-0 cursor-pointer rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
       >
