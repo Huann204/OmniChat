@@ -38,10 +38,21 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 md:px-6 lg:px-8">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" alt="Hchat Logo" className="h-8 w-auto" />
-          <span className="text-xl font-bold text-slate-900 tracking-tight">Hchat</span>
+          <div
+            className="h-9 md:h-10 w-36 bg-gradient-to-r from-[#0866FF] to-[#00C6FF]"
+            style={{
+              maskImage: "url(/hchat.png)",
+              WebkitMaskImage: "url(/hchat.png)",
+              maskSize: "contain",
+              WebkitMaskSize: "contain",
+              maskRepeat: "no-repeat",
+              WebkitMaskRepeat: "no-repeat",
+              maskPosition: "left center",
+              WebkitMaskPosition: "left center",
+            }}
+            aria-label="Hchat Logo"
+          />
         </Link>
 
         {/* Desktop Nav */}

@@ -70,7 +70,7 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
         )}
       >
         <img
-          src={bot.avatarUrl || "/logo.png"}
+          src={bot.avatarUrl || "/hchat.png"}
           alt={bot.name}
           className="h-full w-full object-cover rounded-[6px]"
         />

@@ -8,13 +8,7 @@ export default async function DashboardLoading() {
     <div className="min-h-screen bg-[rgb(80,109,173)] font-roboto flex flex-col">
       <header className="bg-[rgb(80,109,173)]">
         <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center sm:w-[calc(100%-3rem)]">
-          {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
-            
-            <img src="/logo.png" alt="Hchat Logo" className="h-full w-full object-contain" />
-          </span> */}
-          <span className="hidden text-lg font-bold tracking-tight text-white sm:inline">
-            Hchat
-          </span>
+          <img src="/hchat.png" alt="Hchat Logo" className="h-10 w-auto object-contain" />
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3">

@@ -54,7 +54,7 @@ export function ShopSwitcherMenu() {
           className="flex items-center gap-2 rounded-lg py-1 pl-2 pr-1.5 transition-colors hover:bg-white/15 cursor-pointer"
         >
           <span className="hidden flex-col items-end leading-tight sm:flex">
-            <span className="max-w-[180px] truncate text-sm font-semibold text-white">
+            <span className="max-w-[180px] truncate text-sm font-normal text-white">
               {currentShop.name}
             </span>
             <span className="text-[10px] font-semibold uppercase tracking-wide text-white/70">

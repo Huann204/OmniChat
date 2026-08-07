@@ -7,23 +7,19 @@ export default async function LivechatLoading() {
   return (
     <div className="flex h-screen flex-col bg-[rgb(80,109,173)] font-roboto">
       <header className="shrink-0">
-        <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center gap-4 sm:w-[calc(100%-3rem)]">
+        <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center gap-8 sm:w-[calc(100%-3rem)]">
           <div className="flex shrink-0 items-center gap-2 mr-6">
-            {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
-              eslint-disable-next-line @next/next/no-img-element
-              <img src="/logo.png" alt="Hchat Logo" className="h-full w-full object-contain" />
-            </span> */}
-            <span className="hidden text-lg font-bold tracking-tight text-white sm:inline">
-              Hchat
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/hchat.png" alt="Hchat Logo" className="h-10 w-auto object-contain" />
           </div>
 
           <nav className="flex items-center gap-1 overflow-x-auto">
             {["Hội thoại", "Đơn hàng", "Bài viết", "Thống kê", "Cài đặt"].map((tab, i) => (
               <div
                 key={tab}
-                className={`shrink-0 rounded-lg px-3.5 py-2 text-sm font-medium ${i === 0 ? "bg-white/20 text-white" : "text-white/80"
-                  }`}
+                className={`shrink-0 rounded-lg px-3.5 py-2 text-sm font-normal ${
+                  i === 0 ? "bg-white/20 text-white" : "text-white"
+                }`}
               >
                 {tab}
               </div>
