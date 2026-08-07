@@ -1,6 +1,11 @@
 import { getMergePagesCookie } from "@/app/actions/mergeView";
 import { InboxView } from "@/components/inbox/InboxView";
-import { getConnectedPages, getConversationsForPages, verifySession } from "@/lib/dal";
+import {
+  getConnectedPages,
+  getConversationsForPages,
+  getQuickReplies,
+  verifySession,
+} from "@/lib/dal";
 import type { Bot } from "@/types/bot";
 
 // Dùng khi Shop chưa kết nối Page nào — không có Page thật nào để lấy
@@ -20,10 +25,11 @@ const EMPTY_BOT: Bot = {
 export default async function MultiPagesPage() {
   // Không phụ thuộc kết quả của nhau — chạy song song thay vì tuần tự để
   // bớt vòng round-trip.
-  const [user, connectedPages, requestedIds] = await Promise.all([
+  const [user, connectedPages, requestedIds, quickReplies] = await Promise.all([
     verifySession(),
     getConnectedPages(),
     getMergePagesCookie(),
+    getQuickReplies(),
   ]);
 
   const requestedIdSet = new Set(requestedIds);
@@ -48,6 +54,7 @@ export default async function MultiPagesPage() {
           initialConversations={[]}
           socketPageIds={[]}
           pagesById={{}}
+          quickReplies={quickReplies}
         />
       </div>
     );
@@ -87,6 +94,7 @@ export default async function MultiPagesPage() {
         initialConversations={conversations}
         socketPageIds={selectedPages.map((p) => p.id)}
         pagesById={pagesById}
+        quickReplies={quickReplies}
       />
     </div>
   );
