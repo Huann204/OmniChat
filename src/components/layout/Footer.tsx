@@ -29,8 +29,20 @@ export function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-1 flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Hchat Logo" className="h-8 w-auto" />
-              <span className="text-xl font-bold text-slate-900 tracking-tight">Hchat</span>
+              <div
+                className="h-9 md:h-10 w-36 bg-gradient-to-r from-[#0866FF] to-[#00C6FF]"
+                style={{
+                  maskImage: "url(/hchat.png)",
+                  WebkitMaskImage: "url(/hchat.png)",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "left center",
+                  WebkitMaskPosition: "left center",
+                }}
+                aria-label="Hchat Logo"
+              />
             </Link>
             <p className="text-sm text-slate-500 mt-2">
               Nền tảng quản lý tin nhắn đa kênh và chatbot AI dành cho doanh nghiệp tại Việt Nam.

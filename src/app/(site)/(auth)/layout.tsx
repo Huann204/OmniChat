@@ -10,7 +10,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-black/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
 
           <div className="relative z-10">
-            <h1 className="text-3xl font-bold mb-2 tracking-tight text-white">Hchat</h1>
+            <div className="mb-4 bg-white p-2 rounded-full inline-block">
+              <img src="/hchat.png" alt="Hchat Logo" className="h-12 w-12 object-contain" />
+            </div>
             <p className="text-white/90 text-base font-medium">Kết nối với thế giới của bạn.</p>
           </div>
 
