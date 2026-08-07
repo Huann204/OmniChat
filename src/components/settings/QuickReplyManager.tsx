@@ -131,15 +131,16 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
     <div>
       <h1 className="mb-4 text-xl font-semibold text-slate-900">Hỗ trợ trả lời</h1>
 
-      <div className="flex h-[calc(100vh-148px)] flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[8px]">
-        <div className="border-b border-slate-200 px-5 pt-4">
-          <button
-            type="button"
-            className="border-b-2 border-primary px-1 pb-3 text-sm font-semibold text-primary cursor-pointer"
-          >
-            Trả lời nhanh
-          </button>
-        </div>
+      <div className="relative flex h-[calc(100vh-148px)] flex-col overflow-y-auto overflow-x-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[8px]">
+        <div className="sticky top-0 z-10 bg-white">
+          <div className="border-b border-slate-200 px-5 pt-4">
+            <button
+              type="button"
+              className="border-b-2 border-primary px-1 pb-3 text-sm font-semibold text-primary cursor-pointer"
+            >
+              Trả lời nhanh
+            </button>
+          </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div className="flex items-center gap-1.5">
@@ -178,8 +179,9 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
             </button>
           </div>
         </div>
+        </div>
 
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-y border-slate-100 text-xs font-medium text-slate-400">
@@ -214,12 +216,17 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
                             )}
                           </span>
 
-                          {/* Xem trước cỡ lớn khi hover — hiện hết ảnh đính
-                              kèm, không chỉ ảnh đầu tiên. */}
-                          <span className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 hidden gap-1.5 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg group-hover/thumb:flex">
-                            {item.images.map((url, i) => (
-                              <span key={`${url}-${i}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md">
+                          {/* Xem trước cỡ lớn khi hover — chỉ hiện tối đa 4 ảnh,
+                              nếu nhiều hơn sẽ có lớp phủ báo số lượng còn lại. */}
+                          <span className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-max max-w-[300px] flex-wrap gap-1.5 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg group-hover/thumb:flex">
+                            {item.images.slice(0, 4).map((url, i) => (
+                              <span key={`${url}-${i}`} className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-slate-100">
                                 <Image src={url} alt="" fill className="object-cover" unoptimized />
+                                {i === 3 && item.images.length > 4 && (
+                                  <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-bold text-white">
+                                    +{item.images.length - 4}
+                                  </span>
+                                )}
                               </span>
                             ))}
                           </span>
