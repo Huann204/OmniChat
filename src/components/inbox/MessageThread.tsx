@@ -100,7 +100,14 @@ export function MessageThread({
       )}
       {messages.map((message, index) => {
         const next = messages[index + 1];
-        const isLastInGroup = !next || next.sender !== message.sender;
+        // So thêm senderName (không chỉ sender role) — nhóm Zalo nhiều
+        // người cùng mang sender:"customer", so mỗi role thôi sẽ gộp lộn
+        // các thành viên khác nhau vào 1 cụm, chỉ hiện avatar/tên của
+        // NGƯỜI GỬI CUỐI trong cụm đó (che mất người gửi trước). 1-1/Facebook
+        // không có senderName (luôn undefined ở cả 2 phía) nên so sánh này
+        // không đổi hành vi cũ.
+        const isLastInGroup =
+          !next || next.sender !== message.sender || next.senderName !== message.senderName;
         return (
           <MessageRow
             key={message.id}
