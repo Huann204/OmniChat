@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { BotCard } from "./BotCard";
 import { ChannelTabs } from "./ChannelTabs";
@@ -19,6 +20,7 @@ interface BotDashboardProps {
 }
 
 export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDashboardProps) {
+  const router = useRouter();
   const [bots, setBots] = React.useState(initialBots);
   const [prevInitialBots, setPrevInitialBots] = React.useState(initialBots);
   const [search, setSearch] = React.useState("");
@@ -36,6 +38,10 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
   // viết/Thống kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không
   // điều hướng đi đâu cả.
   function handleTabChange(tab: string) {
+    if (tab === "Cài đặt") {
+      router.push("/settings");
+      return;
+    }
     if (tab !== NAV_TABS[0]) {
       toast.info("Tính năng đang được phát triển");
       return;
