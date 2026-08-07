@@ -1,6 +1,7 @@
-import { Tag } from "lucide-react";
-import { SettingsPlaceholder } from "@/components/settings/SettingsPlaceholder";
+import { ConversationTagManager } from "@/components/settings/ConversationTagManager";
+import { getConversationTags } from "@/lib/dal";
 
-export default function TagsSettingsPage() {
-  return <SettingsPlaceholder title="Thẻ hội thoại" icon={Tag} />;
+export default async function TagsSettingsPage() {
+  const items = await getConversationTags();
+  return <ConversationTagManager initialItems={items} />;
 }

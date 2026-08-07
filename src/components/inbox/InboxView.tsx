@@ -6,6 +6,7 @@ import { io, type Socket } from "socket.io-client";
 import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { getOlderMessages, markConversationRead, sendMessage } from "@/app/actions/conversation";
+import { setConversationTags } from "@/app/actions/conversationTag";
 import { getSocketTicket } from "@/app/actions/socket";
 import {
   formatClock,
@@ -17,6 +18,7 @@ import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
+import type { ConversationTag } from "@/types/conversationTag";
 import type { QuickReply } from "@/types/quickReply";
 import { InboxIconRail } from "./InboxIconRail";
 import { ConversationList } from "./ConversationList";
@@ -70,6 +72,9 @@ interface InboxViewProps {
   // nhanh (xem MessageComposer). Snapshot lúc tải trang, không tự đồng bộ
   // real-time nếu sửa ở Cài đặt trong lúc đang mở sẵn Livechat ở tab khác.
   quickReplies?: QuickReply[];
+  // Danh mục thẻ hội thoại của Shop (xem /settings/tags) — QuickTagBar hiện
+  // hết danh mục này, đánh dấu thẻ nào đang gắn cho hội thoại đang mở.
+  conversationTags?: ConversationTag[];
 }
 
 export function InboxView({
@@ -80,6 +85,7 @@ export function InboxView({
   socketPageIds,
   pagesById,
   quickReplies,
+  conversationTags,
 }: InboxViewProps) {
   const router = useRouter();
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
@@ -174,6 +180,10 @@ export function InboxView({
               customerName: payload.conversation.customerName || "Khách hàng",
               customerAvatarUrl: payload.conversation.customerAvatarUrl,
               isGroup: payload.conversation.isGroup,
+              // Hội thoại mới toanh chưa thể có thẻ gì — tags chỉ được gán
+              // qua thao tác thủ công trong QuickTagBar, không phải qua
+              // socket "new_message" (không liên quan tới việc gửi/nhận tin).
+              tags: [],
               lastSeenLabel: "",
               timeLabel: formatTimeLabel(payload.conversation.lastMessageAt),
               isRead: false,
@@ -337,6 +347,28 @@ export function InboxView({
     );
   }
 
+  // Bật/tắt 1 thẻ cho hội thoại đang mở — tự tính lại mảng tagId mới (thêm
+  // nếu chưa có, bỏ nếu đã có) rồi gửi NGUYÊN mảng lên (xem
+  // setConversationTags — API gán lại toàn bộ, không phải add/remove riêng).
+  async function handleToggleTag(tagId: string) {
+    if (!activeConversation) return;
+    const conversationId = activeConversation.id;
+    const currentIds = activeConversation.tags.map((t) => t.id);
+    const nextIds = currentIds.includes(tagId)
+      ? currentIds.filter((id) => id !== tagId)
+      : [...currentIds, tagId];
+
+    const result = await setConversationTags(conversationId, nextIds);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+
+    setConversations((prev) =>
+      prev.map((c) => (c.id === conversationId ? { ...c, tags: result.tags } : c))
+    );
+  }
+
   return (
     <div className="flex h-screen flex-col bg-[rgb(80,109,173)]">
       <DashboardNavbar
@@ -371,7 +403,11 @@ export function InboxView({
                 hasMoreMessages={activeConversation.hasMoreMessages}
                 onLoadMore={() => handleLoadMoreMessages(activeConversation.id)}
               />
-              <QuickTagBar />
+              <QuickTagBar
+                tags={conversationTags ?? []}
+                activeTagIds={activeConversation.tags.map((t) => t.id)}
+                onToggleTag={handleToggleTag}
+              />
               <MessageComposer onSend={handleSend} quickReplies={quickReplies ?? []} />
             </div>
           ) : (

@@ -5,6 +5,7 @@ import { apiFetch } from "./api";
 import { getCachedUser, getCurrentShopId, getSessionToken } from "./session";
 import type { Bot } from "@/types/bot";
 import type { Conversation, MessageKind } from "@/types/conversation";
+import type { ConversationTag } from "@/types/conversationTag";
 import type { QuickReply } from "@/types/quickReply";
 
 export interface SessionUser {
@@ -142,6 +143,7 @@ interface RawConversation {
   isGroup?: boolean;
   lastMessageAt: string;
   isRead: boolean;
+  tags: ConversationTag[];
   hasMoreMessages: boolean;
   messages: RawMessage[];
 }
@@ -231,6 +233,7 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
     customerName: c.customerName || "Khách hàng",
     customerAvatarUrl: c.customerAvatarUrl,
     isGroup: c.isGroup,
+    tags: c.tags,
     lastSeenLabel: "",
     timeLabel: formatTimeLabel(c.lastMessageAt),
     isRead: c.isRead,
@@ -281,6 +284,23 @@ export const getQuickReplies = cache(async (): Promise<QuickReply[]> => {
     const data = await apiFetch<{ success: boolean; items: QuickReply[] }>("/quick-replies", {
       headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) },
     });
+    return data.items;
+  } catch {
+    return [];
+  }
+});
+
+// Danh mục thẻ hội thoại của Shop đang active — dùng cả ở trang Cài đặt
+// (quản lý) lẫn Livechat (QuickTagBar, gắn/gỡ thẻ cho 1 hội thoại).
+export const getConversationTags = cache(async (): Promise<ConversationTag[]> => {
+  const token = await getSessionToken();
+  if (!token) return [];
+
+  try {
+    const data = await apiFetch<{ success: boolean; items: ConversationTag[] }>(
+      "/conversation-tags",
+      { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
+    );
     return data.items;
   } catch {
     return [];

@@ -159,6 +159,20 @@ export function ConversationList({
                   {preview}
                 </p>
 
+                {conversation.tags.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {conversation.tags.map((tag) => (
+                      <span
+                        key={tag.id}
+                        style={{ backgroundColor: tag.color }}
+                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white"
+                      >
+                        {tag.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {page && (
                   <div className="mt-1 flex items-center gap-1.5">
                     <div className="flex min-w-0 items-center gap-1.5">

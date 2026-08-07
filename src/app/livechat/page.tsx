@@ -3,6 +3,7 @@ import { InboxView } from "@/components/inbox/InboxView";
 import {
   getConnectedPages,
   getConversationsForPages,
+  getConversationTags,
   getQuickReplies,
   verifySession,
 } from "@/lib/dal";
@@ -25,11 +26,12 @@ const EMPTY_BOT: Bot = {
 export default async function MultiPagesPage() {
   // Không phụ thuộc kết quả của nhau — chạy song song thay vì tuần tự để
   // bớt vòng round-trip.
-  const [user, connectedPages, requestedIds, quickReplies] = await Promise.all([
+  const [user, connectedPages, requestedIds, quickReplies, conversationTags] = await Promise.all([
     verifySession(),
     getConnectedPages(),
     getMergePagesCookie(),
     getQuickReplies(),
+    getConversationTags(),
   ]);
 
   const requestedIdSet = new Set(requestedIds);
@@ -55,6 +57,7 @@ export default async function MultiPagesPage() {
           socketPageIds={[]}
           pagesById={{}}
           quickReplies={quickReplies}
+          conversationTags={conversationTags}
         />
       </div>
     );
@@ -95,6 +98,7 @@ export default async function MultiPagesPage() {
         socketPageIds={selectedPages.map((p) => p.id)}
         pagesById={pagesById}
         quickReplies={quickReplies}
+        conversationTags={conversationTags}
       />
     </div>
   );
