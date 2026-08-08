@@ -127,6 +127,13 @@ export function InboxView({
     notificationSoundRef.current = new Audio("/nhacchuong.mp3");
   }, []);
 
+  // Đánh số thứ tự request bật/tắt thẻ theo TỪNG hội thoại — bấm nhiều thẻ
+  // liên tiếp nhanh sinh nhiều request API cùng lúc, response có thể về
+  // KHÔNG đúng thứ tự gửi đi (request cũ về sau request mới). Chỉ áp dụng
+  // kết quả của request MỚI NHẤT đã gửi cho đúng hội thoại đó, bỏ qua response
+  // đến muộn của các request đã bị "vượt mặt" — tránh giật/lùi trạng thái.
+  const tagRequestSeqRef = React.useRef<Map<string, number>>(new Map());
+
   React.useEffect(() => {
     let socket: Socket | null = null;
     let cancelled = false;
@@ -366,10 +373,18 @@ export function InboxView({
       prev.map((c) => (c.id === conversationId ? { ...c, tags: optimisticTags } : c))
     );
 
+    const requestId = (tagRequestSeqRef.current.get(conversationId) ?? 0) + 1;
+    tagRequestSeqRef.current.set(conversationId, requestId);
+
     const result = await setConversationTags(
       conversationId,
       optimisticTags.map((t) => t.id)
     );
+
+    // Đã có request MỚI HƠN cho đúng hội thoại này chạy sau request này (bấm
+    // thẻ khác trong lúc đang đợi) — bỏ qua kết quả, dù đến sau hay đến
+    // trước request kia, để không đè lên trạng thái mới hơn đang hiện.
+    if (tagRequestSeqRef.current.get(conversationId) !== requestId) return;
 
     if ("error" in result) {
       toast.error(result.error);
