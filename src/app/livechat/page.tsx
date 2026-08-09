@@ -30,10 +30,6 @@ export default async function MultiPagesPage() {
   // Livechat tốn thêm 1 vòng round-trip thừa, đo được rõ trên production).
   // Không dùng query string vì lộ pageId trên URL nhìn rối mắt — xem
   // BotCard.tsx/BotDashboard.tsx/MergePagesModal.tsx/SettingsShell.tsx.
-  // Log tạm để tìm khoảng trống không lộ ra trong access log của Express
-  // (timestamp ở đó chỉ chính xác tới giây) — dùng Date.now() cùng 1 tiến
-  // trình nên đo được chính xác tới ms, xoá đi sau khi tìm ra nguyên nhân.
-  const __t0 = Date.now();
   const [user, connectedPages, quickReplies, conversationTags, requestedIds] = await Promise.all([
     verifySession(),
     getConnectedPages(),
@@ -41,7 +37,6 @@ export default async function MultiPagesPage() {
     getConversationTags(),
     getMergePagesCookie(),
   ]);
-  console.log(`[livechat perf] batch (verifySession+getConnectedPages+getQuickReplies+getConversationTags): ${Date.now() - __t0}ms`);
 
   const requestedIdSet = new Set(requestedIds);
   let selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
@@ -72,9 +67,7 @@ export default async function MultiPagesPage() {
     );
   }
 
-  const __t1 = Date.now();
   const conversations = await getConversationsForPages(selectedPages.map((p) => p.id));
-  console.log(`[livechat perf] getConversationsForPages: ${Date.now() - __t1}ms, total: ${Date.now() - __t0}ms`);
 
   // Tra theo pageId thật (Facebook) — trùng với Conversation.pageId trả về
   // từ backend — để ConversationList hiện đúng avatar + tên Page nguồn.
