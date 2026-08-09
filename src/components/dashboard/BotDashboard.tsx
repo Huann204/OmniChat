@@ -2,14 +2,12 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { BotCard } from "./BotCard";
 import { ChannelTabs } from "./ChannelTabs";
 import { DashboardNavbar } from "./DashboardNavbar";
 import { DashboardToolbar } from "./DashboardToolbar";
 import { MergePagesModal } from "./MergePagesModal";
 import { NAV_TABS } from "@/lib/nav-tabs";
-import { loadingBar } from "@/store/loading-bar-store";
 import { toast } from "@/store/toast-store";
 import type { Bot, BotChannel } from "@/types/bot";
 
@@ -30,13 +28,15 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
   // là khu vực làm việc của livechat, chỉ nên sáng lên khi thật sự đang ở đó
   // (đã bấm sang /livechat), không phải ngay khi vừa vào Dashboard.
   const [activeTab, setActiveTab] = React.useState<string | undefined>(undefined);
-  const [, startTabTransition] = React.useTransition();
 
-  // Chỉ "Hội thoại" là tab đã có thật (đưa sang /livechat, mặc định gộp
-  // TOÀN BỘ Page hiện có — giống hệt "Gộp trang" nhưng không cần tự chọn,
-  // setMergePagesCookie tự redirect() sau khi ghi cookie). Đơn hàng/Bài
-  // viết/Thống kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không
-  // điều hướng đi đâu cả.
+  // Chỉ "Hội thoại" là tab đã có thật — vào thẳng /livechat (không truyền
+  // pageId = mặc định gộp TOÀN BỘ Page hiện có, xem logic fallback trong
+  // livechat/page.tsx). Điều hướng thẳng bằng router.push, không còn vòng
+  // qua Server Action ghi cookie + redirect như trước — cách cũ khiến MỌI
+  // lượt vào Livechat tốn thêm 1 vòng round-trip thừa trước khi trang thật
+  // sự bắt đầu tải (đo được rõ trên production). Đơn hàng/Bài viết/Thống
+  // kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không điều hướng
+  // đi đâu cả.
   function handleTabChange(tab: string) {
     if (tab === "Cài đặt") {
       router.push("/settings");
@@ -47,14 +47,7 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
       return;
     }
     setActiveTab(tab);
-    startTabTransition(async () => {
-      loadingBar.start();
-      try {
-        await setMergePagesCookie(bots.map((b) => b.id));
-      } finally {
-        loadingBar.done();
-      }
-    });
+    router.push("/livechat");
   }
 
   // initialBots được tính lại ở server (getConnectedPages) mỗi khi

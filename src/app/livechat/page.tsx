@@ -1,4 +1,3 @@
-import { getMergePagesCookie } from "@/app/actions/mergeView";
 import { InboxView } from "@/components/inbox/InboxView";
 import {
   getConnectedPages,
@@ -7,6 +6,7 @@ import {
   getQuickReplies,
   verifySession,
 } from "@/lib/dal";
+import { getMergePagesCookie } from "@/lib/session";
 import type { Bot } from "@/types/bot";
 
 // Dùng khi Shop chưa kết nối Page nào — không có Page thật nào để lấy
@@ -24,22 +24,26 @@ const EMPTY_BOT: Bot = {
 };
 
 export default async function MultiPagesPage() {
-  // Không phụ thuộc kết quả của nhau — chạy song song thay vì tuần tự để
-  // bớt vòng round-trip.
-  const [user, connectedPages, requestedIds, quickReplies, conversationTags] = await Promise.all([
+  // Danh sách Page muốn xem gộp — đọc từ cookie "merge_pages", ghi thẳng ở
+  // client bằng document.cookie (xem lib/mergePagesCookie.ts) thay vì qua
+  // Server Action + redirect() như trước (cách cũ khiến MỌI lượt vào
+  // Livechat tốn thêm 1 vòng round-trip thừa, đo được rõ trên production).
+  // Không dùng query string vì lộ pageId trên URL nhìn rối mắt — xem
+  // BotCard.tsx/BotDashboard.tsx/MergePagesModal.tsx/SettingsShell.tsx.
+  const [user, connectedPages, quickReplies, conversationTags, requestedIds] = await Promise.all([
     verifySession(),
     getConnectedPages(),
-    getMergePagesCookie(),
     getQuickReplies(),
     getConversationTags(),
+    getMergePagesCookie(),
   ]);
 
   const requestedIdSet = new Set(requestedIds);
   let selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
 
-  // Cookie trống, hoặc trỏ tới Page không còn thuộc Shop đang active (vd vừa
-  // đổi Shop) — mặc định lấy TOÀN BỘ Page hiện có (giống hành vi "Gộp trang"
-  // mặc định khi bấm tab từ Dashboard) thay vì chặn cứng bằng 404.
+  // Không truyền pageId (mặc định bấm tab "Hội thoại"), hoặc pageId trỏ tới
+  // Page không còn thuộc Shop đang active (vd vừa đổi Shop) — mặc định lấy
+  // TOÀN BỘ Page hiện có thay vì chặn cứng bằng 404.
   if (selectedPages.length === 0) {
     selectedPages = connectedPages;
   }

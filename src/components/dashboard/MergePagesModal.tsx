@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { CheckSquare, GitMerge, Loader2, Plus, Search, SlidersHorizontal, Square } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
-import { loadingBar } from "@/store/loading-bar-store";
+import { setMergePagesCookie } from "@/lib/mergePagesCookie";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 
@@ -28,6 +28,7 @@ interface MergePagesModalProps {
 }
 
 export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
+  const router = useRouter();
   const [search, setSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [prevOpen, setPrevOpen] = React.useState(open);
@@ -92,19 +93,13 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
   }
 
   function handleConfirm() {
-    // Không lưu lại việc gộp ở đâu cả — chỉ chuyển danh sách Page đã chọn qua
-    // 1 cookie tạm (httpOnly, sống 1 ngày, chỉ gửi kèm request tới
-    // /livechat). Action tự redirect() sau khi ghi cookie — không tự
-    // router.push ở đây (xem giải thích ở BotCard.tsx). onClose() cũng
-    // không cần gọi: redirect điều hướng cả trang đi, modal tự biến mất
-    // theo.
-    startNavigate(async () => {
-      loadingBar.start();
-      try {
-        await setMergePagesCookie(Array.from(selectedIds));
-      } finally {
-        loadingBar.done();
-      }
+    // Ghi cookie danh sách Page đã chọn ngay ở client rồi điều hướng thẳng —
+    // không còn vòng qua Server Action ghi cookie + redirect, cũng không lộ
+    // pageId qua query string (xem giải thích ở BotCard.tsx). onClose() không
+    // cần gọi: điều hướng cả trang đi, modal tự biến mất theo.
+    setMergePagesCookie(Array.from(selectedIds));
+    startNavigate(() => {
+      router.push("/livechat");
     });
   }
 
