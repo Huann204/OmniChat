@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { NAV_TABS } from "@/lib/nav-tabs";
-import { loadingBar } from "@/store/loading-bar-store";
 import { toast } from "@/store/toast-store";
 import { SettingsSidebar } from "./SettingsSidebar";
 
@@ -18,22 +17,17 @@ interface SettingsShellProps {
 // /dashboard và /livechat (xem DashboardNavbar), chỉ khác nội dung bên dưới
 // là sidebar cài đặt + trang con thay vì danh sách bot/hội thoại.
 export function SettingsShell({ userName, userEmail, children }: SettingsShellProps) {
-  const [, startTransition] = React.useTransition();
+  const router = useRouter();
 
   // "Cài đặt" đang mở sẵn (đang đứng trong /settings) — bấm tab khác thì rời
-  // đi đúng nơi tab đó phụ trách, giống hệt cách BotDashboard/InboxView xử lý
-  // NAV_TABS[0] ("Hội thoại" -> /livechat, gộp toàn bộ Page hiện có).
+  // đi đúng nơi tab đó phụ trách, giống hệt cách BotDashboard xử lý
+  // NAV_TABS[0] ("Hội thoại" -> /livechat, không kèm pageId = gộp toàn bộ
+  // Page hiện có, xem livechat/page.tsx). Điều hướng thẳng bằng router.push,
+  // không còn vòng qua Server Action ghi cookie + redirect như trước.
   function handleTabChange(tab: string) {
     if (tab === "Cài đặt") return;
     if (tab === NAV_TABS[0]) {
-      startTransition(async () => {
-        loadingBar.start();
-        try {
-          await setMergePagesCookie([]);
-        } finally {
-          loadingBar.done();
-        }
-      });
+      router.push("/livechat");
       return;
     }
     toast.info("Tính năng đang được phát triển");

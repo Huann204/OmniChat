@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, MoreVertical, Pencil, Power, Trash2 } from "lucide-react";
-import { setMergePagesCookie } from "@/app/actions/mergeView";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
-import { loadingBar } from "@/store/loading-bar-store";
+import { setMergePagesCookie } from "@/lib/mergePagesCookie";
 import type { Bot } from "@/types/bot";
 
 const AVATAR_COLORS = [
@@ -26,25 +26,23 @@ interface BotCardProps {
 }
 
 export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [isNavigating, startNavigate] = React.useTransition();
   const channel = CHANNEL_META[bot.channel];
   const ChannelIcon = channel.icon;
   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
 
-  // Dùng chung cơ chế với "gộp trang" — chỉ khác là gộp đúng 1 Page — để
-  // luôn qua /livechat, không lộ id qua URL. Action tự redirect() sau khi
-  // ghi cookie — KHÔNG tự router.push ở đây nữa: gọi router.push ngay sau
-  // 1 Server Action có mutate cookie khiến Next.js xử lý thành 2 lượt điều
-  // hướng chồng nhau cho cùng 1 lần bấm (đã xác nhận bằng log request).
+  // Ghi cookie ngay ở client (đồng bộ, không qua mạng) rồi điều hướng thẳng —
+  // trước đây đi qua 1 Server Action ghi cookie rồi tự redirect(), khiến MỌI
+  // lượt bấm vào đây tốn thêm 1 vòng round-trip thừa (ghi cookie + redirect)
+  // trước khi /livechat thật sự bắt đầu tải, đo được rõ trên production (log
+  // request cho thấy 3 lượt fetch lại RSC dư thừa). Không dùng query string
+  // vì lộ pageId trên URL nhìn rối mắt.
   function openInbox() {
-    startNavigate(async () => {
-      loadingBar.start();
-      try {
-        await setMergePagesCookie([bot.id]);
-      } finally {
-        loadingBar.done();
-      }
+    setMergePagesCookie([bot.id]);
+    startNavigate(() => {
+      router.push("/livechat");
     });
   }
 
