@@ -36,7 +36,15 @@ function quickReplyImageToMediaItem(url: string): MediaItem {
 // 6 dòng, tránh khung soạn tin nuốt hết chỗ của khung chat nếu gõ quá dài.
 const COMPOSER_MAX_HEIGHT = 140;
 
-export function MessageComposer({ onSend, quickReplies = [] }: MessageComposerProps) {
+// Cho phép component cha (InboxView) tự điền text vào ô soạn tin từ bên
+// ngoài — dùng khi bấm 1 gợi ý trong AiSuggestionBar. value là state nội bộ
+// (không controlled từ prop) nên cần expose qua ref thay vì 1 prop `value`.
+export interface MessageComposerHandle {
+  setText: (text: string) => void;
+}
+
+export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerProps>(
+  function MessageComposer({ onSend, quickReplies = [] }, ref) {
   const [value, setValue] = React.useState("");
   const [isSending, setIsSending] = React.useState(false);
   const [pickerOpen, setPickerOpen] = React.useState(false);
@@ -45,6 +53,10 @@ export function MessageComposer({ onSend, quickReplies = [] }: MessageComposerPr
   // khác slashQuery (tự mở khi đang gõ, lọc theo ký tự tắt).
   const [manualListOpen, setManualListOpen] = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useImperativeHandle(ref, () => ({
+    setText: (text: string) => setValue(text),
+  }));
 
   // Tự phình cao theo nội dung — input/textarea mặc định không tự cao lên,
   // phải tự đo lại scrollHeight mỗi khi value đổi (kể cả lúc reset về ""
@@ -245,4 +257,5 @@ export function MessageComposer({ onSend, quickReplies = [] }: MessageComposerPr
       <MediaPickerModal open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={handlePickImages} />
     </div>
   );
-}
+  }
+);

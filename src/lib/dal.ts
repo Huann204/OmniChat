@@ -3,6 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { apiFetch } from "./api";
 import { getCachedUser, getCurrentShopId, getSessionToken } from "./session";
+import type { AiAssistantSettings } from "@/types/aiAssistant";
 import type { Bot } from "@/types/bot";
 import type { Conversation, MessageKind } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
@@ -304,5 +305,41 @@ export const getConversationTags = cache(async (): Promise<ConversationTag[]> =>
     return data.items;
   } catch {
     return [];
+  }
+});
+
+// Chỉ dùng khi chưa đăng nhập hoặc API lỗi (xem catch bên dưới) — nội dung
+// khớp DEFAULT_PRESET_CONTENT phía server (aiAssistant.controller.ts) để
+// nhất quán, dù nhánh này hiếm khi thật sự hiện ra (suggestReplyEnabled
+// false nên AiSuggestionBar không tự gọi sinh gợi ý).
+const DEFAULT_AI_ASSISTANT_SETTINGS: AiAssistantSettings = {
+  suggestReplyEnabled: false,
+  suggestReplyTrigger: "on_open",
+  presets: [
+    { label: "Câu 1", enabled: false, content: "- Xưng em gọi bác\n- Luôn chào\n- Luôn cảm ơn" },
+    { label: "Câu 2", enabled: false, content: "Sử dụng tone formal cho phong cách nghiêm túc" },
+    {
+      label: "Câu 3",
+      enabled: false,
+      content: "Sử dụng tone friendly cho phong cách thân thiện. Thêm emoji vào câu trả lời",
+    },
+  ],
+};
+
+// Cấu hình "Gợi ý trả lời tin nhắn từ AI" của Shop đang active — dùng ở cả
+// trang Cài đặt (/settings/ai-assistant) lẫn Livechat (quyết định có tự gọi
+// sinh gợi ý khi mở hội thoại hay không, xem InboxView).
+export const getAiAssistantSettings = cache(async (): Promise<AiAssistantSettings> => {
+  const token = await getSessionToken();
+  if (!token) return DEFAULT_AI_ASSISTANT_SETTINGS;
+
+  try {
+    const data = await apiFetch<{ success: boolean; settings: AiAssistantSettings }>(
+      "/ai-assistant/settings",
+      { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
+    );
+    return data.settings;
+  } catch {
+    return DEFAULT_AI_ASSISTANT_SETTINGS;
   }
 });

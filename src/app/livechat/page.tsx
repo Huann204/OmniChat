@@ -1,5 +1,6 @@
 import { InboxView } from "@/components/inbox/InboxView";
 import {
+  getAiAssistantSettings,
   getConnectedPages,
   getConversationsForPages,
   getConversationTags,
@@ -30,13 +31,15 @@ export default async function MultiPagesPage() {
   // Livechat tốn thêm 1 vòng round-trip thừa, đo được rõ trên production).
   // Không dùng query string vì lộ pageId trên URL nhìn rối mắt — xem
   // BotCard.tsx/BotDashboard.tsx/MergePagesModal.tsx/SettingsShell.tsx.
-  const [user, connectedPages, quickReplies, conversationTags, requestedIds] = await Promise.all([
-    verifySession(),
-    getConnectedPages(),
-    getQuickReplies(),
-    getConversationTags(),
-    getMergePagesCookie(),
-  ]);
+  const [user, connectedPages, quickReplies, conversationTags, aiAssistantSettings, requestedIds] =
+    await Promise.all([
+      verifySession(),
+      getConnectedPages(),
+      getQuickReplies(),
+      getConversationTags(),
+      getAiAssistantSettings(),
+      getMergePagesCookie(),
+    ]);
 
   const requestedIdSet = new Set(requestedIds);
   let selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
@@ -62,6 +65,7 @@ export default async function MultiPagesPage() {
           pagesById={{}}
           quickReplies={quickReplies}
           conversationTags={conversationTags}
+          aiAssistantSettings={aiAssistantSettings}
         />
       </div>
     );
@@ -103,6 +107,7 @@ export default async function MultiPagesPage() {
         pagesById={pagesById}
         quickReplies={quickReplies}
         conversationTags={conversationTags}
+        aiAssistantSettings={aiAssistantSettings}
       />
     </div>
   );

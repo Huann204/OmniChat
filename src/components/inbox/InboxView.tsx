@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { generateAiSuggestions } from "@/app/actions/aiAssistant";
 import { getOlderMessages, markConversationRead, sendMessage } from "@/app/actions/conversation";
 import { setConversationTags } from "@/app/actions/conversationTag";
 import { getSocketTicket } from "@/app/actions/socket";
@@ -16,6 +17,7 @@ import {
 } from "@/lib/message-format";
 import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
+import type { AiAssistantSettings } from "@/types/aiAssistant";
 import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
@@ -25,7 +27,8 @@ import { ConversationList } from "./ConversationList";
 import { ChatHeader } from "./ChatHeader";
 import { MessageThread } from "./MessageThread";
 import { QuickTagBar } from "./QuickTagBar";
-import { MessageComposer } from "./MessageComposer";
+import { AiSuggestionBar } from "./AiSuggestionBar";
+import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
 import { CustomerInfoPanel } from "./CustomerInfoPanel";
 
 interface NewMessageEvent {
@@ -75,6 +78,10 @@ interface InboxViewProps {
   // Danh mục thẻ hội thoại của Shop (xem /settings/tags) — QuickTagBar hiện
   // hết danh mục này, đánh dấu thẻ nào đang gắn cho hội thoại đang mở.
   conversationTags?: ConversationTag[];
+  // Cấu hình "Gợi ý trả lời tin nhắn từ AI" (xem /settings/ai-assistant) —
+  // quyết định có tự gọi sinh gợi ý không, và khi nào (mở hội thoại, hay
+  // mỗi tin mới), xem effect gọi generateAiSuggestions bên dưới.
+  aiAssistantSettings?: AiAssistantSettings;
 }
 
 export function InboxView({
@@ -86,6 +93,7 @@ export function InboxView({
   pagesById,
   quickReplies,
   conversationTags,
+  aiAssistantSettings,
 }: InboxViewProps) {
   const router = useRouter();
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
@@ -133,6 +141,35 @@ export function InboxView({
   // kết quả của request MỚI NHẤT đã gửi cho đúng hội thoại đó, bỏ qua response
   // đến muộn của các request đã bị "vượt mặt" — tránh giật/lùi trạng thái.
   const tagRequestSeqRef = React.useRef<Map<string, number>>(new Map());
+
+  // Gợi ý trả lời từ AI (xem AiSuggestionBar) — điền vào ô soạn tin qua ref
+  // (MessageComposer tự quản lý state nội bộ, không nhận value từ prop).
+  const composerRef = React.useRef<MessageComposerHandle>(null);
+  const [aiSuggestions, setAiSuggestions] = React.useState<string[]>([]);
+  const [aiSuggestionsLoading, setAiSuggestionsLoading] = React.useState(false);
+  // Đọc được cấu hình mới nhất bên trong closure của socket effect (chỉ chạy
+  // lại khi pageIdsKey đổi, xem effect bên dưới) mà không phải reconnect
+  // socket mỗi khi cấu hình AI đổi.
+  const aiAssistantSettingsRef = React.useRef(aiAssistantSettings);
+  React.useEffect(() => {
+    aiAssistantSettingsRef.current = aiAssistantSettings;
+  }, [aiAssistantSettings]);
+  // Bấm chọn hội thoại khác trong lúc 1 lượt sinh gợi ý cũ chưa xong -> chỉ
+  // áp dụng kết quả của lượt MỚI NHẤT, giống cơ chế tagRequestSeqRef ở trên.
+  const aiSuggestionsRequestIdRef = React.useRef(0);
+
+  async function fetchAiSuggestions(conversationId: string) {
+    if (!aiAssistantSettingsRef.current?.suggestReplyEnabled) return;
+    const requestId = ++aiSuggestionsRequestIdRef.current;
+    setAiSuggestionsLoading(true);
+    setAiSuggestions([]);
+    const result = await generateAiSuggestions(conversationId);
+    if (aiSuggestionsRequestIdRef.current !== requestId) return;
+    setAiSuggestionsLoading(false);
+    if (!("error" in result)) {
+      setAiSuggestions(result.suggestions);
+    }
+  }
 
   React.useEffect(() => {
     // auth dạng HÀM (không phải object tĩnh) — socket.io-client tự gọi lại
@@ -229,8 +266,32 @@ export function InboxView({
         updated.timeLabel = formatTimeLabel(payload.conversation.lastMessageAt);
         updated.isRead = isActive;
 
-        const rest = prev.filter((_, i) => i !== index);
-        return [updated, ...rest];
+        if (payload.conversationId === activeIdRef.current) {
+          void markConversationRead(payload.conversationId);
+          // "Khi khách nhắn tin"/"Luôn mở" -> sinh lại gợi ý mỗi khi khách gửi
+          // tin mới vào đúng hội thoại đang mở; "Khi mở hội thoại" chỉ sinh 1
+          // lần lúc chọn hội thoại (xem handleSelect), "Thủ công" không tự
+          // sinh lúc nào cả (chỉ qua nút trong AiSuggestionBar).
+          if (
+            payload.message.sender === "customer" &&
+            aiAssistantSettingsRef.current?.suggestReplyEnabled &&
+            (aiAssistantSettingsRef.current?.suggestReplyTrigger === "on_message" ||
+              aiAssistantSettingsRef.current?.suggestReplyTrigger === "always")
+          ) {
+            void fetchAiSuggestions(payload.conversationId);
+          }
+        } else if (payload.message.sender === "customer") {
+          // Chỉ báo toast cho tin của KHÁCH (không phải echo tin mình gửi) và
+          // KHÔNG phải hội thoại đang mở sẵn (đỡ làm phiền khi đang xem đúng
+          // hội thoại đó rồi) — bấm vào toast để mở thẳng hội thoại.
+          const conversationId = payload.conversationId;
+          toast({
+            title: payload.message.senderName || payload.conversation.customerName || "Khách hàng",
+            description: messagePreviewText(payload.message.text, payload.message.attachments),
+            avatarUrl: payload.message.senderAvatarUrl || payload.conversation.customerAvatarUrl,
+            onClick: () => handleSelect(conversationId),
+          });
+        }
       });
 
       if (payload.conversationId === activeIdRef.current) {
@@ -262,6 +323,20 @@ export function InboxView({
     setActiveId(id);
     setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, isRead: true } : c)));
     void markConversationRead(id);
+
+    const trigger = aiAssistantSettingsRef.current?.suggestReplyTrigger;
+    if (trigger === "on_open" || trigger === "always") {
+      void fetchAiSuggestions(id);
+    } else {
+      // "Khi khách nhắn tin" chỉ tự sinh khi có tin MỚI từ khách (xem
+      // socket handler "new_message" bên dưới), không phải lúc mở hội
+      // thoại; "Thủ công" chỉ sinh khi tự bấm nút — cả 2 đều KHÔNG tự sinh
+      // ở đây. Vẫn phải xoá gợi ý của hội thoại TRƯỚC đó, tránh hiện nhầm
+      // gợi ý cũ khi vừa chuyển sang.
+      aiSuggestionsRequestIdRef.current += 1;
+      setAiSuggestions([]);
+      setAiSuggestionsLoading(false);
+    }
   }
 
   // Hiện ngay các tin "đang gửi" (optimistic) bằng clientId tự sinh — khi tin
@@ -281,6 +356,13 @@ export function InboxView({
     if (text) parts.push({ clientId: `temp-${crypto.randomUUID()}`, text });
     if (imageUrls.length > 0) parts.push({ clientId: `temp-${crypto.randomUUID()}`, imageUrls });
     if (parts.length === 0) return;
+
+    // Vừa gửi tin thì gợi ý đang hiện (nếu có) đã lỗi thời — xoá ngay, huỷ
+    // luôn lượt fetch nào đang dở (vd đang loading do "manual"/"on_open")
+    // để nó không tự hiện lại đè lên sau khi resolve.
+    aiSuggestionsRequestIdRef.current += 1;
+    setAiSuggestions([]);
+    setAiSuggestionsLoading(false);
 
     const optimisticMessages: ConversationMessage[] = parts.map((part) => ({
       id: part.clientId,
@@ -451,7 +533,20 @@ export function InboxView({
                 activeTagIds={activeConversation.tags.map((t) => t.id)}
                 onToggleTag={handleToggleTag}
               />
-              <MessageComposer onSend={handleSend} quickReplies={quickReplies ?? []} />
+              {aiAssistantSettings?.suggestReplyEnabled && (
+                <AiSuggestionBar
+                  suggestions={aiSuggestions}
+                  loading={aiSuggestionsLoading}
+                  onSelect={(text) => composerRef.current?.setText(text)}
+                  manual={aiAssistantSettings.suggestReplyTrigger === "manual"}
+                  onRequest={() => fetchAiSuggestions(activeConversation.id)}
+                />
+              )}
+              <MessageComposer
+                ref={composerRef}
+                onSend={handleSend}
+                quickReplies={quickReplies ?? []}
+              />
             </div>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 text-slate-400">
