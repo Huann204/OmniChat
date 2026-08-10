@@ -266,36 +266,24 @@ export function InboxView({
         updated.timeLabel = formatTimeLabel(payload.conversation.lastMessageAt);
         updated.isRead = isActive;
 
-        if (payload.conversationId === activeIdRef.current) {
-          void markConversationRead(payload.conversationId);
-          // "Khi khách nhắn tin"/"Luôn mở" -> sinh lại gợi ý mỗi khi khách gửi
-          // tin mới vào đúng hội thoại đang mở; "Khi mở hội thoại" chỉ sinh 1
-          // lần lúc chọn hội thoại (xem handleSelect), "Thủ công" không tự
-          // sinh lúc nào cả (chỉ qua nút trong AiSuggestionBar).
-          if (
-            payload.message.sender === "customer" &&
-            aiAssistantSettingsRef.current?.suggestReplyEnabled &&
-            (aiAssistantSettingsRef.current?.suggestReplyTrigger === "on_message" ||
-              aiAssistantSettingsRef.current?.suggestReplyTrigger === "always")
-          ) {
-            void fetchAiSuggestions(payload.conversationId);
-          }
-        } else if (payload.message.sender === "customer") {
-          // Chỉ báo toast cho tin của KHÁCH (không phải echo tin mình gửi) và
-          // KHÔNG phải hội thoại đang mở sẵn (đỡ làm phiền khi đang xem đúng
-          // hội thoại đó rồi) — bấm vào toast để mở thẳng hội thoại.
-          const conversationId = payload.conversationId;
-          toast({
-            title: payload.message.senderName || payload.conversation.customerName || "Khách hàng",
-            description: messagePreviewText(payload.message.text, payload.message.attachments),
-            avatarUrl: payload.message.senderAvatarUrl || payload.conversation.customerAvatarUrl,
-            onClick: () => handleSelect(conversationId),
-          });
-        }
+        const rest = prev.filter((_, i) => i !== index);
+        return [updated, ...rest];
       });
 
       if (payload.conversationId === activeIdRef.current) {
         void markConversationRead(payload.conversationId);
+        // "Khi khách nhắn tin"/"Luôn gợi ý" -> sinh lại gợi ý mỗi khi khách
+        // gửi tin mới vào đúng hội thoại đang mở; "Khi mở hội thoại" chỉ
+        // sinh 1 lần lúc chọn hội thoại (xem handleSelect), "Thủ công"
+        // không tự sinh lúc nào cả (chỉ qua nút trong AiSuggestionBar).
+        if (
+          payload.message.sender === "customer" &&
+          aiAssistantSettingsRef.current?.suggestReplyEnabled &&
+          (aiAssistantSettingsRef.current?.suggestReplyTrigger === "on_message" ||
+            aiAssistantSettingsRef.current?.suggestReplyTrigger === "always")
+        ) {
+          void fetchAiSuggestions(payload.conversationId);
+        }
       } else if (payload.message.sender === "customer") {
         // Chỉ báo toast cho tin của KHÁCH (không phải echo tin mình gửi) và
         // KHÔNG phải hội thoại đang mở sẵn (đỡ làm phiền khi đang xem đúng
