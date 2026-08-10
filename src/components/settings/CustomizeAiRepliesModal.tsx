@@ -6,58 +6,61 @@ import { Modal } from "@/components/ui/Modal";
 import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/utils";
 import { toast } from "@/store/toast-store";
-
-interface AiReplyPreset {
-  id: string;
-  label: string;
-  enabled: boolean;
-  content: string;
-}
-
-const DEFAULT_PRESETS: AiReplyPreset[] = [
-  {
-    id: "1",
-    label: "Câu 1",
-    enabled: false,
-    content: "- Xưng em gọi bác\n- Luôn chào\n- Luôn cảm ơn",
-  },
-  {
-    id: "2",
-    label: "Câu 2",
-    enabled: false,
-    content: "Sử dụng tone formal cho phong cách nghiêm túc",
-  },
-  {
-    id: "3",
-    label: "Câu 3",
-    enabled: false,
-    content: "Sử dụng tone friendly cho phong cách thân thiện. Thêm emoji vào câu trả lời",
-  },
-];
+import { updateAiAssistantSettings } from "@/app/actions/aiAssistant";
+import type { AiReplyPreset } from "@/types/aiAssistant";
 
 interface CustomizeAiRepliesModalProps {
   open: boolean;
   onClose: () => void;
+  presets: AiReplyPreset[];
+  // Preset đã lưu thành công phía server — lift lên AiAssistantSettingsClient
+  // để lần mở modal sau (hoặc lúc sinh gợi ý ở Livechat) dùng đúng bản mới.
+  onSaved: (presets: AiReplyPreset[]) => void;
 }
 
-// Chỉ là UI tĩnh (chưa nối AI thật) — nội dung/bật-tắt chỉ sống trong state
-// của modal, mất khi đóng lại (đúng tinh thần "làm UI trước" như phần còn
-// lại của trang Trợ lý AI).
-export function CustomizeAiRepliesModal({ open, onClose }: CustomizeAiRepliesModalProps) {
-  const [presets, setPresets] = React.useState<AiReplyPreset[]>(DEFAULT_PRESETS);
-  const [selectedId, setSelectedId] = React.useState(DEFAULT_PRESETS[0].id);
+export function CustomizeAiRepliesModal({
+  open,
+  onClose,
+  presets: savedPresets,
+  onSaved,
+}: CustomizeAiRepliesModalProps) {
+  const [presets, setPresets] = React.useState<AiReplyPreset[]>(savedPresets);
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const [saving, setSaving] = React.useState(false);
+  const [prevOpen, setPrevOpen] = React.useState(open);
 
-  const selected = presets.find((p) => p.id === selectedId) ?? presets[0];
+  // Đồng bộ lại state nội bộ với bản đã lưu mỗi lần MỞ modal (không phải mỗi
+  // khi prop đổi) — tránh mất nội dung đang gõ dở nếu component re-render
+  // giữa chừng vì lý do khác trong lúc modal đang mở.
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setPresets(savedPresets);
+      setSelectedIndex(0);
+    }
+  }
+
+  const selected = presets[selectedIndex] ?? presets[0];
 
   function updateContent(content: string) {
-    setPresets((prev) => prev.map((p) => (p.id === selectedId ? { ...p, content } : p)));
+    setPresets((prev) => prev.map((p, i) => (i === selectedIndex ? { ...p, content } : p)));
   }
 
-  function toggleEnabled(id: string) {
-    setPresets((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
+  function toggleEnabled(index: number) {
+    setPresets((prev) => prev.map((p, i) => (i === index ? { ...p, enabled: !p.enabled } : p)));
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
+    const result = await updateAiAssistantSettings({ presets });
+    setSaving(false);
+
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+
+    onSaved(result.settings.presets);
     toast.success("Đã lưu câu trả lời tuỳ chỉnh");
     onClose();
   }
@@ -73,13 +76,23 @@ export function CustomizeAiRepliesModal({ open, onClose }: CustomizeAiRepliesMod
         <div className="flex w-[300px] shrink-0 flex-col border-r border-slate-200 bg-slate-50 p-4">
           <p className="mb-3 text-sm font-semibold text-slate-900">Danh sách câu trả lời</p>
           <div className="flex-1 space-y-2 overflow-y-auto">
-            {presets.map((preset) => {
-              const isSelected = preset.id === selectedId;
+            {presets.map((preset, index) => {
+              const isSelected = index === selectedIndex;
               return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => setSelectedId(preset.id)}
+                // Trong này có Switch (tự render 1 <button> riêng) — không thể
+                // bọc bằng <button> ngoài (HTML không cho phép button lồng
+                // button, gây lỗi hydration), dùng div + role="button" thay thế.
+                <div
+                  key={index}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedIndex(index)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedIndex(index);
+                    }
+                  }}
                   className={cn(
                     "block w-full rounded-xl border bg-white p-3 text-left transition-colors cursor-pointer",
                     isSelected
@@ -95,7 +108,7 @@ export function CustomizeAiRepliesModal({ open, onClose }: CustomizeAiRepliesMod
                     <span onClick={(e) => e.stopPropagation()}>
                       <Switch
                         checked={preset.enabled}
-                        onCheckedChange={() => toggleEnabled(preset.id)}
+                        onCheckedChange={() => toggleEnabled(index)}
                         aria-label={`Bật/tắt ${preset.label}`}
                       />
                     </span>
@@ -103,7 +116,7 @@ export function CustomizeAiRepliesModal({ open, onClose }: CustomizeAiRepliesMod
                   <p className="mt-1.5 whitespace-pre-line text-xs leading-relaxed text-slate-400">
                     {preset.content}
                   </p>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -145,9 +158,10 @@ export function CustomizeAiRepliesModal({ open, onClose }: CustomizeAiRepliesMod
           <button
             type="button"
             onClick={handleSave}
-            className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover cursor-pointer"
+            disabled={saving}
+            className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Lưu
+            {saving ? "Đang lưu..." : "Lưu"}
           </button>
         </div>
       </div>
