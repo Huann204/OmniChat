@@ -172,90 +172,99 @@ export function InboxView({
   }
 
   React.useEffect(() => {
-    let socket: Socket | null = null;
-    let cancelled = false;
+    // auth dạng HÀM (không phải object tĩnh) — socket.io-client tự gọi lại
+    // hàm này ở MỌI lần thử kết nối, kể cả các lần tự động reconnect sau khi
+    // rớt mạng, không chỉ lần đầu. Bắt buộc phải vậy vì vé chỉ sống 60s (xem
+    // server/src/utils/jwt.ts#signSocketTicket) — trước đây lấy vé 1 lần rồi
+    // nhét cứng vào object, nên mọi lần reconnect sau phút đầu tiên đều gửi
+    // lại vé đã hết hạn và bị server từ chối thẳng, khiến auto-reconnect của
+    // thư viện tồn tại trên danh nghĩa nhưng chưa từng thành công thật sự.
+    const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
+      auth: async (cb) => {
+        const ticket = await getSocketTicket();
+        cb({ ticket: ticket ?? "" });
+      },
+    });
 
-    (async () => {
-      const ticket = await getSocketTicket();
-      if (!ticket || cancelled) return;
+    socket.on("connect", () => {
+      for (const id of pageIds) {
+        socket.emit("join_page", id);
+      }
+    });
 
-      socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, { auth: { ticket } });
+    // Chỉ log để còn thấy trong console lúc debug — không toast, vì rớt
+    // mạng thoáng qua (đổi wifi, laptop ngủ...) là chuyện bình thường, tự
+    // reconnect ngầm được rồi (nay đã sửa), không cần làm phiền người dùng
+    // mỗi lần.
+    socket.on("connect_error", (err) => {
+      console.error("Lỗi kết nối socket:", err.message);
+    });
 
-      socket.on("connect", () => {
-        for (const id of pageIds) {
-          socket?.emit("join_page", id);
+    socket.on("new_message", (payload: NewMessageEvent) => {
+      // Phát âm thanh cho MỌI tin nhắn khách gửi tới (kể cả hội thoại đang
+      // mở sẵn) — khác toast (chỉ báo khi KHÔNG mở sẵn, xem bên dưới), vì
+      // âm thanh không gây rối màn hình như toast. .catch() bỏ qua lỗi
+      // NotAllowedError nếu trình duyệt chặn autoplay do chưa có tương tác
+      // nào của người dùng trong trang.
+      if (payload.message.sender === "customer") {
+        notificationSoundRef.current?.play().catch(() => {});
+      }
+
+      const { kind, text, attachmentUrls } = messageKindAndContent(
+        payload.message.text,
+        payload.message.attachments
+      );
+      const newMessage: ConversationMessage = {
+        id: payload.message.id,
+        sender: payload.message.sender,
+        kind,
+        text,
+        attachmentUrls,
+        senderName: payload.message.senderName,
+        senderAvatarUrl: payload.message.senderAvatarUrl,
+        time: formatClock(payload.message.createdAt),
+        createdAt: payload.message.createdAt,
+      };
+
+      setConversations((prev) => {
+        const index = prev.findIndex((c) => c.id === payload.conversationId);
+
+        if (index === -1) {
+          const newConversation: Conversation = {
+            id: payload.conversation.id,
+            pageId: payload.conversation.pageId,
+            type: payload.conversation.type,
+            customerName: payload.conversation.customerName || "Khách hàng",
+            customerAvatarUrl: payload.conversation.customerAvatarUrl,
+            isGroup: payload.conversation.isGroup,
+            // Hội thoại mới toanh chưa thể có thẻ gì — tags chỉ được gán
+            // qua thao tác thủ công trong QuickTagBar, không phải qua
+            // socket "new_message" (không liên quan tới việc gửi/nhận tin).
+            tags: [],
+            lastSeenLabel: "",
+            timeLabel: formatTimeLabel(payload.conversation.lastMessageAt),
+            isRead: false,
+            hasMoreMessages: false,
+            messages: [newMessage],
+          };
+          return [newConversation, ...prev];
         }
-      });
 
-      socket.on("new_message", (payload: NewMessageEvent) => {
-        // Phát âm thanh cho MỌI tin nhắn khách gửi tới (kể cả hội thoại đang
-        // mở sẵn) — khác toast (chỉ báo khi KHÔNG mở sẵn, xem bên dưới), vì
-        // âm thanh không gây rối màn hình như toast. .catch() bỏ qua lỗi
-        // NotAllowedError nếu trình duyệt chặn autoplay do chưa có tương tác
-        // nào của người dùng trong trang.
-        if (payload.message.sender === "customer") {
-          notificationSoundRef.current?.play().catch(() => {});
+        const conversation = prev[index];
+        // Echo của chính tin mình vừa gửi — đã hiện optimistic (và tự
+        // chuyển "sent") ở handleSend rồi, bỏ qua không thêm trùng.
+        if (
+          payload.message.clientId &&
+          conversation.messages.some((m) => m.id === payload.message.clientId)
+        ) {
+          return prev;
         }
 
-        const { kind, text, attachmentUrls } = messageKindAndContent(
-          payload.message.text,
-          payload.message.attachments
-        );
-        const newMessage: ConversationMessage = {
-          id: payload.message.id,
-          sender: payload.message.sender,
-          kind,
-          text,
-          attachmentUrls,
-          senderName: payload.message.senderName,
-          senderAvatarUrl: payload.message.senderAvatarUrl,
-          time: formatClock(payload.message.createdAt),
-          createdAt: payload.message.createdAt,
-        };
-
-        setConversations((prev) => {
-          const index = prev.findIndex((c) => c.id === payload.conversationId);
-
-          if (index === -1) {
-            const newConversation: Conversation = {
-              id: payload.conversation.id,
-              pageId: payload.conversation.pageId,
-              type: payload.conversation.type,
-              customerName: payload.conversation.customerName || "Khách hàng",
-              customerAvatarUrl: payload.conversation.customerAvatarUrl,
-              isGroup: payload.conversation.isGroup,
-              // Hội thoại mới toanh chưa thể có thẻ gì — tags chỉ được gán
-              // qua thao tác thủ công trong QuickTagBar, không phải qua
-              // socket "new_message" (không liên quan tới việc gửi/nhận tin).
-              tags: [],
-              lastSeenLabel: "",
-              timeLabel: formatTimeLabel(payload.conversation.lastMessageAt),
-              isRead: false,
-              hasMoreMessages: false,
-              messages: [newMessage],
-            };
-            return [newConversation, ...prev];
-          }
-
-          const conversation = prev[index];
-          // Echo của chính tin mình vừa gửi — đã hiện optimistic (và tự
-          // chuyển "sent") ở handleSend rồi, bỏ qua không thêm trùng.
-          if (
-            payload.message.clientId &&
-            conversation.messages.some((m) => m.id === payload.message.clientId)
-          ) {
-            return prev;
-          }
-
-          const isActive = payload.conversationId === activeIdRef.current;
-          const updated = { ...conversation };
-          updated.messages = [...updated.messages, newMessage];
-          updated.timeLabel = formatTimeLabel(payload.conversation.lastMessageAt);
-          updated.isRead = isActive;
-
-          const rest = prev.filter((_, i) => i !== index);
-          return [updated, ...rest];
-        });
+        const isActive = payload.conversationId === activeIdRef.current;
+        const updated = { ...conversation };
+        updated.messages = [...updated.messages, newMessage];
+        updated.timeLabel = formatTimeLabel(payload.conversation.lastMessageAt);
+        updated.isRead = isActive;
 
         if (payload.conversationId === activeIdRef.current) {
           void markConversationRead(payload.conversationId);
@@ -284,11 +293,25 @@ export function InboxView({
           });
         }
       });
-    })();
+
+      if (payload.conversationId === activeIdRef.current) {
+        void markConversationRead(payload.conversationId);
+      } else if (payload.message.sender === "customer") {
+        // Chỉ báo toast cho tin của KHÁCH (không phải echo tin mình gửi) và
+        // KHÔNG phải hội thoại đang mở sẵn (đỡ làm phiền khi đang xem đúng
+        // hội thoại đó rồi) — bấm vào toast để mở thẳng hội thoại.
+        const conversationId = payload.conversationId;
+        toast({
+          title: payload.message.senderName || payload.conversation.customerName || "Khách hàng",
+          description: messagePreviewText(payload.message.text, payload.message.attachments),
+          avatarUrl: payload.message.senderAvatarUrl || payload.conversation.customerAvatarUrl,
+          onClick: () => handleSelect(conversationId),
+        });
+      }
+    });
 
     return () => {
-      cancelled = true;
-      socket?.disconnect();
+      socket.disconnect();
     };
     // Chỉ reconnect khi tập hợp id thực sự đổi (so theo pageIdsKey) — dùng
     // trực tiếp mảng pageIds bên trong effect để join, không đưa nó vào
