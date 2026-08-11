@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Check, Loader2, Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User, X } from "lucide-react";
+import { ATTACHMENT_LABELS } from "@/lib/message-format";
 import { cn } from "@/lib/utils";
 import type { ConversationMessage } from "@/types/conversation";
 
@@ -348,13 +349,19 @@ function MessageRow({
 
   // Trả lời trích dẫn: cả Facebook lẫn Zalo đều hỗ trợ thật (Facebook qua
   // field reply_to.mid, không có trong tài liệu chính thức nhưng đã kiểm
-  // chứng hoạt động — xem facebook.service.ts), chỉ giới hạn tin TEXT (kênh
-  // nào cũng cần nội dung dạng chuỗi để trích dẫn). Thả icon thì CHỈ Zalo hỗ
-  // trợ (Facebook không có API cho Page tự thả icon, xem channels/types.ts).
+  // chứng hoạt động — xem facebook.service.ts) — áp dụng cho mọi loại tin
+  // của khách (kể cả ảnh/sticker/video/file, không chỉ text; server đã lưu
+  // đủ dữ liệu quote cho mọi loại, xem message.model.ts), trừ tin hệ thống
+  // (call_*). Thả icon thì CHỈ Zalo hỗ trợ (Facebook không có API cho Page
+  // tự thả icon, xem channels/types.ts).
   const canReact = canReplyReact && !isPage;
-  const canReply = !isPage && message.kind === "text" && !!message.text;
+  const canReply = !isPage && !message.kind.startsWith("call_");
+  const replyPreviewLabel =
+    message.kind === "text"
+      ? message.text ?? ""
+      : ATTACHMENT_LABELS[message.kind] ?? "[Tệp đính kèm]";
   const replyHandler = canReply
-    ? () => onReply?.({ id: message.id, text: message.text ?? "", senderLabel: senderName })
+    ? () => onReply?.({ id: message.id, text: replyPreviewLabel, senderLabel: senderName })
     : undefined;
   const reactHandler = canReact ? (icon: string) => onReact?.(message.id, icon) : undefined;
 
@@ -395,6 +402,16 @@ function MessageRow({
         {isPage && <MessageMeta name={senderName} time={message.time} />}
 
         <div className={cn("relative flex flex-col gap-1", isPage ? "items-end" : "items-start")}>
+          {message.replyPreviewText && (
+            <div
+              className={cn(
+                "max-w-[260px] truncate rounded-t-lg border-l-2 border-slate-300 bg-black/5 px-2.5 py-1 text-xs text-slate-500",
+                isPage && "text-right"
+              )}
+            >
+              {message.replyPreviewText}
+            </div>
+          )}
           {message.reactionIcon && (
             <span
               className="absolute -bottom-2 right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-xs shadow"
@@ -448,7 +465,12 @@ function MessageRow({
         </div>
 
         {!isPage && (
-          <MessageMeta name={senderName} time={message.time} onReact={reactHandler} />
+          <MessageMeta
+            name={senderName}
+            time={message.time}
+            onReply={replyHandler}
+            onReact={reactHandler}
+          />
         )}
       </div>
     );
