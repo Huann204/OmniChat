@@ -57,6 +57,9 @@ interface NewMessageEvent {
     // Chỉ có khi hội thoại là nhóm và tin do 1 thành viên khác gửi.
     senderName?: string;
     senderAvatarUrl?: string;
+    // Snippet khung trích dẫn nếu tin này LÀ 1 lời trả lời — xem
+    // message.model.ts#replyPreviewText.
+    replyPreviewText?: string;
     createdAt: string;
     // id tạm phía mình tự sinh lúc gửi — server echo lại nguyên văn (xem
     // NewMessageEvent trong realtime/socket.ts) để đối chiếu, biết đây là
@@ -236,6 +239,7 @@ export function InboxView({
         attachmentUrls,
         senderName: payload.message.senderName,
         senderAvatarUrl: payload.message.senderAvatarUrl,
+        replyPreviewText: payload.message.replyPreviewText,
         time: formatClock(payload.message.createdAt),
         createdAt: payload.message.createdAt,
       };
