@@ -35,6 +35,8 @@ interface RawMessage {
   attachments?: { type: string; url: string }[];
   senderName?: string;
   senderAvatarUrl?: string;
+  replyPreviewText?: string;
+  reactionIcon?: string;
   createdAt: string;
 }
 
@@ -66,6 +68,8 @@ export async function getOlderMessages(
           attachmentUrls,
           senderName: m.senderName,
           senderAvatarUrl: m.senderAvatarUrl,
+          replyPreviewText: m.replyPreviewText,
+          reactionIcon: m.reactionIcon,
           time: formatClock(m.createdAt),
           createdAt: m.createdAt,
         };
@@ -85,6 +89,10 @@ export interface SendMessagePart {
   clientId: string;
   text?: string;
   imageUrls?: string[];
+  // Chỉ có ý nghĩa khi có `text` — id 1 tin nhắn của khách muốn "Trả lời
+  // trích dẫn" (hiện chỉ Zalo hỗ trợ, xem MessageThread.tsx). Bỏ qua âm thầm
+  // phía server nếu không đủ dữ liệu để trích dẫn.
+  replyToMessageId?: string;
 }
 
 export interface SendMessagePartResult {
@@ -115,6 +123,30 @@ export async function sendMessage(
   } catch (err) {
     return {
       error: err instanceof ApiError ? err.message : "Không gửi được tin nhắn",
+    };
+  }
+}
+
+// Thả (icon là 1 trong ZALO_REACTIONS phía server) hoặc gỡ (icon="NONE")
+// reaction vào 1 tin nhắn của khách — hiện chỉ Zalo hỗ trợ, server tự báo
+// lỗi rõ ràng nếu gọi cho hội thoại Facebook.
+export async function reactToMessage(
+  conversationId: string,
+  messageId: string,
+  icon: string
+): Promise<{ reactionIcon?: string } | { error: string }> {
+  const token = await getSessionToken();
+  if (!token) return { error: "Chưa đăng nhập" };
+
+  try {
+    const data = await apiFetch<{ success: boolean; reactionIcon?: string }>(
+      `/conversations/${conversationId}/messages/${messageId}/reaction`,
+      { method: "PUT", headers: await authHeaders(token), body: JSON.stringify({ icon }) }
+    );
+    return { reactionIcon: data.reactionIcon };
+  } catch (err) {
+    return {
+      error: err instanceof ApiError ? err.message : "Không thả được icon",
     };
   }
 }

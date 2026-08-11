@@ -6,7 +6,12 @@ import { io, type Socket } from "socket.io-client";
 import { MessageSquareText } from "lucide-react";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { generateAiSuggestions } from "@/app/actions/aiAssistant";
-import { getOlderMessages, markConversationRead, sendMessage } from "@/app/actions/conversation";
+import {
+  getOlderMessages,
+  markConversationRead,
+  reactToMessage,
+  sendMessage,
+} from "@/app/actions/conversation";
 import { setConversationTags } from "@/app/actions/conversationTag";
 import { getSocketTicket } from "@/app/actions/socket";
 import {
@@ -25,7 +30,7 @@ import type { QuickReply } from "@/types/quickReply";
 import { InboxIconRail } from "./InboxIconRail";
 import { ConversationList } from "./ConversationList";
 import { ChatHeader } from "./ChatHeader";
-import { MessageThread } from "./MessageThread";
+import { MessageThread, type ReplyTarget } from "./MessageThread";
 import { QuickTagBar } from "./QuickTagBar";
 import { AiSuggestionBar } from "./AiSuggestionBar";
 import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
@@ -58,6 +63,12 @@ interface NewMessageEvent {
     // tin CHÍNH MÌNH vừa gửi (đã hiện optimistic rồi) hay tin mới thật sự.
     clientId?: string;
   };
+}
+
+interface MessageReactionEvent {
+  conversationId: string;
+  messageId: string;
+  reactionIcon?: string;
 }
 
 interface InboxViewProps {
@@ -100,6 +111,9 @@ export function InboxView({
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [activeTab, setActiveTab] = React.useState<string>(NAV_TABS[0]);
+  // Đang trả lời trích dẫn tin nào (bấm nút Trả lời trong MessageThread) —
+  // hiện thành 1 khung trên MessageComposer, xem handleReply/handleSend.
+  const [replyingTo, setReplyingTo] = React.useState<ReplyTarget | null>(null);
 
   // Chỉ "Hội thoại" (đang xem ở đây) là tab đã có thật — Đơn hàng/Bài
   // viết/Thống kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không
@@ -298,6 +312,25 @@ export function InboxView({
       }
     });
 
+    // Đồng bộ reaction agent vừa thả/gỡ ở tab/phiên khác đang mở cùng hội
+    // thoại (xem emitMessageReaction trong realtime/socket.ts) — bản thân
+    // tab vừa thả cũng nhận lại đúng event này, không sao vì set cùng 1 giá
+    // trị lại (idempotent), không cần lọc self-echo như new_message.
+    socket.on("message_reaction", (payload: MessageReactionEvent) => {
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === payload.conversationId
+            ? {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === payload.messageId ? { ...m, reactionIcon: payload.reactionIcon } : m
+                ),
+              }
+            : c
+        )
+      );
+    });
+
     return () => {
       socket.disconnect();
     };
@@ -309,6 +342,7 @@ export function InboxView({
 
   function handleSelect(id: string) {
     setActiveId(id);
+    setReplyingTo(null);
     setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, isRead: true } : c)));
     void markConversationRead(id);
 
@@ -335,13 +369,13 @@ export function InboxView({
   // text và imageUrls là 2 tin nhắn RIÊNG BIỆT nếu cả 2 cùng có — nhưng nếu
   // chọn nhiều ảnh, cả nhóm ảnh đó gộp chung 1 tin (message.attachments dạng
   // mảng của Facebook), không tách thành nhiều tin/bong bóng riêng.
-  async function handleSend(text: string, imageUrls: string[]) {
+  async function handleSend(text: string, imageUrls: string[], replyToMessageId?: string) {
     if (!activeConversation) return;
     const conversationId = activeConversation.id;
     const now = new Date().toISOString();
 
-    const parts: { clientId: string; text?: string; imageUrls?: string[] }[] = [];
-    if (text) parts.push({ clientId: `temp-${crypto.randomUUID()}`, text });
+    const parts: { clientId: string; text?: string; imageUrls?: string[]; replyToMessageId?: string }[] = [];
+    if (text) parts.push({ clientId: `temp-${crypto.randomUUID()}`, text, replyToMessageId });
     if (imageUrls.length > 0) parts.push({ clientId: `temp-${crypto.randomUUID()}`, imageUrls });
     if (parts.length === 0) return;
 
@@ -411,6 +445,46 @@ export function InboxView({
     result.results.forEach((r) => {
       if (r.error) toast.error(r.error);
     });
+  }
+
+  // Thả (hoặc gỡ, icon="NONE") icon vào 1 tin của khách — optimistic giống
+  // handleToggleTag, tự lùi lại nếu API lỗi. Không cần request-sequence guard
+  // như tag (chỉ 1 icon/lần, không có thao tác dồn dập liên tiếp trên cùng 1
+  // tin để mà bị lệch thứ tự).
+  async function handleReact(messageId: string, icon: string) {
+    if (!activeConversation) return;
+    const conversationId = activeConversation.id;
+    const previous = activeConversation.messages.find((m) => m.id === messageId)?.reactionIcon;
+
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === conversationId
+          ? {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === messageId ? { ...m, reactionIcon: icon === "NONE" ? undefined : icon } : m
+              ),
+            }
+          : c
+      )
+    );
+
+    const result = await reactToMessage(conversationId, messageId, icon);
+    if ("error" in result) {
+      toast.error(result.error);
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === conversationId
+            ? {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === messageId ? { ...m, reactionIcon: previous } : m
+                ),
+              }
+            : c
+        )
+      );
+    }
   }
 
   // Tải thêm tin nhắn cũ hơn khi cuộn lên đầu khung chat — cursor lấy từ
@@ -515,6 +589,9 @@ export function InboxView({
                 customerAvatarUrl={activeConversation.customerAvatarUrl}
                 hasMoreMessages={activeConversation.hasMoreMessages}
                 onLoadMore={() => handleLoadMoreMessages(activeConversation.id)}
+                channelType={activeConversation.type}
+                onReply={setReplyingTo}
+                onReact={handleReact}
               />
               <QuickTagBar
                 tags={conversationTags ?? []}
@@ -534,6 +611,8 @@ export function InboxView({
                 ref={composerRef}
                 onSend={handleSend}
                 quickReplies={quickReplies ?? []}
+                replyingTo={replyingTo}
+                onCancelReply={() => setReplyingTo(null)}
               />
             </div>
           ) : (

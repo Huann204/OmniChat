@@ -132,6 +132,8 @@ interface RawMessage {
   attachments?: { type: string; url: string }[];
   senderName?: string;
   senderAvatarUrl?: string;
+  replyPreviewText?: string;
+  reactionIcon?: string;
   createdAt: string;
 }
 
@@ -249,6 +251,8 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
         attachmentUrls,
         senderName: m.senderName,
         senderAvatarUrl: m.senderAvatarUrl,
+        replyPreviewText: m.replyPreviewText,
+        reactionIcon: m.reactionIcon,
         time: formatClock(m.createdAt),
         createdAt: m.createdAt,
       };

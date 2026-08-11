@@ -34,6 +34,12 @@ export interface ConversationMessage {
   // customerName/customerAvatarUrl (tên/avatar của cả nhóm).
   senderName?: string;
   senderAvatarUrl?: string;
+  // "Trả lời"/"Thả icon" — hiện chỉ Zalo hỗ trợ (Facebook không có API cho 2
+  // việc này, xem server/src/services/channels/types.ts). replyPreviewText
+  // = snippet tin gốc nếu tin NÀY là 1 lời trả lời trích dẫn. reactionIcon =
+  // icon agent đã thả vào tin NÀY (chỉ tin của khách mới thả được).
+  replyPreviewText?: string;
+  reactionIcon?: string;
 }
 
 export interface Conversation {
