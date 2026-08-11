@@ -424,9 +424,13 @@ export function InboxView({
       return;
     }
 
-    const statusByClientId = new Map(
-      result.results.map((r) => [r.clientId, r.error ? "failed" : "sent"] as const)
-    );
+    // Không đổi `m.id` sang id thật của server — vẫn phải giữ nguyên clientId
+    // để cơ chế chống trùng lúc socket "new_message" echo về sau (so khớp
+    // payload.message.clientId với m.id, xem effect kết nối socket) còn nhận
+    // ra đúng tin này. Chỉ merge thêm field mà optimistic message CHƯA CÓ vì
+    // chỉ server mới tính được — replyPreviewText là ví dụ điển hình, thiếu
+    // bước merge này thì khung trích dẫn "Trả lời" chỉ hiện đúng sau khi F5.
+    const resultByClientId = new Map(result.results.map((r) => [r.clientId, r]));
 
     setConversations((prev) =>
       prev.map((c) =>
@@ -434,8 +438,13 @@ export function InboxView({
           ? {
               ...c,
               messages: c.messages.map((m) => {
-                const status = statusByClientId.get(m.id);
-                return status ? { ...m, status } : m;
+                const r = resultByClientId.get(m.id);
+                if (!r) return m;
+                return {
+                  ...m,
+                  status: r.error ? "failed" : "sent",
+                  replyPreviewText: r.message?.replyPreviewText ?? m.replyPreviewText,
+                };
               }),
             }
           : c

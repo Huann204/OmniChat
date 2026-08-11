@@ -40,6 +40,23 @@ interface RawMessage {
   createdAt: string;
 }
 
+function mapRawMessage(m: RawMessage): ConversationMessage {
+  const { kind, text, attachmentUrls } = messageKindAndContent(m.text, m.attachments);
+  return {
+    id: m.id,
+    sender: m.sender,
+    kind,
+    text,
+    attachmentUrls,
+    senderName: m.senderName,
+    senderAvatarUrl: m.senderAvatarUrl,
+    replyPreviewText: m.replyPreviewText,
+    reactionIcon: m.reactionIcon,
+    time: formatClock(m.createdAt),
+    createdAt: m.createdAt,
+  };
+}
+
 // Tải thêm tin nhắn cũ hơn khi client cuộn lên đầu khung chat — before/
 // beforeId là cursor: createdAt + id của tin cũ nhất đang có ở client.
 export async function getOlderMessages(
@@ -58,22 +75,7 @@ export async function getOlderMessages(
 
     return {
       hasMore: data.hasMore,
-      messages: data.messages.map((m) => {
-        const { kind, text, attachmentUrls } = messageKindAndContent(m.text, m.attachments);
-        return {
-          id: m.id,
-          sender: m.sender,
-          kind,
-          text,
-          attachmentUrls,
-          senderName: m.senderName,
-          senderAvatarUrl: m.senderAvatarUrl,
-          replyPreviewText: m.replyPreviewText,
-          reactionIcon: m.reactionIcon,
-          time: formatClock(m.createdAt),
-          createdAt: m.createdAt,
-        };
-      }),
+      messages: data.messages.map(mapRawMessage),
     };
   } catch {
     return { messages: [], hasMore: false };
@@ -98,6 +100,11 @@ export interface SendMessagePart {
 export interface SendMessagePartResult {
   clientId: string;
   error?: string;
+  // Dữ liệu THẬT của tin vừa gửi (id thật thay cho clientId tạm, và các
+  // field chỉ server mới tính được như replyPreviewText) — dùng để đồng bộ
+  // lại tin đang hiện optimistic, tránh phải F5 mới thấy đúng (khung trích
+  // dẫn "Trả lời" là ví dụ điển hình, xem InboxView.tsx#handleSend).
+  message?: ConversationMessage;
 }
 
 // Gửi 1 hoặc nhiều tin nhắn (text và/hoặc ảnh) trong cùng 1 lượt bấm gửi.
@@ -113,13 +120,19 @@ export async function sendMessage(
   try {
     const data = await apiFetch<{
       success: boolean;
-      results: SendMessagePartResult[];
+      results: { clientId: string; error?: string; message?: RawMessage }[];
     }>(`/conversations/${conversationId}/messages`, {
       method: "POST",
       headers: await authHeaders(token),
       body: JSON.stringify({ parts }),
     });
-    return { results: data.results };
+    return {
+      results: data.results.map((r) => ({
+        clientId: r.clientId,
+        error: r.error,
+        message: r.message ? mapRawMessage(r.message) : undefined,
+      })),
+    };
   } catch (err) {
     return {
       error: err instanceof ApiError ? err.message : "Không gửi được tin nhắn",
