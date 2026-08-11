@@ -5,12 +5,44 @@ import { Check, Loader2, Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User,
 import { cn } from "@/lib/utils";
 import type { ConversationMessage } from "@/types/conversation";
 
+// Khớp CHANNEL_TYPE_ZALO_PERSONAL trong
+// server/src/models/connectedPage.model.ts — chỉ Zalo hỗ trợ "Trả lời"/"Thả
+// icon" (Facebook không có API cho 2 việc này, xem
+// server/src/services/channels/types.ts).
+const ZALO_CHANNEL_TYPE = 1;
+
+// Khớp ZALO_REACTIONS trong server/src/services/channels/zalo.channel.ts —
+// chỉ hiện emoji tương ứng để người dùng dễ nhận biết, giá trị gửi lên vẫn
+// là key (vd "HEART"), không phải emoji.
+const REACTION_OPTIONS: { key: string; emoji: string }[] = [
+  { key: "HEART", emoji: "❤️" },
+  { key: "LIKE", emoji: "👍" },
+  { key: "HAHA", emoji: "😆" },
+  { key: "WOW", emoji: "😮" },
+  { key: "CRY", emoji: "😢" },
+  { key: "ANGRY", emoji: "😠" },
+];
+const REACTION_EMOJI: Record<string, string> = Object.fromEntries(
+  REACTION_OPTIONS.map((r) => [r.key, r.emoji])
+);
+
+export interface ReplyTarget {
+  id: string;
+  text: string;
+  senderLabel: string;
+}
+
 interface MessageThreadProps {
   messages: ConversationMessage[];
   customerName: string;
   customerAvatarUrl?: string;
   hasMoreMessages?: boolean;
   onLoadMore?: () => Promise<void>;
+  // Kênh của hội thoại (Conversation.type) — quyết định có hiện nút Trả
+  // lời/Thả icon hay không (chỉ Zalo).
+  channelType?: number;
+  onReply?: (target: ReplyTarget) => void;
+  onReact?: (messageId: string, icon: string) => void;
 }
 
 // Cuộn lên gần sát đầu (trong khoảng này) mới coi là "muốn xem thêm tin cũ".
@@ -22,6 +54,9 @@ export function MessageThread({
   customerAvatarUrl,
   hasMoreMessages = false,
   onLoadMore,
+  channelType,
+  onReply,
+  onReact,
 }: MessageThreadProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
@@ -117,6 +152,9 @@ export function MessageThread({
             showAvatar={isLastInGroup}
             onImageLoad={handleImageLoad}
             onImageClick={setLightboxUrl}
+            canReplyReact={channelType === ZALO_CHANNEL_TYPE}
+            onReply={onReply}
+            onReact={onReact}
           />
         );
       })}
@@ -147,23 +185,77 @@ export function MessageThread({
   );
 }
 
-function MessageMeta({ name, time }: { name: string; time: string }) {
+function MessageMeta({
+  name,
+  time,
+  onReply,
+  onReact,
+}: {
+  name: string;
+  time: string;
+  // Chỉ hiện nút tương ứng khi có handler — MessageRow đã tự tính điều kiện
+  // (kênh, sender, loại tin) rồi mới quyết định truyền hay không, ở đây
+  // không cần biết thêm gì về ngữ cảnh.
+  onReply?: () => void;
+  onReact?: (icon: string) => void;
+}) {
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  const pickerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!pickerOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [pickerOpen]);
+
   return (
     <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100">
-      <button
-        type="button"
-        className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-black/5 hover:text-slate-600 cursor-pointer"
-        aria-label="Thả cảm xúc"
-      >
-        <Smile className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-black/5 hover:text-slate-600 cursor-pointer"
-        aria-label="Trả lời"
-      >
-        <Reply className="h-4 w-4" />
-      </button>
+      {onReact && (
+        <div className="relative" ref={pickerRef}>
+          <button
+            type="button"
+            onClick={() => setPickerOpen((v) => !v)}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-black/5 hover:text-slate-600 cursor-pointer"
+            aria-label="Thả cảm xúc"
+          >
+            <Smile className="h-4 w-4" />
+          </button>
+          {pickerOpen && (
+            <div className="absolute bottom-full z-20 mb-1 flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-1 shadow-lg">
+              {REACTION_OPTIONS.map((r) => (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() => {
+                    onReact(r.key);
+                    setPickerOpen(false);
+                  }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-base transition-transform hover:scale-125 cursor-pointer"
+                  aria-label={r.key}
+                  title={r.key}
+                >
+                  {r.emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {onReply && (
+        <button
+          type="button"
+          onClick={onReply}
+          className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-black/5 hover:text-slate-600 cursor-pointer"
+          aria-label="Trả lời"
+        >
+          <Reply className="h-4 w-4" />
+        </button>
+      )}
       <button
         type="button"
         className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-black/5 hover:text-slate-600 cursor-pointer"
@@ -219,6 +311,12 @@ interface MessageRowProps {
   // Bấm vào ảnh/sticker trong tin nhắn — mở xem cỡ lớn (lightbox), xem
   // MessageThread.
   onImageClick?: (url: string) => void;
+  // Chỉ true khi hội thoại là Zalo — Trả lời/Thả icon chỉ hiện + hoạt động
+  // được trên tin của KHÁCH (không phải tin mình gửi, xem giải thích ở
+  // server/src/models/message.model.ts#reactionIcon).
+  canReplyReact?: boolean;
+  onReply?: (target: ReplyTarget) => void;
+  onReact?: (messageId: string, icon: string) => void;
 }
 
 function MessageRow({
@@ -228,6 +326,9 @@ function MessageRow({
   showAvatar,
   onImageLoad,
   onImageClick,
+  canReplyReact,
+  onReply,
+  onReact,
 }: MessageRowProps) {
   if (message.sender === "system") {
     return (
@@ -244,6 +345,18 @@ function MessageRow({
   // customerName/customerAvatarUrl như cũ, không đổi hành vi.
   const senderName = isPage ? "Bạn" : message.senderName ?? customerName;
   const senderAvatarUrl = isPage ? undefined : message.senderAvatarUrl ?? customerAvatarUrl;
+
+  // Trả lời trích dẫn: cả Facebook lẫn Zalo đều hỗ trợ thật (Facebook qua
+  // field reply_to.mid, không có trong tài liệu chính thức nhưng đã kiểm
+  // chứng hoạt động — xem facebook.service.ts), chỉ giới hạn tin TEXT (kênh
+  // nào cũng cần nội dung dạng chuỗi để trích dẫn). Thả icon thì CHỈ Zalo hỗ
+  // trợ (Facebook không có API cho Page tự thả icon, xem channels/types.ts).
+  const canReact = canReplyReact && !isPage;
+  const canReply = !isPage && message.kind === "text" && !!message.text;
+  const replyHandler = canReply
+    ? () => onReply?.({ id: message.id, text: message.text ?? "", senderLabel: senderName })
+    : undefined;
+  const reactHandler = canReact ? (icon: string) => onReact?.(message.id, icon) : undefined;
 
   if (message.kind === "call_request") {
     return (
@@ -281,7 +394,15 @@ function MessageRow({
         )}
         {isPage && <MessageMeta name={senderName} time={message.time} />}
 
-        <div className={cn("flex flex-col gap-1", isPage ? "items-end" : "items-start")}>
+        <div className={cn("relative flex flex-col gap-1", isPage ? "items-end" : "items-start")}>
+          {message.reactionIcon && (
+            <span
+              className="absolute -bottom-2 right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-xs shadow"
+              title={message.reactionIcon}
+            >
+              {REACTION_EMOJI[message.reactionIcon] ?? "❤️"}
+            </span>
+          )}
           {isMultiImage ? (
             <div className="flex max-w-[260px] flex-wrap gap-1">
               {urls.map((url, i) => (
@@ -326,7 +447,9 @@ function MessageRow({
           )}
         </div>
 
-        {!isPage && <MessageMeta name={senderName} time={message.time} />}
+        {!isPage && (
+          <MessageMeta name={senderName} time={message.time} onReact={reactHandler} />
+        )}
       </div>
     );
   }
@@ -373,13 +496,33 @@ function MessageRow({
       )}
       {isPage && <MessageMeta name={senderName} time={message.time} />}
 
-      <div
-        className={cn(
-          "max-w-sm rounded-2xl px-4 py-2 text-sm shadow-sm",
-          isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
+      <div className="relative max-w-sm">
+        {message.replyPreviewText && (
+          <div
+            className={cn(
+              "mb-0.5 truncate rounded-t-lg border-l-2 border-slate-300 bg-black/5 px-2.5 py-1 text-xs text-slate-500",
+              isPage && "text-right"
+            )}
+          >
+            {message.replyPreviewText}
+          </div>
         )}
-      >
-        {message.text}
+        <div
+          className={cn(
+            "rounded-2xl px-4 py-2 text-sm shadow-sm",
+            isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
+          )}
+        >
+          {message.text}
+        </div>
+        {message.reactionIcon && (
+          <span
+            className="absolute -bottom-2 right-1 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-xs shadow"
+            title={message.reactionIcon}
+          >
+            {REACTION_EMOJI[message.reactionIcon] ?? "❤️"}
+          </span>
+        )}
       </div>
 
       {isPage && (
@@ -399,7 +542,14 @@ function MessageRow({
         </span>
       )}
 
-      {!isPage && <MessageMeta name={senderName} time={message.time} />}
+      {!isPage && (
+        <MessageMeta
+          name={senderName}
+          time={message.time}
+          onReply={replyHandler}
+          onReact={reactHandler}
+        />
+      )}
     </div>
   );
 }
