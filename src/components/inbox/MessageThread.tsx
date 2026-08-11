@@ -12,9 +12,9 @@ import type { ConversationMessage } from "@/types/conversation";
 // server/src/services/channels/types.ts).
 const ZALO_CHANNEL_TYPE = 1;
 
-// Khớp ZALO_REACTIONS trong server/src/services/channels/zalo.channel.ts —
-// chỉ hiện emoji tương ứng để người dùng dễ nhận biết, giá trị gửi lên vẫn
-// là key (vd "HEART"), không phải emoji.
+// Bộ icon cho AGENT chọn khi thả — khớp ZALO_REACTIONS trong
+// server/src/services/channels/zalo.channel.ts, gửi lên server bằng KEY (vd
+// "HEART"), không phải emoji hay mã thô.
 const REACTION_OPTIONS: { key: string; emoji: string }[] = [
   { key: "HEART", emoji: "❤️" },
   { key: "LIKE", emoji: "👍" },
@@ -23,9 +23,69 @@ const REACTION_OPTIONS: { key: string; emoji: string }[] = [
   { key: "CRY", emoji: "😢" },
   { key: "ANGRY", emoji: "😠" },
 ];
-const REACTION_EMOJI: Record<string, string> = Object.fromEntries(
-  REACTION_OPTIONS.map((r) => [r.key, r.emoji])
-);
+
+// Bảng tra hiển thị — KHÁC bộ trên: message.reactionIcon luôn lưu MÃ THÔ của
+// Zalo (vd "/-heart"), không phải key ngữ nghĩa, vì field này còn được ghi
+// bởi reaction khách TỰ thả từ app Zalo thật của họ (nghe qua listener, xem
+// zaloSession.manager.ts) — khách có thể thả bất kỳ icon nào trong bộ ~50
+// loại của Zalo, không chỉ 6 loại agent chọn được qua REACTION_OPTIONS, nên
+// cần bảng đầy đủ hơn để hiện đúng thay vì rơi vào fallback chung chung.
+const RAW_REACTION_EMOJI: Record<string, string> = {
+  "/-heart": "❤️",
+  "/-strong": "👍",
+  ":>": "😆",
+  ":o": "😮",
+  ":-((": "😢",
+  ":-h": "😠",
+  ":-*": "😘",
+  ":')": "😂",
+  "/-shit": "💩",
+  "/-rose": "🌹",
+  "/-break": "💔",
+  "/-weak": "👎",
+  ";xx": "😍",
+  ";-/": "😕",
+  ";-)": "😉",
+  "/-fade": "😵",
+  "/-li": "☀️",
+  "/-bd": "🎂",
+  "/-bome": "💣",
+  "/-ok": "👌",
+  "/-v": "✌️",
+  "/-thanks": "🙏",
+  "/-punch": "👊",
+  "/-share": "📤",
+  "_()_": "🙏",
+  "/-no": "🚫",
+  "/-bad": "👎",
+  "/-loveu": "🥰",
+  "--b": "😞",
+  ":((": "😭",
+  "x-)": "😎",
+  "8-)": "🤓",
+  ";-d": "😃",
+  "b-)": "😎",
+  ":--|": "😐",
+  "p-(": "🙁",
+  ":-bye": "👋",
+  "|-)": "😴",
+  ":wipe": "😓",
+  ":-dig": "⛏️",
+  "&-(": "😧",
+  ":handclap": "👏",
+  ">-|": "😡",
+  ":-f": "🪑",
+  ":-l": "🪑",
+  ":-r": "🪑",
+  ";-x": "🤐",
+  ":-o": "😲",
+  ";-s": "😳",
+  ";-a": "😨",
+  ":-<": "😟",
+  ":))": "😄",
+  "$-)": "🤑",
+  "/-beer": "🍺",
+};
 
 export interface ReplyTarget {
   id: string;
@@ -417,7 +477,7 @@ function MessageRow({
               className="absolute -bottom-2 right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-xs shadow"
               title={message.reactionIcon}
             >
-              {REACTION_EMOJI[message.reactionIcon] ?? "❤️"}
+              {RAW_REACTION_EMOJI[message.reactionIcon] ?? "❤️"}
             </span>
           )}
           {isMultiImage ? (
@@ -542,7 +602,7 @@ function MessageRow({
             className="absolute -bottom-2 right-1 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-xs shadow"
             title={message.reactionIcon}
           >
-            {REACTION_EMOJI[message.reactionIcon] ?? "❤️"}
+            {RAW_REACTION_EMOJI[message.reactionIcon] ?? "❤️"}
           </span>
         )}
       </div>
