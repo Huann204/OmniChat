@@ -70,3 +70,30 @@ export async function switchShop(shopId: string) {
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
+
+export interface SupportShopResult {
+  id: string;
+  name: string;
+  owner: { name: string; email: string } | null;
+}
+
+// Chỉ nhân viên hỗ trợ nền tảng (isSupportAdmin) gọi thành công — BE tự chặn
+// lại (requireSupportAdmin), xem shop.controller.ts#listAllShops. Tìm TOÀN
+// BỘ Shop trong hệ thống theo tên Shop hoặc tên/email chủ sở hữu, để chọn
+// đổi vào hỗ trợ trực tiếp — đổi thật vẫn dùng switchShop() ở trên (giống
+// hệt luồng đổi Shop bình thường).
+export async function searchAllShops(search: string): Promise<SupportShopResult[]> {
+  const token = await getSessionToken();
+  if (!token) return [];
+
+  try {
+    const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : "";
+    const data = await apiFetch<{ success: boolean; shops: SupportShopResult[] }>(
+      `/shops/all${query}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data.shops;
+  } catch {
+    return [];
+  }
+}
