@@ -169,8 +169,17 @@ export function TeamMemberManager({
           <div className="divide-y divide-slate-100">
             {members.map((member) => (
               <div key={member.id} className="flex items-center gap-3 py-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                  <User className="h-4.5 w-4.5" />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400">
+                  {member.user.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={member.user.avatarUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-4.5 w-4.5" />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">{member.user.name}</p>
