@@ -11,21 +11,17 @@ export default async function DashboardLoading() {
           <img src="/hchat.png" alt="Hchat Logo" className="h-10 w-auto object-contain" />
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <div className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3">
+            <div className="flex items-center rounded-full p-1">
               {user ? (
-                <>
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-700">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
-                  <span className="hidden truncate max-w-[8rem] text-sm text-white sm:inline">
-                    {user.name}
-                  </span>
-                </>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-slate-700">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    user.name.charAt(0).toUpperCase()
+                  )}
+                </span>
               ) : (
-                <>
-                  <span className="h-8 w-8 rounded-full bg-white/20 animate-pulse" />
-                  <span className="hidden h-4 w-24 rounded bg-white/20 animate-pulse sm:inline" />
-                </>
+                <span className="h-8 w-8 rounded-full bg-white/20 animate-pulse" />
               )}
             </div>
             <div className="relative flex h-9 w-9 items-center justify-center rounded-full text-white/90">

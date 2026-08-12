@@ -14,6 +14,7 @@ export interface SessionUser {
   id: string;
   name: string;
   email: string;
+  avatarUrl?: string;
 }
 
 // Ưu tiên đọc từ cookie user_info (ghi lúc login/register, xem session.ts)

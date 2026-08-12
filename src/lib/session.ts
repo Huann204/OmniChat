@@ -17,6 +17,7 @@ export interface CachedUser {
   id: string;
   name: string;
   email: string;
+  avatarUrl?: string;
 }
 
 // user_info không phải thông tin bí mật/định danh phiên (chỉ để hiển thị
