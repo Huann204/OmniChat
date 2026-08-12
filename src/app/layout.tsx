@@ -20,12 +20,17 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Hchat | Nền tảng quản lý tin nhắn và AI Chatbot",
   description: "Quản lý tất cả tin nhắn khách hàng trong một nơi. Tự động hóa bán hàng với AI Chatbot thông minh trên Facebook, Zalo, Instagram, WhatsApp, và Website.",
+  icons: {
+    icon: "/favi.png",
+    shortcut: "/favi.png",
+    apple: "/favi.png",
+  },
   openGraph: {
     title: "Hchat | Nền tảng quản lý tin nhắn và AI Chatbot",
     description: "Quản lý tất cả tin nhắn khách hàng trong một nơi. Tự động hóa bán hàng với AI Chatbot thông minh.",
     type: "website",
     locale: "vi_VN",
-    url: "https://hchat.vn",
+    url: "https://hchat.site",
   }
 };
 
