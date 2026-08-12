@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { BsFillBellFill, BsPersonFill } from "react-icons/bs";
+import { BsFillBellFill, BsPersonFill, BsShieldLock } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ShopSwitcherMenu } from "@/components/dashboard/ShopSwitcherMenu";
@@ -29,6 +29,7 @@ export function DashboardNavbar({
   // Ảnh đại diện lấy từ store (đồng bộ realtime sau khi đổi ở /profile, xem
   // ProfileEditor.tsx) — userName/userEmail vẫn giữ nguyên qua props như cũ.
   const avatarUrl = useAuthStore((state) => state.user?.avatarUrl);
+  const isSupportAdmin = useAuthStore((state) => state.user?.isSupportAdmin);
 
   return (
     <header className={cn("bg-[rgb(80,109,173)]", className)}>
@@ -93,6 +94,16 @@ export function DashboardNavbar({
                     <BsPersonFill className="h-4 w-4" />
                     Hồ sơ
                   </Link>
+                  {isSupportAdmin && (
+                    <Link
+                      href="/cms"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-normal text-slate-700 hover:bg-slate-50"
+                    >
+                      <BsShieldLock className="h-4 w-4" />
+                      CMS
+                    </Link>
+                  )}
                   <LogoutButton
                     variant="ghost"
                     className={cn(

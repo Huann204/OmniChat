@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useActionState, useTransition } from "react";
 import { BsCheckLg, BsChevronDown, BsPlusLg, BsSearch } from "react-icons/bs";
-import { Loader2 } from "lucide-react";
+import { LifeBuoy, Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store-provider";
@@ -25,6 +25,7 @@ export function ShopSwitcherMenu() {
 
   const shops = useAuthStore((state) => state.shops);
   const currentShopId = useAuthStore((state) => state.currentShopId);
+  const isSupportAdmin = useAuthStore((state) => state.user?.isSupportAdmin);
   const currentShop = shops.find((s) => s.id === currentShopId);
 
   const filteredShops = shops.filter((s) =>
@@ -41,11 +42,17 @@ export function ShopSwitcherMenu() {
   // chuyển quyền owner cho người khác rồi tự xoá chính mình khỏi Shop đó,
   // removeMember không chặn tự xoá bản thân — xem shop.controller.ts) xử lý
   // riêng bên dưới bằng nút "Tạo Shop" luôn hiện, không dựa vào Shop có sẵn.
+  //
+  // BỎ QUA effect này với nhân viên hỗ trợ (isSupportAdmin) — với họ,
+  // currentShopId không khớp Shop nào trong `shops` (danh sách Shop thật của
+  // CHÍNH họ) là chuyện BÌNH THƯỜNG khi đang đổi vào hỗ trợ Shop khách (xem
+  // SupportSwitchModal), không phải lỗi cần tự sửa. Nếu không loại trừ, effect
+  // này sẽ tự đá họ về Shop của mình NGAY sau khi vừa đổi vào Shop khách.
   React.useEffect(() => {
-    if (!currentShop && shops.length > 0) {
+    if (!currentShop && shops.length > 0 && !isSupportAdmin) {
       switchShop(shops[0].id);
     }
-  }, [currentShop, shops]);
+  }, [currentShop, shops, isSupportAdmin]);
 
   function handleSwitch(shop: AuthShop) {
     if (shop.id === currentShopId) {
@@ -60,11 +67,21 @@ export function ShopSwitcherMenu() {
 
   // Thật sự không còn Shop nào (đã rời/bị xoá khỏi Shop cuối cùng) — không
   // có Shop nào để hiện tên/vai trò hay để chuyển tới, chỉ còn đường duy
-  // nhất là tạo Shop mới. Vẫn phải hiện 1 nút bấm được ở đây vì đây là nơi
-  // DUY NHẤT có modal "Tạo Shop" trong toàn app.
-  if (shops.length === 0) {
-    return (
-      <>
+  // nhất là tạo Shop mới.
+  const noShops = shops.length === 0;
+  // Đang trong lúc hỗ trợ Shop khách (isSupportAdmin, currentShopId không
+  // khớp Shop nào của chính mình) — khác hẳn pendingAutoSwitch bên dưới,
+  // đây là trạng thái ổn định, có UI riêng (nút "Về Shop của tôi").
+  const inSupportMode = !noShops && !currentShop && isSupportAdmin;
+  // Đang tự chuyển sang Shop khác ở effect trên (currentShopId cũ chưa kịp
+  // cập nhật) — chưa có gì hợp lệ để hiện, đợi effect chạy xong rồi render
+  // lại với currentShop mới. Không tính trường hợp inSupportMode (effect đó
+  // đã loại trừ isSupportAdmin, sẽ không tự chuyển).
+  const pendingAutoSwitch = !noShops && !currentShop && !isSupportAdmin;
+
+  return (
+    <>
+      {noShops && (
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
@@ -73,113 +90,116 @@ export function ShopSwitcherMenu() {
           <BsPlusLg className="h-4 w-4" />
           Tạo Shop
         </button>
-        <CreateShopModal open={createOpen} onClose={() => setCreateOpen(false)} />
-      </>
-    );
-  }
+      )}
 
-  // Đang tự chuyển sang Shop khác ở effect trên (currentShopId cũ chưa kịp
-  // cập nhật) — chưa có gì hợp lệ để hiện, đợi effect chạy xong rồi render
-  // lại với currentShop mới.
-  if (!currentShop) return null;
-
-  return (
-    <>
-      <div className="relative">
+      {inSupportMode && (
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Chuyển Shop"
-          aria-expanded={open}
-          className="flex items-center gap-2 rounded-lg py-1 pl-2 pr-1.5 transition-colors hover:bg-white/15 cursor-pointer"
+          onClick={() => switchShop(shops[0].id)}
+          className="flex items-center gap-1.5 rounded-lg bg-amber-400/20 py-1.5 pl-2.5 pr-3 text-xs font-semibold text-amber-100 transition-colors hover:bg-amber-400/30 cursor-pointer"
         >
-          <span className="hidden flex-col items-end leading-tight sm:flex">
-            <span className="max-w-[180px] truncate text-sm font-normal text-white">
-              {currentShop.name}
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-white/70">
-              {SHOP_ROLE_LABELS[currentShop.role]}
-            </span>
-          </span>
-          <BsChevronDown
-            className={cn("h-4 w-4 text-white/80 transition-transform", open && "rotate-180")}
-          />
+          <LifeBuoy className="h-3.5 w-3.5" />
+          Đang hỗ trợ Shop khác · Về Shop của tôi
         </button>
+      )}
 
-        {open && (
-          <>
-            <div className="fixed inset-0 z-10 bg-black/20 sm:bg-transparent" onClick={() => setOpen(false)} />
-            <div className="fixed left-3 right-3 top-14 z-20 mt-2 max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[420px] sm:max-w-none">
-              <div className="flex items-center gap-2 border-b border-slate-100 p-3">
-                <div className="relative flex-1 min-w-0">
-                  <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Tìm kiếm"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
-                  />
+      {currentShop && (
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Chuyển Shop"
+            aria-expanded={open}
+            className="flex items-center gap-2 rounded-lg py-1 pl-2 pr-1.5 transition-colors hover:bg-white/15 cursor-pointer"
+          >
+            <span className="hidden flex-col items-end leading-tight sm:flex">
+              <span className="max-w-[180px] truncate text-sm font-normal text-white">
+                {currentShop.name}
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-white/70">
+                {SHOP_ROLE_LABELS[currentShop.role]}
+              </span>
+            </span>
+            <BsChevronDown
+              className={cn("h-4 w-4 text-white/80 transition-transform", open && "rotate-180")}
+            />
+          </button>
+
+          {open && (
+            <>
+              <div className="fixed inset-0 z-10 bg-black/20 sm:bg-transparent" onClick={() => setOpen(false)} />
+              <div className="fixed left-3 right-3 top-14 z-20 mt-2 max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[420px] sm:max-w-none">
+                <div className="flex items-center gap-2 border-b border-slate-100 p-3">
+                  <div className="relative flex-1 min-w-0">
+                    <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Tìm kiếm"
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      setCreateOpen(true);
+                    }}
+                    className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+                  >
+                    <BsPlusLg className="h-4 w-4" />
+                    Tạo shop
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    setCreateOpen(true);
-                  }}
-                  className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-                >
-                  <BsPlusLg className="h-4 w-4" />
-                  Tạo shop
-                </button>
-              </div>
 
-              <div className="grid grid-cols-[1fr_auto] gap-x-4 px-4 pt-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                <span>Tên shop</span>
-                <span>Quyền</span>
-              </div>
+                <div className="grid grid-cols-[1fr_auto] gap-x-4 px-4 pt-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  <span>Tên shop</span>
+                  <span>Quyền</span>
+                </div>
 
-              <div className="max-h-72 overflow-y-auto pb-2">
-                {filteredShops.length === 0 && (
-                  <p className="px-4 py-6 text-center text-sm text-slate-400">
-                    Không tìm thấy shop nào.
-                  </p>
-                )}
-                {filteredShops.map((shop) => {
-                  const isCurrent = shop.id === currentShopId;
-                  return (
-                    <button
-                      key={shop.id}
-                      type="button"
-                      disabled={switchingId === shop.id}
-                      onClick={() => handleSwitch(shop)}
-                      className={cn(
-                        "grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-x-4 px-4 py-2.5 text-left transition-colors disabled:cursor-pointer disabled:opacity-60",
-                        isCurrent ? "bg-primary/5" : "hover:bg-slate-50"
-                      )}
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-slate-900">
-                          {shop.name}
-                        </span>
-                        {isCurrent && <BsCheckLg className="h-3.5 w-3.5 shrink-0 text-primary" />}
-                      </span>
-                      <span className="flex items-center gap-2 text-sm text-slate-500">
-                        {switchingId === shop.id && (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <div className="max-h-72 overflow-y-auto pb-2">
+                  {filteredShops.length === 0 && (
+                    <p className="px-4 py-6 text-center text-sm text-slate-400">
+                      Không tìm thấy shop nào.
+                    </p>
+                  )}
+                  {filteredShops.map((shop) => {
+                    const isCurrent = shop.id === currentShopId;
+                    return (
+                      <button
+                        key={shop.id}
+                        type="button"
+                        disabled={switchingId === shop.id}
+                        onClick={() => handleSwitch(shop)}
+                        className={cn(
+                          "grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-x-4 px-4 py-2.5 text-left transition-colors disabled:cursor-pointer disabled:opacity-60",
+                          isCurrent ? "bg-primary/5" : "hover:bg-slate-50"
                         )}
-                        {SHOP_ROLE_LABELS[shop.role]}
-                      </span>
-                    </button>
-                  );
-                })}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-slate-900">
+                            {shop.name}
+                          </span>
+                          {isCurrent && <BsCheckLg className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                        </span>
+                        <span className="flex items-center gap-2 text-sm text-slate-500">
+                          {switchingId === shop.id && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          )}
+                          {SHOP_ROLE_LABELS[shop.role]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
+      )}
 
-      <CreateShopModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      {!pendingAutoSwitch && <CreateShopModal open={createOpen} onClose={() => setCreateOpen(false)} />}
     </>
   );
 }

@@ -15,6 +15,9 @@ export interface SessionUser {
   name: string;
   email: string;
   avatarUrl?: string;
+  // Chỉ dùng để quyết định có hiện UI "đổi vào Shop khách để hỗ trợ" hay
+  // không — quyền thật luôn được BE kiểm tra lại, xem shop.controller.ts#listAllShops.
+  isSupportAdmin?: boolean;
 }
 
 // Luôn gọi /auth/me lấy dữ liệu mới nhất — trước đây có cache riêng ở cookie

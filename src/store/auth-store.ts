@@ -5,6 +5,7 @@ export interface AuthUser {
   name: string;
   email: string;
   avatarUrl?: string;
+  isSupportAdmin?: boolean;
 }
 
 export interface AuthShop {
