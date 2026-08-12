@@ -92,7 +92,7 @@ export function ConversationTagManager({ initialItems }: ConversationTagManagerP
       <h1 className="mb-4 text-xl font-semibold text-slate-900">Thẻ hội thoại</h1>
 
       <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[8px]">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-sm text-slate-500">
             Thẻ dùng để đánh dấu trạng thái hội thoại trong Livechat (vd &quot;Mua hàng&quot;,
             &quot;Đã gửi&quot;) — 1 hội thoại có thể gắn nhiều thẻ cùng lúc.

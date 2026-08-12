@@ -48,6 +48,15 @@ body {
    (vd [&::-webkit-scrollbar-thumb]:bg-transparent ở MessageThread) sẽ luôn
    bị rule chung dưới đây đè lên, dù selector đó cụ thể hơn hẳn. */
 @layer base {
+  /* Chống iOS Safari tự động phóng to toàn trang khi người dùng bấm vào ô nhập liệu (input/textarea < 16px) */
+  @media screen and (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

@@ -146,7 +146,7 @@ export function TeamMemberManager({
       <h1 className="mb-4 text-xl font-semibold text-slate-900">Phân quyền</h1>
 
       <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[8px]">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-sm text-slate-500">
             Thành viên có tài khoản trong hệ thống mới thêm được — nhập đúng email họ đã đăng ký.
             Vai trò &quot;Nhân viên&quot; có thể giới hạn chỉ xử lý 1 số Page cụ thể trong Livechat.
@@ -168,7 +168,7 @@ export function TeamMemberManager({
         ) : (
           <div className="divide-y divide-slate-100">
             {members.map((member) => (
-              <div key={member.id} className="flex items-center gap-3 py-3">
+              <div key={member.id} className="flex flex-wrap sm:flex-nowrap items-center gap-3 py-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400">
                   {member.user.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element

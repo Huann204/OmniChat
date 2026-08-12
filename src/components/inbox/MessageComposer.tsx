@@ -214,7 +214,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
             }
           }}
           placeholder="Nhập tin nhắn... (gõ / để chèn mẫu trả lời nhanh, Shift+Enter để xuống dòng)"
-          className="block w-full resize-none overflow-y-auto border-none bg-transparent py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+          className="block w-full resize-none overflow-y-auto border-none bg-transparent py-1.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
         />
       </div>
 
