@@ -270,10 +270,13 @@ export function InboxView({
 
         const conversation = prev[index];
         // Echo của chính tin mình vừa gửi — đã hiện optimistic (và tự
-        // chuyển "sent") ở handleSend rồi, bỏ qua không thêm trùng.
+        // chuyển "sent") ở handleSend rồi, bỏ qua không thêm trùng. So theo
+        // `clientId` (KHÔNG phải `id` — đã đổi sang id thật ngay khi có phản
+        // hồi từ server, xem handleSend) để vẫn nhận ra đúng tin dù `id` đã
+        // đổi từ lúc đó.
         if (
           payload.message.clientId &&
-          conversation.messages.some((m) => m.id === payload.message.clientId)
+          conversation.messages.some((m) => m.clientId === payload.message.clientId)
         ) {
           return prev;
         }
@@ -392,6 +395,10 @@ export function InboxView({
 
     const optimisticMessages: ConversationMessage[] = parts.map((part) => ({
       id: part.clientId,
+      // Giữ riêng clientId (không đổi, khác `id` sẽ được cập nhật sang id
+      // thật ngay khi server phản hồi) — cần cho chống trùng echo socket VÀ
+      // đối chiếu reaction khách thả vào đúng tin thật sau này.
+      clientId: part.clientId,
       sender: "page",
       kind: part.imageUrls ? "image" : "text",
       text: part.text,
@@ -419,7 +426,7 @@ export function InboxView({
             ? {
                 ...c,
                 messages: c.messages.map((m) =>
-                  parts.some((p) => p.clientId === m.id) ? { ...m, status: "failed" } : m
+                  parts.some((p) => p.clientId === m.clientId) ? { ...m, status: "failed" } : m
                 ),
               }
             : c
@@ -428,12 +435,14 @@ export function InboxView({
       return;
     }
 
-    // Không đổi `m.id` sang id thật của server — vẫn phải giữ nguyên clientId
-    // để cơ chế chống trùng lúc socket "new_message" echo về sau (so khớp
-    // payload.message.clientId với m.id, xem effect kết nối socket) còn nhận
-    // ra đúng tin này. Chỉ merge thêm field mà optimistic message CHƯA CÓ vì
-    // chỉ server mới tính được — replyPreviewText là ví dụ điển hình, thiếu
-    // bước merge này thì khung trích dẫn "Trả lời" chỉ hiện đúng sau khi F5.
+    // Đổi `id` sang id thật của server (giữ nguyên `clientId` không đổi) —
+    // cần để sau này reaction khách thả vào ĐÚNG tin vừa gửi này còn đối
+    // chiếu được (emitMessageReaction gửi id thật, không phải clientId, xem
+    // zaloSession.manager.ts). Cơ chế chống trùng echo socket vẫn hoạt động
+    // đúng vì đã so theo `clientId` (không đổi), không so theo `id` nữa (xem
+    // effect kết nối socket phía trên). Merge thêm field chỉ server mới tính
+    // được — replyPreviewText là ví dụ điển hình, thiếu bước này thì khung
+    // trích dẫn "Trả lời" chỉ hiện đúng sau khi F5.
     const resultByClientId = new Map(result.results.map((r) => [r.clientId, r]));
 
     setConversations((prev) =>
@@ -442,10 +451,11 @@ export function InboxView({
           ? {
               ...c,
               messages: c.messages.map((m) => {
-                const r = resultByClientId.get(m.id);
+                const r = m.clientId ? resultByClientId.get(m.clientId) : undefined;
                 if (!r) return m;
                 return {
                   ...m,
+                  id: r.message?.id ?? m.id,
                   status: r.error ? "failed" : "sent",
                   replyPreviewText: r.message?.replyPreviewText ?? m.replyPreviewText,
                 };
