@@ -40,6 +40,11 @@ export interface ConversationMessage {
   // icon agent đã thả vào tin NÀY (chỉ tin của khách mới thả được).
   replyPreviewText?: string;
   reactionIcon?: string;
+  // Chỉ có ở tin Page vừa tự gửi (đang optimistic) — id tạm tự sinh lúc gửi,
+  // KHÁC `id` (đổi sang id thật ngay khi có phản hồi từ server, xem
+  // InboxView.tsx#handleSend). Giữ riêng field này để cơ chế chống trùng
+  // echo qua socket vẫn nhận ra đúng tin dù `id` đã đổi.
+  clientId?: string;
 }
 
 export interface Conversation {
