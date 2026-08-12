@@ -2,17 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { ApiError, apiFetch } from "@/lib/api";
-import {
-  createSession,
-  getCachedUser,
-  getRefreshToken,
-  getSessionToken,
-  type CachedUser,
-} from "@/lib/session";
+import { createSession, getSessionToken } from "@/lib/session";
+import type { SessionUser } from "@/lib/dal";
 
 interface ProfileResponse {
   success: boolean;
-  user: CachedUser;
+  user: SessionUser;
 }
 
 export interface ProfileFormState {
@@ -30,12 +25,10 @@ export async function updateProfile(
   if (!name) return { error: "Vui lòng nhập tên" };
 
   const token = await getSessionToken();
-  const refreshToken = await getRefreshToken();
-  if (!token || !refreshToken) return { error: "Chưa đăng nhập" };
+  if (!token) return { error: "Chưa đăng nhập" };
 
-  let data: ProfileResponse;
   try {
-    data = await apiFetch<ProfileResponse>("/auth/me", {
+    await apiFetch<ProfileResponse>("/auth/me", {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify({ name }),
@@ -44,9 +37,9 @@ export async function updateProfile(
     return { error: err instanceof ApiError ? err.message : "Không cập nhật được hồ sơ" };
   }
 
-  // Làm mới cookie user_info (cache tên/avatar hiển thị, xem lib/session.ts)
-  // bằng đúng access/refresh token hiện có — không đổi phiên đăng nhập.
-  await createSession(token, refreshToken, data.user);
+  // Không còn cache tên/avatar ở cookie riêng (getUser() giờ luôn gọi
+  // /auth/me — xem lib/dal.ts) nên chỉ cần revalidate để lần render kế tiếp
+  // tự lấy dữ liệu mới, không phải tự ghi đè cookie nào ở đây nữa.
   revalidatePath("/", "layout");
 
   return { success: true };
@@ -89,8 +82,7 @@ export async function changePassword(
     return { error: err instanceof ApiError ? err.message : "Không đổi được mật khẩu" };
   }
 
-  const user = await getCachedUser();
-  await createSession(data.accessToken, data.refreshToken, user ?? undefined);
+  await createSession(data.accessToken, data.refreshToken);
 
   return { success: true };
 }

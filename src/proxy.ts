@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ACCESS_COOKIE = 'token';
 const REFRESH_COOKIE = 'refreshToken';
+const SHOP_COOKIE = 'current_shop_id';
 const REFRESH_GUARD_COOKIE = '__refreshed';
 // Đánh dấu "vừa gọi Express thất bại vì lý do mạng" (không phải bị từ chối).
 // Dùng để chặn vòng lặp redirect vô hạn /login <-> /dashboard khi backend
@@ -111,12 +112,15 @@ export async function proxy(request: NextRequest) {
       }
 
       // Express phản hồi rõ ràng từ chối (401: refresh token sai/hết hạn/đã
-      // bị revoke) -> đây mới thực sự là phiên không hợp lệ.
+      // bị revoke) -> đây mới thực sự là phiên không hợp lệ. Xoá luôn
+      // current_shop_id theo access/refresh — không chỉ xoá 2 cookie đó,
+      // tránh phiên đăng nhập kế tiếp lỡ dính Shop cũ.
       const response = isProtected
         ? NextResponse.redirect(new URL('/login', request.url))
         : NextResponse.next();
       response.cookies.delete(ACCESS_COOKIE);
       response.cookies.delete(REFRESH_COOKIE);
+      response.cookies.delete(SHOP_COOKIE);
       return response;
     } catch {
       // Không gọi được Express (mất mạng, timeout, hoặc backend đang "ngủ"

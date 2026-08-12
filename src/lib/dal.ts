@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { apiFetch } from "./api";
-import { getCachedUser, getCurrentShopId, getSessionToken } from "./session";
+import { getCurrentShopId, getSessionToken } from "./session";
 import type { AiAssistantSettings } from "@/types/aiAssistant";
 import type { Bot } from "@/types/bot";
 import type { Conversation, MessageKind } from "@/types/conversation";
@@ -17,15 +17,14 @@ export interface SessionUser {
   avatarUrl?: string;
 }
 
-// Ưu tiên đọc từ cookie user_info (ghi lúc login/register, xem session.ts)
-// — tránh gọi /auth/me (tức query Mongo qua protect middleware) mỗi lần
-// chuyển trang. Chỉ gọi /auth/me khi chưa có cache (phiên cũ từ trước khi
-// có cơ chế này, hoặc cookie bị xoá) — các API khác vẫn tự xác thực JWT
-// riêng nên bỏ qua bước gọi /auth/me ở đây không làm giảm bảo mật.
+// Luôn gọi /auth/me lấy dữ liệu mới nhất — trước đây có cache riêng ở cookie
+// user_info để đỡ query Mongo mỗi lần chuyển trang, nhưng cache đó không tự
+// biết khi nào phiên đăng nhập bị coi là không hợp lệ (vd refresh token bị
+// thu hồi vì đổi mật khẩu ở thiết bị khác), nên có lúc hiện "vẫn đăng nhập"
+// dù phiên đã chết hẳn. `cache()` của React vẫn tự gộp nhiều lần gọi trong
+// CÙNG 1 lượt render (không gọi lặp lại /auth/me nhiều lần/1 trang), chỉ mất
+// cache được XUYÊN SUỐT nhiều lượt điều hướng như trước.
 export const getUser = cache(async (): Promise<SessionUser | null> => {
-  const cached = await getCachedUser();
-  if (cached) return cached;
-
   const token = await getSessionToken();
   if (!token) return null;
 

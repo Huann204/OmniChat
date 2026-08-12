@@ -1,10 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 import { MessageSquareText } from "lucide-react";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { generateAiSuggestions } from "@/app/actions/aiAssistant";
 import {
   getOlderMessages,
@@ -20,14 +18,12 @@ import {
   messageKindAndContent,
   messagePreviewText,
 } from "@/lib/message-format";
-import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
 import type { AiAssistantSettings } from "@/types/aiAssistant";
 import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
 import type { QuickReply } from "@/types/quickReply";
-import type { ShopRole } from "@/types/shopMember";
 import { cn } from "@/lib/utils";
 import { InboxIconRail } from "./InboxIconRail";
 import { ConversationList } from "./ConversationList";
@@ -78,8 +74,6 @@ interface MessageReactionEvent {
 
 interface InboxViewProps {
   bot: Bot;
-  userName: string;
-  userEmail: string;
   initialConversations: Conversation[];
   // Danh sách Page thật cần join room realtime — mặc định chỉ [bot.id].
   // Truyền nhiều id khi đang xem gộp tạm thời nhiều Page cùng lúc.
@@ -98,48 +92,24 @@ interface InboxViewProps {
   // quyết định có tự gọi sinh gợi ý không, và khi nào (mở hội thoại, hay
   // mỗi tin mới), xem effect gọi generateAiSuggestions bên dưới.
   aiAssistantSettings?: AiAssistantSettings;
-  // Nhân viên (role="member") không được vào Cài đặt — ẩn hẳn tab thay vì
-  // để bấm vào rồi bị bounce ngược, xem settings/layout.tsx (chặn thật ở đó).
-  myRole: ShopRole | null;
 }
 
 export function InboxView({
   bot,
-  userName,
-  userEmail,
   initialConversations,
   socketPageIds,
   pagesById,
   quickReplies,
   conversationTags,
   aiAssistantSettings,
-  myRole,
 }: InboxViewProps) {
-  const router = useRouter();
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
-  const [activeTab, setActiveTab] = React.useState<string>(NAV_TABS[0]);
-  const tabs = myRole === "member" ? NAV_TABS.filter((tab) => tab !== "Cài đặt") : NAV_TABS;
   // Đang trả lời trích dẫn tin nào (bấm nút Trả lời trong MessageThread) —
   // hiện thành 1 khung trên MessageComposer, xem handleReply/handleSend.
   const [replyingTo, setReplyingTo] = React.useState<ReplyTarget | null>(null);
   const [showCustomerInfo, setShowCustomerInfo] = React.useState(false);
-
-  // Chỉ "Hội thoại" (đang xem ở đây) là tab đã có thật — Đơn hàng/Bài
-  // viết/Thống kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không
-  // đổi tab (không có nội dung gì để chuyển sang).
-  function handleTabChange(tab: string) {
-    if (tab === "Cài đặt") {
-      router.push("/settings");
-      return;
-    }
-    if (tab !== NAV_TABS[0]) {
-      toast.info("Tính năng đang được phát triển");
-      return;
-    }
-    setActiveTab(tab);
-  }
 
   const activeConversation = conversations.find((c) => c.id === activeId) ?? null;
   const pageIds = socketPageIds ?? [bot.id];
@@ -588,18 +558,8 @@ export function InboxView({
   }
 
   return (
-    <div className="flex h-screen h-[100dvh] flex-col bg-[rgb(80,109,173)] overflow-hidden">
-      <DashboardNavbar
-        userName={userName}
-        userEmail={userEmail}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        className="!bg-none bg-transparent border-none shadow-none shrink-0"
-      />
-
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <InboxIconRail className="!bg-none bg-transparent border-none" />
+    <div className="flex min-h-0 flex-1 overflow-hidden">
+      <InboxIconRail className="!bg-none bg-transparent border-none" />
 
         <div className="relative flex flex-1 min-w-0 bg-white rounded-tl-xl overflow-hidden">
           <ConversationList
@@ -681,6 +641,5 @@ export function InboxView({
           )}
         </div>
       </div>
-    </div>
   );
 }

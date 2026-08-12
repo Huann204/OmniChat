@@ -4,9 +4,7 @@ import {
   getConnectedPages,
   getConversationsForPages,
   getConversationTags,
-  getCurrentShopRole,
   getQuickReplies,
-  verifySession,
 } from "@/lib/dal";
 import { getMergePagesCookie } from "@/lib/session";
 import type { Bot } from "@/types/bot";
@@ -32,23 +30,14 @@ export default async function MultiPagesPage() {
   // Livechat tốn thêm 1 vòng round-trip thừa, đo được rõ trên production).
   // Không dùng query string vì lộ pageId trên URL nhìn rối mắt — xem
   // BotCard.tsx/BotDashboard.tsx/MergePagesModal.tsx/SettingsShell.tsx.
-  const [
-    user,
-    connectedPages,
-    quickReplies,
-    conversationTags,
-    aiAssistantSettings,
-    requestedIds,
-    myRole,
-  ] = await Promise.all([
-    verifySession(),
-    getConnectedPages(),
-    getQuickReplies(),
-    getConversationTags(),
-    getAiAssistantSettings(),
-    getMergePagesCookie(),
-    getCurrentShopRole(),
-  ]);
+  const [connectedPages, quickReplies, conversationTags, aiAssistantSettings, requestedIds] =
+    await Promise.all([
+      getConnectedPages(),
+      getQuickReplies(),
+      getConversationTags(),
+      getAiAssistantSettings(),
+      getMergePagesCookie(),
+    ]);
 
   const requestedIdSet = new Set(requestedIds);
   let selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
@@ -64,20 +53,15 @@ export default async function MultiPagesPage() {
   // thoại, khung chat), chỉ danh sách hội thoại rỗng, không phải 404.
   if (selectedPages.length === 0) {
     return (
-      <div className="font-roboto">
-        <InboxView
-          bot={EMPTY_BOT}
-          userName={user.name}
-          userEmail={user.email}
-          initialConversations={[]}
-          socketPageIds={[]}
-          pagesById={{}}
-          quickReplies={quickReplies}
-          conversationTags={conversationTags}
-          aiAssistantSettings={aiAssistantSettings}
-          myRole={myRole}
-        />
-      </div>
+      <InboxView
+        bot={EMPTY_BOT}
+        initialConversations={[]}
+        socketPageIds={[]}
+        pagesById={{}}
+        quickReplies={quickReplies}
+        conversationTags={conversationTags}
+        aiAssistantSettings={aiAssistantSettings}
+      />
     );
   }
 
@@ -107,19 +91,14 @@ export default async function MultiPagesPage() {
   };
 
   return (
-    <div className="font-roboto">
-      <InboxView
-        bot={virtualBot}
-        userName={user.name}
-        userEmail={user.email}
-        initialConversations={conversations}
-        socketPageIds={selectedPages.map((p) => p.id)}
-        pagesById={pagesById}
-        quickReplies={quickReplies}
-        conversationTags={conversationTags}
-        aiAssistantSettings={aiAssistantSettings}
-        myRole={myRole}
-      />
-    </div>
+    <InboxView
+      bot={virtualBot}
+      initialConversations={conversations}
+      socketPageIds={selectedPages.map((p) => p.id)}
+      pagesById={pagesById}
+      quickReplies={quickReplies}
+      conversationTags={conversationTags}
+      aiAssistantSettings={aiAssistantSettings}
+    />
   );
 }
