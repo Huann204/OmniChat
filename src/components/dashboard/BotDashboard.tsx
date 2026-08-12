@@ -10,15 +10,20 @@ import { MergePagesModal } from "./MergePagesModal";
 import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
 import type { Bot, BotChannel } from "@/types/bot";
+import type { ShopRole } from "@/types/shopMember";
 
 interface BotDashboardProps {
   bots: Bot[];
   userName: string;
   userEmail: string;
+  // Nhân viên (role="member") không được vào Cài đặt — ẩn hẳn tab thay vì
+  // để bấm vào rồi bị bounce ngược, xem settings/layout.tsx (chặn thật ở đó).
+  myRole: ShopRole | null;
 }
 
-export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDashboardProps) {
+export function BotDashboard({ bots: initialBots, userName, userEmail, myRole }: BotDashboardProps) {
   const router = useRouter();
+  const tabs = myRole === "member" ? NAV_TABS.filter((tab) => tab !== "Cài đặt") : NAV_TABS;
   const [bots, setBots] = React.useState(initialBots);
   const [prevInitialBots, setPrevInitialBots] = React.useState(initialBots);
   const [search, setSearch] = React.useState("");
@@ -80,7 +85,7 @@ export function BotDashboard({ bots: initialBots, userName, userEmail }: BotDash
       <DashboardNavbar
         userName={userName}
         userEmail={userEmail}
-        tabs={NAV_TABS}
+        tabs={tabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         className="!bg-none bg-transparent border-none shrink-0"
