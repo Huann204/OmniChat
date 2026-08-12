@@ -63,8 +63,8 @@ interface SettingRowProps {
 
 function SettingRow({ icon, title, description, control, children }: SettingRowProps) {
   return (
-    <div className="flex flex-col gap-4 px-6 py-5">
-      <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-col gap-4 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6">
         <div className="flex min-w-0 gap-3">
           <span className="mt-0.5 shrink-0">{icon}</span>
           <div className="min-w-0">
@@ -72,7 +72,7 @@ function SettingRow({ icon, title, description, control, children }: SettingRowP
             <p className="mt-0.5 text-sm leading-relaxed text-slate-500">{description}</p>
           </div>
         </div>
-        {control && <div className="flex shrink-0 items-center gap-3">{control}</div>}
+        {control && <div className="flex shrink-0 flex-wrap items-center gap-2.5 sm:gap-3">{control}</div>}
       </div>
       {children}
     </div>
@@ -89,7 +89,7 @@ function SubRow({
   control: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 pl-11">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 pl-0 sm:pl-11">
       <span className="flex min-w-0 items-center gap-1.5 text-sm text-slate-600">
         {label}
         {hint && (
@@ -256,7 +256,7 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
             </>
           }
         >
-          <div className="pl-11">
+          <div className="pl-0 sm:pl-11">
             <p className="text-sm text-slate-600">
               Khi khách hàng <span className="font-semibold text-slate-800">Không hài lòng</span>{" "}
               hoặc <span className="font-semibold text-slate-800">giận dữ, tiêu cực</span>:
@@ -275,7 +275,7 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
           />
 
           {sentimentAction === "Gắn thẻ hội thoại" && (
-            <div className="pl-11">
+            <div className="pl-0 sm:pl-11">
               <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 {sentimentTags.map((tag) => (
                   <span

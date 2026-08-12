@@ -142,46 +142,46 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
             </button>
           </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-          <div className="flex items-center gap-1.5">
-            <button type="button" title="Chọn tất cả" onClick={notImplemented} className={ICON_BTN}>
-              <ListChecks className="h-4 w-4" />
-            </button>
-            <button type="button" title="Nhập từ file" onClick={notImplemented} className={ICON_BTN}>
-              <Upload className="h-4 w-4" />
-            </button>
-            <button type="button" title="Xuất file" onClick={notImplemented} className={ICON_BTN}>
-              <Download className="h-4 w-4" />
-            </button>
-            <button type="button" title="Sao chép" onClick={notImplemented} className={ICON_BTN}>
-              <Copy className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm kiếm"
-                className="w-48 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
-              />
+          <div className="flex flex-wrap items-center justify-between gap-3 px-3 sm:px-5 py-4">
+            <div className="flex items-center gap-1.5">
+              <button type="button" title="Chọn tất cả" onClick={notImplemented} className={ICON_BTN}>
+                <ListChecks className="h-4 w-4" />
+              </button>
+              <button type="button" title="Nhập từ file" onClick={notImplemented} className={ICON_BTN}>
+                <Upload className="h-4 w-4" />
+              </button>
+              <button type="button" title="Xuất file" onClick={notImplemented} className={ICON_BTN}>
+                <Download className="h-4 w-4" />
+              </button>
+              <button type="button" title="Sao chép" onClick={notImplemented} className={ICON_BTN}>
+                <Copy className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={openAddModal}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover cursor-pointer"
-            >
-              <Plus className="h-4 w-4" />
-              Thêm mẫu
-            </button>
+
+            <div className="flex w-full sm:w-auto items-center gap-2">
+              <div className="relative flex-1 sm:flex-none">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Tìm kiếm"
+                  className="w-full sm:w-48 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={openAddModal}
+                className="flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-primary-hover cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                Thêm mẫu
+              </button>
+            </div>
           </div>
         </div>
-        </div>
 
-        <div className="flex-1">
+        <div className="flex-1 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-y border-slate-100 text-xs font-medium text-slate-400">

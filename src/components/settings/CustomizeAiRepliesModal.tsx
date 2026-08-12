@@ -72,8 +72,8 @@ export function CustomizeAiRepliesModal({
       title="Tuỳ chỉnh câu trả lời từ AI"
       className="max-w-4xl bg-slate-100"
     >
-      <div className="flex h-[70vh] min-h-[420px]">
-        <div className="flex w-[300px] shrink-0 flex-col border-r border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col md:flex-row min-h-[420px] max-h-[80vh] overflow-y-auto md:overflow-hidden">
+        <div className="flex w-full md:w-[300px] shrink-0 flex-col border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50 p-4">
           <p className="mb-3 text-sm font-semibold text-slate-900">Danh sách câu trả lời</p>
           <div className="flex-1 space-y-2 overflow-y-auto">
             {presets.map((preset, index) => {
