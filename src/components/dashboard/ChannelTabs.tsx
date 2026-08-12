@@ -21,13 +21,15 @@ export function ChannelTabs({ bots, value, onChange }: ChannelTabsProps) {
     iconColor: string;
   }[] = [
     { key: "all", label: "Tất cả", count: bots.length, icon: BsFillLayersFill, iconColor: "text-slate-500" },
-    ...(Object.keys(CHANNEL_META) as BotChannel[]).map((channel) => ({
-      key: channel,
-      label: CHANNEL_META[channel].label,
-      count: bots.filter((b) => b.channel === channel).length,
-      icon: CHANNEL_META[channel].icon,
-      iconColor: CHANNEL_META[channel].badgeBg.replace("bg-", "text-"),
-    })),
+    ...(Object.keys(CHANNEL_META) as BotChannel[])
+      .map((channel) => ({
+        key: channel,
+        label: CHANNEL_META[channel].label,
+        count: bots.filter((b) => b.channel === channel).length,
+        icon: CHANNEL_META[channel].icon,
+        iconColor: CHANNEL_META[channel].badgeBg.replace("bg-", "text-"),
+      }))
+      .filter((tab) => tab.count > 0),
   ];
 
   return (
