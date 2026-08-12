@@ -27,6 +27,7 @@ import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
 import type { QuickReply } from "@/types/quickReply";
+import type { ShopRole } from "@/types/shopMember";
 import { InboxIconRail } from "./InboxIconRail";
 import { ConversationList } from "./ConversationList";
 import { ChatHeader } from "./ChatHeader";
@@ -96,6 +97,9 @@ interface InboxViewProps {
   // quyết định có tự gọi sinh gợi ý không, và khi nào (mở hội thoại, hay
   // mỗi tin mới), xem effect gọi generateAiSuggestions bên dưới.
   aiAssistantSettings?: AiAssistantSettings;
+  // Nhân viên (role="member") không được vào Cài đặt — ẩn hẳn tab thay vì
+  // để bấm vào rồi bị bounce ngược, xem settings/layout.tsx (chặn thật ở đó).
+  myRole: ShopRole | null;
 }
 
 export function InboxView({
@@ -108,12 +112,14 @@ export function InboxView({
   quickReplies,
   conversationTags,
   aiAssistantSettings,
+  myRole,
 }: InboxViewProps) {
   const router = useRouter();
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [activeTab, setActiveTab] = React.useState<string>(NAV_TABS[0]);
+  const tabs = myRole === "member" ? NAV_TABS.filter((tab) => tab !== "Cài đặt") : NAV_TABS;
   // Đang trả lời trích dẫn tin nào (bấm nút Trả lời trong MessageThread) —
   // hiện thành 1 khung trên MessageComposer, xem handleReply/handleSend.
   const [replyingTo, setReplyingTo] = React.useState<ReplyTarget | null>(null);
@@ -584,7 +590,7 @@ export function InboxView({
       <DashboardNavbar
         userName={userName}
         userEmail={userEmail}
-        tabs={NAV_TABS}
+        tabs={tabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         className="!bg-none bg-transparent border-none shadow-none"

@@ -1,6 +1,19 @@
-import { Users } from "lucide-react";
-import { SettingsPlaceholder } from "@/components/settings/SettingsPlaceholder";
+import { TeamMemberManager } from "@/components/settings/TeamMemberManager";
+import { getConnectedPages, getCurrentShopRole, getShopMembers, verifySession } from "@/lib/dal";
 
-export default function PermissionsSettingsPage() {
-  return <SettingsPlaceholder title="Phân quyền" icon={Users} />;
+export default async function PermissionsSettingsPage() {
+  const [user, members, myRole, connectedPages] = await Promise.all([
+    verifySession(),
+    getShopMembers(),
+    getCurrentShopRole(),
+    getConnectedPages(),
+  ]);
+  return (
+    <TeamMemberManager
+      initialMembers={members}
+      myRole={myRole}
+      myUserId={user.id}
+      connectedPages={connectedPages}
+    />
+  );
 }

@@ -4,6 +4,7 @@ import {
   getConnectedPages,
   getConversationsForPages,
   getConversationTags,
+  getCurrentShopRole,
   getQuickReplies,
   verifySession,
 } from "@/lib/dal";
@@ -31,15 +32,23 @@ export default async function MultiPagesPage() {
   // Livechat tốn thêm 1 vòng round-trip thừa, đo được rõ trên production).
   // Không dùng query string vì lộ pageId trên URL nhìn rối mắt — xem
   // BotCard.tsx/BotDashboard.tsx/MergePagesModal.tsx/SettingsShell.tsx.
-  const [user, connectedPages, quickReplies, conversationTags, aiAssistantSettings, requestedIds] =
-    await Promise.all([
-      verifySession(),
-      getConnectedPages(),
-      getQuickReplies(),
-      getConversationTags(),
-      getAiAssistantSettings(),
-      getMergePagesCookie(),
-    ]);
+  const [
+    user,
+    connectedPages,
+    quickReplies,
+    conversationTags,
+    aiAssistantSettings,
+    requestedIds,
+    myRole,
+  ] = await Promise.all([
+    verifySession(),
+    getConnectedPages(),
+    getQuickReplies(),
+    getConversationTags(),
+    getAiAssistantSettings(),
+    getMergePagesCookie(),
+    getCurrentShopRole(),
+  ]);
 
   const requestedIdSet = new Set(requestedIds);
   let selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
@@ -66,6 +75,7 @@ export default async function MultiPagesPage() {
           quickReplies={quickReplies}
           conversationTags={conversationTags}
           aiAssistantSettings={aiAssistantSettings}
+          myRole={myRole}
         />
       </div>
     );
@@ -108,6 +118,7 @@ export default async function MultiPagesPage() {
         quickReplies={quickReplies}
         conversationTags={conversationTags}
         aiAssistantSettings={aiAssistantSettings}
+        myRole={myRole}
       />
     </div>
   );

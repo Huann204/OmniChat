@@ -8,6 +8,7 @@ import type { Bot } from "@/types/bot";
 import type { Conversation, MessageKind } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
 import type { QuickReply } from "@/types/quickReply";
+import type { ShopMember } from "@/types/shopMember";
 
 export interface SessionUser {
   id: string;
@@ -74,6 +75,42 @@ async function shopHeader(): Promise<Record<string, string>> {
   const shopId = await getCurrentShopId();
   return shopId ? { "X-Shop-Id": shopId } : {};
 }
+
+// Vai trò của CHÍNH MÌNH trong Shop đang active — quyết định trang Nhân sự
+// có hiện nút thêm/đổi vai trò/xoá hay không (chỉ owner/admin thêm-xoá được,
+// chỉ owner đổi vai trò được — khớp requireShopRole ở shop.routes.ts).
+export const getCurrentShopRole = cache(async (): Promise<ShopSummary["role"] | null> => {
+  const token = await getSessionToken();
+  const shopId = await getCurrentShopId();
+  if (!token || !shopId) return null;
+
+  try {
+    const data = await apiFetch<{ success: boolean; role: ShopSummary["role"] }>(
+      "/shops/current",
+      { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
+    );
+    return data.role;
+  } catch {
+    return null;
+  }
+});
+
+// Danh sách nhân viên (thành viên) của Shop đang active — trang /settings/permissions.
+export const getShopMembers = cache(async (): Promise<ShopMember[]> => {
+  const token = await getSessionToken();
+  const shopId = await getCurrentShopId();
+  if (!token || !shopId) return [];
+
+  try {
+    const data = await apiFetch<{ success: boolean; members: ShopMember[] }>(
+      `/shops/${shopId}/members`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data.members;
+  } catch {
+    return [];
+  }
+});
 
 interface ConnectedPageRaw {
   id: string;

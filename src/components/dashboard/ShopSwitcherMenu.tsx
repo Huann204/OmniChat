@@ -30,6 +30,22 @@ export function ShopSwitcherMenu() {
     s.name.toLowerCase().includes(search.trim().toLowerCase())
   );
 
+  // currentShopId trỏ tới 1 Shop không còn nằm trong danh sách Shop đang
+  // active của mình nữa (vd vừa bị chủ Shop xoá khỏi Shop đó, /shops/mine
+  // chỉ trả Shop status="active" — xem shop.controller.ts#listMyShops) —
+  // trước đây rơi vào return null bên dưới, tức là nút "Chuyển Shop"/"Tạo
+  // shop" biến mất hoàn toàn khỏi navbar (đây là nơi DUY NHẤT có 2 thao
+  // tác đó) khiến user kẹt cứng, không thoát ra được. Chỉ tự chuyển khi
+  // CÒN Shop khác để chuyển tới — trường hợp shops.length === 0 (vd tự
+  // chuyển quyền owner cho người khác rồi tự xoá chính mình khỏi Shop đó,
+  // removeMember không chặn tự xoá bản thân — xem shop.controller.ts) xử lý
+  // riêng bên dưới bằng nút "Tạo Shop" luôn hiện, không dựa vào Shop có sẵn.
+  React.useEffect(() => {
+    if (!currentShop && shops.length > 0) {
+      switchShop(shops[0].id);
+    }
+  }, [currentShop, shops]);
+
   function handleSwitch(shop: AuthShop) {
     if (shop.id === currentShopId) {
       setOpen(false);
@@ -41,6 +57,29 @@ export function ShopSwitcherMenu() {
     });
   }
 
+  // Thật sự không còn Shop nào (đã rời/bị xoá khỏi Shop cuối cùng) — không
+  // có Shop nào để hiện tên/vai trò hay để chuyển tới, chỉ còn đường duy
+  // nhất là tạo Shop mới. Vẫn phải hiện 1 nút bấm được ở đây vì đây là nơi
+  // DUY NHẤT có modal "Tạo Shop" trong toàn app.
+  if (shops.length === 0) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-white/15 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/25"
+        >
+          <Plus className="h-4 w-4" />
+          Tạo Shop
+        </button>
+        <CreateShopModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      </>
+    );
+  }
+
+  // Đang tự chuyển sang Shop khác ở effect trên (currentShopId cũ chưa kịp
+  // cập nhật) — chưa có gì hợp lệ để hiện, đợi effect chạy xong rồi render
+  // lại với currentShop mới.
   if (!currentShop) return null;
 
   return (
