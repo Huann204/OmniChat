@@ -28,6 +28,7 @@ import type { Conversation, ConversationMessage } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
 import type { QuickReply } from "@/types/quickReply";
 import type { ShopRole } from "@/types/shopMember";
+import { cn } from "@/lib/utils";
 import { InboxIconRail } from "./InboxIconRail";
 import { ConversationList } from "./ConversationList";
 import { ChatHeader } from "./ChatHeader";
@@ -123,6 +124,7 @@ export function InboxView({
   // Đang trả lời trích dẫn tin nào (bấm nút Trả lời trong MessageThread) —
   // hiện thành 1 khung trên MessageComposer, xem handleReply/handleSend.
   const [replyingTo, setReplyingTo] = React.useState<ReplyTarget | null>(null);
+  const [showCustomerInfo, setShowCustomerInfo] = React.useState(false);
 
   // Chỉ "Hội thoại" (đang xem ở đây) là tab đã có thật — Đơn hàng/Bài
   // viết/Thống kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không
@@ -586,20 +588,20 @@ export function InboxView({
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[rgb(80,109,173)]">
+    <div className="flex h-screen h-[100dvh] flex-col bg-[rgb(80,109,173)] overflow-hidden">
       <DashboardNavbar
         userName={userName}
         userEmail={userEmail}
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        className="!bg-none bg-transparent border-none shadow-none"
+        className="!bg-none bg-transparent border-none shadow-none shrink-0"
       />
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <InboxIconRail className="!bg-none bg-transparent border-none" />
 
-        <div className="flex flex-1 min-w-0 bg-white rounded-tl-xl overflow-hidden">
+        <div className="relative flex flex-1 min-w-0 bg-white rounded-tl-xl overflow-hidden">
           <ConversationList
             conversations={conversations}
             activeId={activeId}
@@ -610,8 +612,13 @@ export function InboxView({
           />
 
           {activeConversation ? (
-            <div className="flex min-w-0 flex-1 flex-col">
-              <ChatHeader conversation={activeConversation} />
+            <div className={cn("flex min-w-0 flex-1 flex-col h-full", !activeId && "hidden md:flex")}>
+              <ChatHeader
+                conversation={activeConversation}
+                onBack={() => setActiveId(null)}
+                onToggleCustomerInfo={() => setShowCustomerInfo((v) => !v)}
+                showCustomerInfo={showCustomerInfo}
+              />
               <MessageThread
                 messages={activeConversation.messages}
                 customerName={activeConversation.customerName}
@@ -645,13 +652,33 @@ export function InboxView({
               />
             </div>
           ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 text-slate-400">
+            <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-2 text-slate-400">
               <MessageSquareText className="h-10 w-10" strokeWidth={1.5} />
               <p className="text-sm">Xin chọn 1 hội thoại từ danh sách bên trái</p>
             </div>
           )}
 
-          <CustomerInfoPanel hasActiveConversation={!!activeConversation} />
+          {/* Customer info panel on Desktop (md screen size and above) */}
+          <CustomerInfoPanel
+            hasActiveConversation={!!activeConversation}
+            className="hidden md:flex"
+          />
+
+          {/* Customer info drawer overlay on Mobile ONLY (< md screen size) */}
+          {showCustomerInfo && (
+            <div className="fixed inset-0 z-50 flex justify-end md:hidden">
+              <div
+                className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+                onClick={() => setShowCustomerInfo(false)}
+              />
+              <div className="relative z-10 w-full max-w-xs sm:max-w-sm h-full bg-white shadow-2xl animate-in slide-in-from-right duration-200">
+                <CustomerInfoPanel
+                  hasActiveConversation={!!activeConversation}
+                  onClose={() => setShowCustomerInfo(false)}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

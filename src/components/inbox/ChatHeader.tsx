@@ -1,10 +1,14 @@
 "use client";
 
-import { Link2, History, Smile, Users, FolderOpen, Mail, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Link2, History, Smile, Users, FolderOpen, Mail, MoreHorizontal, PanelRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types/conversation";
 
 interface ChatHeaderProps {
   conversation: Conversation;
+  onBack?: () => void;
+  onToggleCustomerInfo?: () => void;
+  showCustomerInfo?: boolean;
 }
 
 const HEADER_AVATAR_COLORS: Record<string, string> = {};
@@ -17,12 +21,27 @@ function avatarColorFor(name: string) {
   return HEADER_AVATAR_COLORS[name];
 }
 
-export function ChatHeader({ conversation }: ChatHeaderProps) {
+export function ChatHeader({
+  conversation,
+  onBack,
+  onToggleCustomerInfo,
+  showCustomerInfo,
+}: ChatHeaderProps) {
   const lastMessage = conversation.messages[conversation.messages.length - 1];
 
   return (
-    <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5">
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2.5 sm:px-4">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Quay lại danh sách hội thoại"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 md:hidden cursor-pointer -ml-1"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
         {conversation.customerAvatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -53,17 +72,31 @@ export function ChatHeader({ conversation }: ChatHeaderProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-1 text-slate-400">
+      <div className="flex shrink-0 items-center gap-1 text-slate-400">
         {[Users, FolderOpen, Mail].map((Icon, i) => (
           <button
             key={i}
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
           >
             <Icon className="h-4 w-4" />
           </button>
         ))}
-        <span className="mx-1 h-5 w-px bg-slate-200" />
+        {onToggleCustomerInfo && (
+          <button
+            type="button"
+            onClick={onToggleCustomerInfo}
+            title="Thông tin khách hàng / Tạo đơn"
+            aria-label="Thông tin khách hàng / Tạo đơn"
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-full transition-colors cursor-pointer md:hidden",
+              showCustomerInfo ? "bg-primary/10 text-primary" : "hover:bg-slate-100 hover:text-slate-700"
+            )}
+          >
+            <PanelRight className="h-4 w-4" />
+          </button>
+        )}
+        <span className="mx-0.5 sm:mx-1 h-5 w-px bg-slate-200" />
         <button
           type="button"
           className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"

@@ -39,6 +39,7 @@ interface ConversationListProps {
   // Chỉ truyền khi đang xem gộp nhiều Page — hiện avatar + tên Page nguồn
   // bên dưới mỗi hội thoại để phân biệt hội thoại đến từ Page nào.
   pagesById?: Record<string, PageInfo>;
+  className?: string;
 }
 
 export function ConversationList({
@@ -48,13 +49,20 @@ export function ConversationList({
   onSearchChange,
   onSelect,
   pagesById,
+  className,
 }: ConversationListProps) {
   const filtered = conversations.filter((c) =>
     c.customerName.toLowerCase().includes(search.trim().toLowerCase())
   );
 
   return (
-    <div className="flex w-[25%] xl:w-[400px] shrink-0 flex-col border-r border-slate-200 bg-white">
+    <div
+      className={cn(
+        "flex flex-col border-r border-slate-200 bg-white md:w-[25%] xl:w-[400px] shrink-0 h-full",
+        activeId ? "hidden md:flex" : "flex w-full md:w-[25%] xl:w-[400px]",
+        className
+      )}
+    >
       <div className="flex items-center gap-2 border-b border-slate-100 p-3">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

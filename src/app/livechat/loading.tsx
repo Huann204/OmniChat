@@ -5,19 +5,19 @@ export default async function LivechatLoading() {
   const user = await getCachedUser();
 
   return (
-    <div className="flex h-screen flex-col bg-[rgb(80,109,173)] font-roboto">
+    <div className="flex h-screen h-[100dvh] flex-col bg-[rgb(80,109,173)] font-roboto overflow-hidden">
       <header className="shrink-0">
-        <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center gap-8 sm:w-[calc(100%-3rem)]">
-          <div className="flex shrink-0 items-center gap-2 mr-6">
+        <div className="mx-auto flex h-14 w-full px-3 sm:w-[calc(100%-2rem)] max-w-[1144px] items-center gap-2 sm:gap-4 md:gap-8 sm:w-[calc(100%-3rem)]">
+          <div className="flex shrink-0 items-center gap-2 mr-1 sm:mr-4 md:mr-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/hchat.png" alt="Hchat Logo" className="h-10 w-auto object-contain" />
+            <img src="/hchat.png" alt="Hchat Logo" className="h-8 sm:h-10 w-auto object-contain" />
           </div>
 
-          <nav className="flex items-center gap-1 overflow-x-auto">
+          <nav className="flex items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {["Hội thoại", "Đơn hàng", "Bài viết", "Thống kê", "Cài đặt"].map((tab, i) => (
               <div
                 key={tab}
-                className={`shrink-0 rounded-lg px-3.5 py-2 text-sm font-normal ${
+                className={`shrink-0 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-normal ${
                   i === 0 ? "bg-white/20 text-white" : "text-white"
                 }`}
               >
@@ -26,7 +26,7 @@ export default async function LivechatLoading() {
             ))}
           </nav>
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
             <div className="flex items-center rounded-full p-1">
               {user ? (
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-slate-700">
@@ -48,11 +48,11 @@ export default async function LivechatLoading() {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <div className="w-14 shrink-0 border-r border-white/10" />
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="hidden md:block w-14 shrink-0 border-r border-white/10" />
 
         <div className="flex flex-1 min-w-0 overflow-hidden rounded-tl-xl bg-white">
-          <div className="flex w-[400px] shrink-0 flex-col border-r border-slate-200 animate-pulse">
+          <div className="flex w-full md:w-[25%] xl:w-[400px] shrink-0 flex-col border-r border-slate-200 animate-pulse">
             <div className="border-b border-slate-100 p-3">
               <div className="h-9 rounded-xl bg-slate-100" />
             </div>
@@ -69,13 +69,13 @@ export default async function LivechatLoading() {
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col animate-pulse">
+          <div className="hidden md:flex min-w-0 flex-1 flex-col animate-pulse">
             <div className="h-16 shrink-0 border-b border-slate-100" />
             <div className="flex-1" />
             <div className="h-16 shrink-0 border-t border-slate-100" />
           </div>
 
-          <div className="hidden w-[27%] shrink-0 border-l border-slate-200 lg:block animate-pulse" />
+          <div className="hidden md:block w-[27%] shrink-0 border-l border-slate-200 animate-pulse" />
         </div>
       </div>
     </div>

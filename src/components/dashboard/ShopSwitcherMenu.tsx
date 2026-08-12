@@ -107,10 +107,10 @@ export function ShopSwitcherMenu() {
 
         {open && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute right-0 z-20 mt-2 w-[420px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+            <div className="fixed inset-0 z-10 bg-black/20 sm:bg-transparent" onClick={() => setOpen(false)} />
+            <div className="fixed left-3 right-3 top-14 z-20 mt-2 max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[420px] sm:max-w-none">
               <div className="flex items-center gap-2 border-b border-slate-100 p-3">
-                <div className="relative flex-1">
+                <div className="relative flex-1 min-w-0">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"

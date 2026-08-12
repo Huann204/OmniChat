@@ -7,10 +7,10 @@ export default async function DashboardLoading() {
   return (
     <div className="min-h-screen bg-[rgb(80,109,173)] font-roboto flex flex-col">
       <header className="bg-[rgb(80,109,173)]">
-        <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center sm:w-[calc(100%-3rem)]">
-          <img src="/hchat.png" alt="Hchat Logo" className="h-10 w-auto object-contain" />
+        <div className="mx-auto flex h-14 w-full px-3 sm:w-[calc(100%-2rem)] max-w-[1144px] items-center gap-2 sm:gap-4 md:gap-8 sm:w-[calc(100%-3rem)]">
+          <img src="/hchat.png" alt="Hchat Logo" className="h-8 sm:h-10 w-auto object-contain" />
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
             <div className="flex items-center rounded-full p-1">
               {user ? (
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-slate-700">
