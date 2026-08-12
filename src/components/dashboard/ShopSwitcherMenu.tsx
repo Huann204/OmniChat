@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useActionState, useTransition } from "react";
-import { Check, ChevronDown, Loader2, Plus, Search } from "lucide-react";
+import { BsCheckLg, BsChevronDown, BsPlusLg, BsSearch } from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store-provider";
@@ -69,7 +70,7 @@ export function ShopSwitcherMenu() {
           onClick={() => setCreateOpen(true)}
           className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-white/15 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/25"
         >
-          <Plus className="h-4 w-4" />
+          <BsPlusLg className="h-4 w-4" />
           Tạo Shop
         </button>
         <CreateShopModal open={createOpen} onClose={() => setCreateOpen(false)} />
@@ -100,7 +101,7 @@ export function ShopSwitcherMenu() {
               {SHOP_ROLE_LABELS[currentShop.role]}
             </span>
           </span>
-          <ChevronDown
+          <BsChevronDown
             className={cn("h-4 w-4 text-white/80 transition-transform", open && "rotate-180")}
           />
         </button>
@@ -111,7 +112,7 @@ export function ShopSwitcherMenu() {
             <div className="fixed left-3 right-3 top-14 z-20 mt-2 max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[420px] sm:max-w-none">
               <div className="flex items-center gap-2 border-b border-slate-100 p-3">
                 <div className="relative flex-1 min-w-0">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={search}
@@ -128,7 +129,7 @@ export function ShopSwitcherMenu() {
                   }}
                   className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
                 >
-                  <Plus className="h-4 w-4" />
+                  <BsPlusLg className="h-4 w-4" />
                   Tạo shop
                 </button>
               </div>
@@ -161,7 +162,7 @@ export function ShopSwitcherMenu() {
                         <span className="truncate text-sm font-semibold text-slate-900">
                           {shop.name}
                         </span>
-                        {isCurrent && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                        {isCurrent && <BsCheckLg className="h-3.5 w-3.5 shrink-0 text-primary" />}
                       </span>
                       <span className="flex items-center gap-2 text-sm text-slate-500">
                         {switchingId === shop.id && (

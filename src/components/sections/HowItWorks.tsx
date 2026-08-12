@@ -1,6 +1,6 @@
 import { Section } from "@/components/ui/Section";
 import { FadeIn } from "@/components/ui/FadeIn";
-import { Link2, Settings, MessageSquarePlus } from "lucide-react";
+import { BsLink45Deg, BsGearFill, BsChatSquareTextFill } from "react-icons/bs";
 
 export function HowItWorks() {
   const steps = [
@@ -8,19 +8,19 @@ export function HowItWorks() {
       number: "01",
       title: "Kết nối kênh",
       description: "Tích hợp Facebook, Zalo, WhatsApp và Website chỉ với vài click chuột.",
-      icon: <Link2 className="h-8 w-8 text-[#0866FF]" />,
+      icon: <BsLink45Deg className="h-8 w-8 text-[#0866FF]" />,
     },
     {
       number: "02",
       title: "Cài đặt Chatbot",
       description: "Thiết lập kịch bản tự động, AI bot và từ khóa để phản hồi khách hàng 24/7.",
-      icon: <Settings className="h-8 w-8 text-[#0866FF]" />,
+      icon: <BsGearFill className="h-8 w-8 text-[#0866FF]" />,
     },
     {
       number: "03",
       title: "Bắt đầu tương tác",
       description: "Nhận tin nhắn, xử lý hội thoại và chạy các chiến dịch marketing tự động.",
-      icon: <MessageSquarePlus className="h-8 w-8 text-[#0866FF]" />,
+      icon: <BsChatSquareTextFill className="h-8 w-8 text-[#0866FF]" />,
     },
   ];
 

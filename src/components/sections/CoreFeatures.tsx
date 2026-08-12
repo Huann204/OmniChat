@@ -1,64 +1,64 @@
 import { Section } from "@/components/ui/Section";
 import { Card } from "@/components/ui/Card";
 import { FadeIn } from "@/components/ui/FadeIn";
-import { 
-  Bot, 
-  Inbox, 
-  Megaphone, 
-  Workflow, 
-  Target, 
-  Gamepad2, 
-  BarChart3, 
-  Users, 
-  CalendarClock 
-} from "lucide-react";
+import {
+  BsRobot,
+  BsInboxFill,
+  BsMegaphoneFill,
+  BsDiagram3Fill,
+  BsBullseye,
+  BsController,
+  BsBarChartFill,
+  BsFillPeopleFill,
+  BsFillCalendarDateFill,
+} from "react-icons/bs";
 
 export function CoreFeatures() {
   const features = [
     {
       title: "AI Chatbot thông minh",
       description: "Tự động trả lời 24/7, tích hợp OpenAI, tạo Knowledge Base từ tài liệu của bạn.",
-      icon: <Bot className="h-6 w-6 text-primary" />,
+      icon: <BsRobot className="h-6 w-6 text-primary" />,
     },
     {
       title: "Hộp thư hợp nhất",
       description: "Quản lý toàn bộ hội thoại đa kênh trong một inbox duy nhất, phân công nhân viên tức thì.",
-      icon: <Inbox className="h-6 w-6 text-primary" />,
+      icon: <BsInboxFill className="h-6 w-6 text-primary" />,
     },
     {
       title: "Broadcast hàng loạt",
       description: "Gửi tin nhắn marketing đến hàng nghìn khách hàng trên Facebook, Zalo, Telegram.",
-      icon: <Megaphone className="h-6 w-6 text-primary" />,
+      icon: <BsMegaphoneFill className="h-6 w-6 text-primary" />,
     },
     {
       title: "Tự động hóa & Flow",
       description: "Xây dựng kịch bản chatbot bằng kéo thả, keyword trigger, sequence drip.",
-      icon: <Workflow className="h-6 w-6 text-primary" />,
+      icon: <BsDiagram3Fill className="h-6 w-6 text-primary" />,
     },
     {
       title: "Marketing & Quảng cáo",
       description: "Tích hợp Facebook Ads, tạo quảng cáo bằng AI, remarketing tự động.",
-      icon: <Target className="h-6 w-6 text-primary" />,
+      icon: <BsBullseye className="h-6 w-6 text-primary" />,
     },
     {
       title: "MiniGame & Viral",
       description: "Quiz, Vòng quay may mắn, Cây vàng — tăng tương tác và thu thập lead.",
-      icon: <Gamepad2 className="h-6 w-6 text-primary" />,
+      icon: <BsController className="h-6 w-6 text-primary" />,
     },
     {
       title: "Thống kê & Báo cáo",
       description: "Dashboard phân tích hiệu quả kênh, hội thoại, chiến dịch marketing.",
-      icon: <BarChart3 className="h-6 w-6 text-primary" />,
+      icon: <BsBarChartFill className="h-6 w-6 text-primary" />,
     },
     {
       title: "Quản lý khách hàng",
       description: "CRM nhẹ, phân nhóm, gắn tag, lưu thuộc tính khách hàng.",
-      icon: <Users className="h-6 w-6 text-primary" />,
+      icon: <BsFillPeopleFill className="h-6 w-6 text-primary" />,
     },
     {
       title: "Đặt lịch tự động",
       description: "Booking tích hợp, gửi nhắc nhở qua Zalo/Messenger.",
-      icon: <CalendarClock className="h-6 w-6 text-primary" />,
+      icon: <BsFillCalendarDateFill className="h-6 w-6 text-primary" />,
     },
   ];
 

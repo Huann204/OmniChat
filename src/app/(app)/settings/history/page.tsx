@@ -1,6 +1,6 @@
-import { History } from "lucide-react";
+import { BsFillClockFill } from "react-icons/bs";
 import { SettingsPlaceholder } from "@/components/settings/SettingsPlaceholder";
 
 export default function HistorySettingsPage() {
-  return <SettingsPlaceholder title="Lịch sử" icon={History} />;
+  return <SettingsPlaceholder title="Lịch sử" icon={BsFillClockFill} />;
 }

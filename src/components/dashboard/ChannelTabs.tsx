@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import type { ComponentType, SVGProps } from "react";
-import { Layers } from "lucide-react";
+import { BsFillLayersFill } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import type { Bot, BotChannel } from "@/types/bot";
@@ -20,7 +20,7 @@ export function ChannelTabs({ bots, value, onChange }: ChannelTabsProps) {
     icon: ComponentType<SVGProps<SVGSVGElement>>;
     iconColor: string;
   }[] = [
-    { key: "all", label: "Tất cả", count: bots.length, icon: Layers, iconColor: "text-slate-500" },
+    { key: "all", label: "Tất cả", count: bots.length, icon: BsFillLayersFill, iconColor: "text-slate-500" },
     ...(Object.keys(CHANNEL_META) as BotChannel[]).map((channel) => ({
       key: channel,
       label: CHANNEL_META[channel].label,

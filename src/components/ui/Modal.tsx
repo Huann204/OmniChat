@@ -3,7 +3,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { BsX } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
@@ -80,7 +80,7 @@ export function Modal({ open, onClose, title, className, children }: ModalProps)
                   aria-label="Đóng"
                   className="cursor-pointer rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
                 >
-                  <X className="h-5 w-5" />
+                  <BsX className="h-5 w-5" />
                 </button>
               </div>
             )}

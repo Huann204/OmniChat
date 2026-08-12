@@ -1,9 +1,11 @@
+import { InboxIconRail } from "@/components/inbox/InboxIconRail";
+
 // Navbar giờ sống ở AppShell (app/(app)/layout.tsx) — đứng yên, không bị
 // Suspense của loading.tsx này bọc lại khi trang con đang tải.
 export default function LivechatLoading() {
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
-      <div className="hidden md:block w-14 shrink-0 border-r border-white/10" />
+      <InboxIconRail className="!bg-none bg-transparent border-none" />
 
       <div className="flex flex-1 min-w-0 overflow-hidden rounded-tl-xl bg-white">
         <div className="flex w-full md:w-[25%] xl:w-[400px] shrink-0 flex-col border-r border-slate-200 animate-pulse">

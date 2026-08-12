@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { BsChatFill } from "react-icons/bs";
 import { FaFacebook, FaYoutube } from "react-icons/fa";
 
 export function Footer() {
@@ -52,7 +52,7 @@ export function Footer() {
                 <FaFacebook className="h-5 w-5" />
               </a>
               <a href="#" className="text-slate-400 hover:text-primary transition-colors">
-                <MessageCircle className="h-5 w-5" />
+                <BsChatFill className="h-5 w-5" />
               </a>
               <a href="#" className="text-slate-400 hover:text-primary transition-colors">
                 <FaYoutube className="h-5 w-5" />

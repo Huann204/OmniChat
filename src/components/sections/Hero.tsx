@@ -2,20 +2,21 @@ import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Section";
 import { FadeIn } from "@/components/ui/FadeIn";
 import {
-  PlayCircle,
-  MessageCircle,
-  Bot,
-  Users,
-  ArrowRight,
-  Sparkles,
-  ShoppingBag,
-  Search,
-  Lock,
-  CheckCircle2,
-  Send,
-  FileText,
-} from "lucide-react";
+  BsPlayCircleFill,
+  BsChatFill,
+  BsRobot,
+  BsFillPeopleFill,
+  BsArrowRight,
+  BsStars,
+  BsBagCheckFill,
+  BsSearch,
+  BsLockFill,
+  BsCheckCircleFill,
+  BsSendFill,
+  BsFileTextFill,
+} from "react-icons/bs";
 
+import { PlayCircle } from "lucide-react";
 export function Hero() {
   return (
     <Section className="pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden relative">
@@ -27,7 +28,7 @@ export function Hero() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/80 border border-blue-100/50 text-primary text-sm font-semibold mb-2">
             <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
             Hchat AI 2.0 đã ra mắt
-            <ArrowRight className="h-4 w-4 ml-1" />
+            <BsArrowRight className="h-4 w-4 ml-1" />
           </div>
         </FadeIn>
 
@@ -63,7 +64,7 @@ export function Hero() {
           {/* Floating Highlight Badges */}
           <div className="absolute -top-5 -right-2 md:-right-6 z-30 bg-white/90 backdrop-blur-md border border-emerald-200/80 px-4 py-2 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-semibold text-slate-800 animate-bounce duration-1000">
             <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
-            <Sparkles className="h-4 w-4 text-emerald-600" />
+            <BsStars className="h-4 w-4 text-emerald-600" />
             <span>AI Auto-Reply Active • Khách VIP 100%</span>
           </div>
 
@@ -115,7 +116,7 @@ export function Hero() {
                   <img src="/zalo.png" alt="Zalo" className="h-5 w-5 object-contain" />
                 </div>
                 <div className="mt-auto h-8 w-8 rounded-xl bg-white/15 flex items-center justify-center text-white/80">
-                  <Bot className="h-4 w-4" />
+                  <BsRobot className="h-4 w-4" />
                 </div>
               </div>
 
@@ -123,7 +124,7 @@ export function Hero() {
               <div className="w-56 md:w-64 border-r border-slate-200/80 flex flex-col bg-slate-50/60 shrink-0 hidden sm:flex">
                 <div className="p-3 border-b border-slate-200/80 bg-white">
                   <div className="h-8.5 rounded-xl bg-slate-100/90 px-3 flex items-center gap-2 text-xs text-slate-400 border border-slate-200/60">
-                    <Search className="h-3.5 w-3.5 text-slate-400" />
+                    <BsSearch className="h-3.5 w-3.5 text-slate-400" />
                     <span>Tìm kiếm hội thoại...</span>
                   </div>
                 </div>
@@ -211,7 +212,7 @@ export function Hero() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-primary font-bold bg-blue-50 border border-blue-100/80 px-3.5 py-1.5 rounded-full shadow-xs">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    <BsStars className="h-3.5 w-3.5 text-primary" />
                     <span>AI Chatbot Active</span>
                   </div>
                 </div>
@@ -235,12 +236,12 @@ export function Hero() {
                   {/* AI Chatbot Message */}
                   <div className="flex gap-2.5 max-w-[90%] self-end flex-row-reverse">
                     <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1 text-white shadow-xs">
-                      <Bot className="h-4.5 w-4.5" />
+                      <BsRobot className="h-4.5 w-4.5" />
                     </div>
                     <div className="bg-blue-100/90 border border-blue-200/90 text-slate-900 rounded-2xl rounded-tr-xs p-4 shadow-xs space-y-2.5">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold">
                         <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white flex items-center gap-1.5 font-semibold shadow-xs">
-                          <Sparkles className="h-3 w-3 text-amber-300" /> Hchat AI Assistant
+                          <BsStars className="h-3 w-3 text-amber-300" /> Hchat AI Assistant
                         </span>
                       </div>
                       <p className="leading-relaxed text-slate-900 font-semibold">
@@ -252,11 +253,11 @@ export function Hero() {
 
                       <div className="flex flex-wrap gap-2 pt-1">
                         <button className="px-3.5 py-1.5 bg-primary text-white font-bold text-[11px] rounded-xl shadow-xs hover:bg-primary-hover transition-all flex items-center gap-1.5 cursor-pointer">
-                          <Sparkles className="h-3.5 w-3.5" />
+                          <BsStars className="h-3.5 w-3.5" />
                           <span>Dùng thử tính năng AI Chatbot</span>
                         </button>
                         <button className="px-3.5 py-1.5 bg-white text-slate-800 font-bold text-[11px] rounded-xl border border-slate-200/80 hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer">
-                          <FileText className="h-3.5 w-3.5 text-slate-500" />
+                          <BsFileTextFill className="h-3.5 w-3.5 text-slate-500" />
                           <span>Xem kịch bản mẫu</span>
                         </button>
                       </div>
@@ -271,7 +272,7 @@ export function Hero() {
                   </div>
                   <div className="h-9.5 px-4.5 rounded-xl bg-primary text-white text-xs font-bold flex items-center gap-2 shadow-md hover:bg-primary-hover transition-colors cursor-pointer">
                     <span>Gửi</span>
-                    <Send className="h-3.5 w-3.5" />
+                    <BsSendFill className="h-3.5 w-3.5" />
                   </div>
                 </div>
               </div>
@@ -299,7 +300,7 @@ export function Hero() {
                       <span>Quận 1, TP. Hồ Chí Minh</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-emerald-600 font-bold pt-1.5 border-t border-slate-100">
-                      <CheckCircle2 className="h-4 w-4" />
+                      <BsCheckCircleFill className="h-4 w-4" />
                       <span>Đã mua 3 đơn thành công</span>
                     </div>
                   </div>

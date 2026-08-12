@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
+import { BsChevronDown } from "react-icons/bs";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface AccordionItemProps {
@@ -16,11 +16,11 @@ export function AccordionItem({ title, content, isOpen, onClick }: AccordionItem
   return (
     <div className="border-b border-slate-200 last:border-0">
       <button
-        className="flex w-full items-center justify-between py-5 text-left transition-all hover:text-primary focus:outline-none"
+        className="flex w-full items-center justify-between py-5 text-left transition-all hover:text-primary focus:outline-none cursor-pointer"
         onClick={onClick}
       >
         <span className="text-lg font-medium text-slate-800">{title}</span>
-        <ChevronDown
+        <BsChevronDown
           className={cn(
             "h-5 w-5 shrink-0 text-slate-400 transition-transform duration-300",
             isOpen && "rotate-180 text-primary"

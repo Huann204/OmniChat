@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Info, Lightbulb, Smile, Sparkles, Wallet, X } from "lucide-react";
+import {
+  BsChevronDown,
+  BsInfoCircleFill,
+  BsLightbulbFill,
+  BsEmojiSmileFill,
+  BsStars,
+  BsWalletFill,
+  BsX,
+} from "react-icons/bs";
 import { Switch } from "@/components/ui/Switch";
 import { CustomizeAiRepliesModal } from "@/components/settings/CustomizeAiRepliesModal";
 import { updateAiAssistantSettings } from "@/app/actions/aiAssistant";
@@ -48,7 +56,7 @@ function PillSelect({
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+      <BsChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
     </div>
   );
 }
@@ -94,7 +102,7 @@ function SubRow({
         {label}
         {hint && (
           <span title={hint} className="text-slate-300">
-            <Info className="h-3.5 w-3.5" />
+            <BsInfoCircleFill className="h-3.5 w-3.5" />
           </span>
         )}
       </span>
@@ -157,7 +165,7 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
         <SettingRow
           icon={
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-500">
-              <Sparkles className="h-4 w-4" />
+              <BsStars className="h-4 w-4" />
             </span>
           }
           title="Mô hình AI"
@@ -177,7 +185,7 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
         <SettingRow
           icon={
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-500">
-              <Wallet className="h-4 w-4" />
+              <BsWalletFill className="h-4 w-4" />
             </span>
           }
           title="Thanh toán"
@@ -198,7 +206,7 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
         <SettingRow
           icon={
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-500">
-              <Lightbulb className="h-4 w-4" />
+              <BsLightbulbFill className="h-4 w-4" />
             </span>
           }
           title="Gợi ý trả lời tin nhắn từ AI"
@@ -240,7 +248,7 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
         <SettingRow
           icon={
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-500">
-              <Smile className="h-4 w-4" />
+              <BsEmojiSmileFill className="h-4 w-4" />
             </span>
           }
           title="Phát hiện cảm xúc của khách hàng"
@@ -289,7 +297,7 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
                       onClick={() => setSentimentTags((prev) => prev.filter((t) => t !== tag))}
                       className="text-sky-500 transition-colors hover:text-sky-700 cursor-pointer"
                     >
-                      <X className="h-3 w-3" />
+                      <BsX className="h-3 w-3" />
                     </button>
                   </span>
                 ))}

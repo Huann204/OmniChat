@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { CheckSquare, GitMerge, Loader2, Plus, Search, SlidersHorizontal, Square } from "lucide-react";
+import {
+  BsCheckSquareFill,
+  BsDiagram3Fill,
+  BsPlusLg,
+  BsSearch,
+  BsSliders,
+  BsSquare,
+} from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
@@ -122,7 +130,7 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
             aria-label="Thêm nhóm gộp"
             className="cursor-pointer rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
           >
-            <Plus className="h-4 w-4" />
+            <BsPlusLg className="h-4 w-4" />
           </button>
         </div>
 
@@ -139,7 +147,7 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
 
           <div className="flex items-center gap-2">
             <div className="relative w-56">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={search}
@@ -153,7 +161,7 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
               aria-label="Bộ lọc"
               className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <BsSliders className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -245,9 +253,9 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
             className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-800"
           >
             {allFilteredSelected ? (
-              <CheckSquare className="h-4 w-4" />
+              <BsCheckSquareFill className="h-4 w-4" />
             ) : (
-              <Square className="h-4 w-4" />
+              <BsSquare className="h-4 w-4" />
             )}
             Chọn tất cả / bỏ chọn
             <span className="ml-1 flex items-center gap-1">
@@ -269,7 +277,7 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
             {isNavigating ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <GitMerge className="h-4 w-4" />
+              <BsDiagram3Fill className="h-4 w-4" />
             )}
             Vào chế độ gộp trang
           </button>

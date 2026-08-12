@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { BsPencilFill, BsPlusLg, BsTrashFill } from "react-icons/bs";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import {
@@ -102,7 +102,7 @@ export function ConversationTagManager({ initialItems }: ConversationTagManagerP
             onClick={openAddModal}
             className="flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
+            <BsPlusLg className="h-4 w-4" />
             Thêm thẻ
           </button>
         </div>
@@ -127,7 +127,7 @@ export function ConversationTagManager({ initialItems }: ConversationTagManagerP
                     onClick={() => openEditModal(tag)}
                     className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-black/15 cursor-pointer"
                   >
-                    <Pencil className="h-3 w-3" />
+                    <BsPencilFill className="h-3 w-3" />
                   </button>
                   <button
                     type="button"
@@ -135,7 +135,7 @@ export function ConversationTagManager({ initialItems }: ConversationTagManagerP
                     onClick={() => handleDelete(tag.id)}
                     className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-black/15 cursor-pointer"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <BsTrashFill className="h-3 w-3" />
                   </button>
                 </span>
               </div>

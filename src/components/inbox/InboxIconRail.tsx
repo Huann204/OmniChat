@@ -2,30 +2,32 @@
 
 import * as React from "react";
 import {
-  MessageCircle,
-  MessagesSquare,
-  Mail,
-  Star,
-  Phone,
-  PhoneMissed,
-  Clock,
-  Calendar,
-  Archive,
-  Users,
-} from "lucide-react";
+  BsChatSquareTextFill,
+  BsPersonCircle,
+  BsChatFill,
+  BsFillEnvelopeFill,
+  BsFillStarFill,
+  BsFillTelephoneFill,
+  BsFillTelephoneXFill,
+  BsFillClockFill,
+  BsFillCalendarDateFill,
+  BsFillLayersFill,
+  BsFillPeopleFill,
+} from "react-icons/bs";
 import { cn } from "@/lib/utils";
 
 const RAIL_ITEMS = [
-  { id: "contacts", icon: Users, label: "Danh bạ" },
-  { id: "chat", icon: MessageCircle, label: "Hội thoại" },
-  { id: "quick", icon: MessagesSquare, label: "Tin nhắn nhanh" },
-  { id: "mail", icon: Mail, label: "Hộp thư" },
-  { id: "star", icon: Star, label: "Đánh dấu sao" },
-  { id: "phone", icon: Phone, label: "Cuộc gọi" },
-  { id: "missed", icon: PhoneMissed, label: "Cuộc gọi nhỡ" },
-  { id: "clock", icon: Clock, label: "Lịch sử" },
-  { id: "calendar", icon: Calendar, label: "Lịch hẹn" },
-  { id: "archive", icon: Archive, label: "Lưu trữ" },
+  { id: "quick", icon: BsChatSquareTextFill, label: "Tin nhắn nhanh" },
+  { id: "contacts", icon: BsPersonCircle, label: "Danh bạ" },
+  { id: "chat", icon: BsChatFill, label: "Hội thoại" },
+  { id: "mail", icon: BsFillEnvelopeFill, label: "Hộp thư" },
+  { id: "star", icon: BsFillStarFill, label: "Đánh dấu sao" },
+  { id: "phone", icon: BsFillTelephoneFill, label: "Cuộc gọi" },
+  { id: "missed", icon: BsFillTelephoneXFill, label: "Cuộc gọi nhỡ" },
+  { id: "clock", icon: BsFillClockFill, label: "Lịch sử" },
+  { id: "calendar", icon: BsFillCalendarDateFill, label: "Lịch hẹn" },
+  { id: "archive", icon: BsFillLayersFill, label: "Lưu trữ" },
+  { id: "team", icon: BsFillPeopleFill, label: "Nhóm" },
 ] as const;
 
 interface InboxIconRailProps {
@@ -36,7 +38,7 @@ export function InboxIconRail({ className }: InboxIconRailProps = {}) {
   const [active, setActive] = React.useState<string>("chat");
 
   return (
-    <nav className={cn("hidden md:flex w-14 shrink-0 flex-col items-center gap-2 border-r border-slate-200 bg-[rgb(80,109,173)] py-3", className)}>
+    <nav className={cn("hidden md:flex w-13 shrink-0 flex-col items-center gap-2 border-r border-slate-200 bg-[rgb(80,109,173)] py-3", className)}>
       {RAIL_ITEMS.map(({ id, icon: Icon, label }) => (
         <button
           key={id}
@@ -49,7 +51,7 @@ export function InboxIconRail({ className }: InboxIconRailProps = {}) {
             active === id && "bg-white/20 text-white"
           )}
         >
-          <Icon className="h-4.5 w-4.5" />
+          <Icon className="h-5 w-5" />
         </button>
       ))}
     </nav>

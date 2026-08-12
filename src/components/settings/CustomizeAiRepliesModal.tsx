@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { HelpCircle, Sparkles } from "lucide-react";
+import { BsQuestionCircleFill, BsStars } from "react-icons/bs";
 import { Modal } from "@/components/ui/Modal";
 import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/utils";
@@ -102,7 +102,7 @@ export function CustomizeAiRepliesModal({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-                      <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                      <BsStars className="h-3.5 w-3.5 text-violet-400" />
                       {preset.label}
                     </span>
                     <span onClick={(e) => e.stopPropagation()}>
@@ -127,7 +127,7 @@ export function CustomizeAiRepliesModal({
 
         <div className="flex flex-1 flex-col bg-white p-5">
           <p className="mb-3 flex items-start gap-1.5 text-sm text-slate-500">
-            <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+            <BsQuestionCircleFill className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
             <span>
               Bạn đang không chắc viết gì? Hãy{" "}
               <button

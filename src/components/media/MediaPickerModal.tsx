@@ -2,7 +2,16 @@
 
 import * as React from "react";
 import NextImage from "next/image";
-import { Clock, FolderPlus, Heart, Images, Loader2, Search, Trash2, X } from "lucide-react";
+import {
+  BsFillClockFill,
+  BsFolderPlus,
+  BsHeartFill,
+  BsFillImageFill,
+  BsSearch,
+  BsTrashFill,
+  BsX,
+} from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useMediaLibraryData } from "@/hooks/useMediaLibraryData";
@@ -90,7 +99,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
         <h2 className="shrink-0 text-base font-semibold text-slate-900">Thư mục ảnh</h2>
         <div className="relative ml-2 max-w-md flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -104,7 +113,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
           aria-label="Đóng"
           className="cursor-pointer rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
         >
-          <X className="h-5 w-5" />
+          <BsX className="h-5 w-5" />
         </button>
       </div>
 
@@ -123,7 +132,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
               aria-label="Thêm thư mục (sắp ra mắt)"
               className="flex h-7 w-7 shrink-0 cursor-not-allowed items-center justify-center rounded-lg text-slate-300"
             >
-              <FolderPlus className="h-4 w-4" />
+              <BsFolderPlus className="h-4 w-4" />
             </button>
           </div>
 
@@ -136,7 +145,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
                 tab === "recent" ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50"
               )}
             >
-              <Clock className="h-4 w-4" />
+              <BsFillClockFill className="h-4 w-4" />
               Tải lên gần đây
             </button>
             <button
@@ -145,7 +154,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
               title="Sắp ra mắt"
               className="flex cursor-not-allowed items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-300"
             >
-              <Heart className="h-4 w-4" />
+              <BsHeartFill className="h-4 w-4" />
               Yêu thích
             </button>
           </nav>
@@ -203,7 +212,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
             {showEmptyState ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 py-10 text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
-                  <Images className="h-8 w-8" />
+                  <BsFillImageFill className="h-8 w-8" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-600">Bạn chưa có ảnh nào.</p>
@@ -260,7 +269,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
                 aria-label="Xoá các ảnh đã chọn"
                 className="flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
               >
-                <Trash2 className="h-4 w-4" />
+                <BsTrashFill className="h-4 w-4" />
               </button>
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 py-1.5 pl-3 pr-2 text-xs font-medium text-slate-600">
                 Đã chọn {selectedIds.length} ảnh
@@ -270,7 +279,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
                   aria-label="Bỏ chọn tất cả"
                   className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-slate-400 hover:text-slate-600"
                 >
-                  <X className="h-3 w-3" />
+                  <BsX className="h-3 w-3" />
                 </button>
               </span>
             </>
@@ -300,7 +309,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
               aria-label="Đóng xem trước"
               className="cursor-pointer rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
             >
-              <X className="h-5 w-5" />
+              <BsX className="h-5 w-5" />
             </button>
           </div>
           <div className="relative min-h-0 flex-1 bg-slate-50">
@@ -331,7 +340,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
             <div className="flex items-start gap-3">
-              <Trash2 className="h-5 w-5 shrink-0 text-red-500" />
+              <BsTrashFill className="h-5 w-5 shrink-0 text-red-500" />
               <p className="text-sm font-medium text-slate-900">
                 {pendingDeleteIds.length > 1
                   ? `Bạn có chắc chắn muốn xoá ${pendingDeleteIds.length} ảnh đã chọn không?`

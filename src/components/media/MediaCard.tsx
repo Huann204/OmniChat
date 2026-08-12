@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Loader2, Trash2, ZoomIn } from "lucide-react";
+import { BsZoomIn, BsTrashFill } from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/media";
 import type { MediaItem } from "@/types/media";
@@ -64,7 +65,7 @@ export function MediaCard({
             }}
             className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm transition-colors hover:bg-white"
           >
-            <ZoomIn className="h-3.5 w-3.5" />
+            <BsZoomIn className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
@@ -79,7 +80,7 @@ export function MediaCard({
             {deleting ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Trash2 className="h-3.5 w-3.5" />
+              <BsTrashFill className="h-3.5 w-3.5" />
             )}
           </button>
         </div>

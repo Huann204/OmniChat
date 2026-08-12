@@ -2,7 +2,16 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Phone, StickyNote, Paperclip, Image as ImageIcon, MessageSquareText, Send, HelpCircle, X } from "lucide-react";
+import {
+  BsFillTelephoneFill,
+  BsStickyFill,
+  BsPaperclip,
+  BsFillImageFill,
+  BsChatSquareTextFill,
+  BsSendFill,
+  BsQuestionCircleFill,
+  BsX,
+} from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import { MediaPickerModal } from "@/components/media/MediaPickerModal";
 import type { MediaItem } from "@/types/media";
@@ -132,7 +141,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
             aria-label="Huỷ trả lời"
             className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 cursor-pointer"
           >
-            <X className="h-3.5 w-3.5" />
+            <BsX className="h-4 w-4" />
           </button>
         </div>
       )}
@@ -156,7 +165,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
                 aria-label={`Bỏ ${item.originalFilename}`}
                 className="absolute right-0.5 top-0.5 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
               >
-                <X className="h-2.5 w-2.5" />
+                <BsX className="h-3 w-3" />
               </button>
             </div>
           ))}
@@ -220,7 +229,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
 
       <div className="mt-1 flex items-center justify-between">
         <div className="flex items-center gap-1 text-slate-400">
-          <HelpCircle className="h-4.5 w-4.5" />
+          <BsQuestionCircleFill className="h-4.5 w-4.5" />
         </div>
 
         <div className="flex items-center gap-1 text-slate-400">
@@ -228,19 +237,19 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
           >
-            <Phone className="h-4.5 w-4.5" />
+            <BsFillTelephoneFill className="h-4.5 w-4.5" />
           </button>
           <button
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
           >
-            <StickyNote className="h-4.5 w-4.5" />
+            <BsStickyFill className="h-4.5 w-4.5" />
           </button>
           <button
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
           >
-            <Paperclip className="h-4.5 w-4.5" />
+            <BsPaperclip className="h-4.5 w-4.5" />
           </button>
           <button
             type="button"
@@ -248,7 +257,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
             aria-label="Chọn ảnh từ thư viện"
             className="relative flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
           >
-            <ImageIcon className="h-4.5 w-4.5" />
+            <BsFillImageFill className="h-4.5 w-4.5" />
             {attachedImages.length > 0 && (
               <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold leading-none text-white">
                 {attachedImages.length}
@@ -264,7 +273,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
               manualListOpen ? "bg-primary/10 text-primary" : "hover:bg-slate-100 hover:text-slate-700"
             )}
           >
-            <MessageSquareText className="h-4.5 w-4.5" />
+            <BsChatSquareTextFill className="h-4.5 w-4.5" />
           </button>
           <button
             type="button"
@@ -273,7 +282,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
             aria-label="Gửi tin nhắn"
             className="flex h-8 w-8 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Send className="h-4.5 w-4.5" />
+            <BsSendFill className="h-4.5 w-4.5" />
           </button>
         </div>
       </div>

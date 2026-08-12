@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { BsStars, BsChevronDown, BsArrowRepeat } from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 
 interface AiSuggestionBarProps {
   suggestions: string[];
@@ -51,7 +52,7 @@ export function AiSuggestionBar({
   return (
     <div className="relative flex items-center gap-2 overflow-hidden border-t border-slate-200 bg-violet-50/40 px-3 py-2 select-none">
       <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-violet-500">
-        <Sparkles className="h-3.5 w-3.5" />
+        <BsStars className="h-3.5 w-3.5" />
         AI gợi ý
       </span>
 
@@ -79,7 +80,7 @@ export function AiSuggestionBar({
                 className="flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 cursor-pointer transition-colors"
               >
                 +{extraSuggestions.length} khác
-                <ChevronDown className="h-3 w-3" />
+                <BsChevronDown className="h-3 w-3" />
               </button>
 
               {showMoreOpen && (
@@ -111,7 +112,7 @@ export function AiSuggestionBar({
               title="Sinh lại gợi ý"
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-violet-400 transition-colors hover:bg-violet-100 hover:text-violet-600 cursor-pointer ml-auto"
             >
-              <RefreshCw className="h-3.5 w-3.5" />
+              <BsArrowRepeat className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, Trash2, User } from "lucide-react";
+import { BsPencilFill, BsPlusLg, BsTrashFill, BsPersonFill } from "react-icons/bs";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import {
@@ -157,7 +157,7 @@ export function TeamMemberManager({
               onClick={openAddModal}
               className="flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover cursor-pointer"
             >
-              <Plus className="h-4 w-4" />
+              <BsPlusLg className="h-4 w-4" />
               Thêm nhân viên
             </button>
           )}
@@ -178,7 +178,7 @@ export function TeamMemberManager({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <User className="h-4.5 w-4.5" />
+                    <BsPersonFill className="h-4.5 w-4.5" />
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -202,7 +202,7 @@ export function TeamMemberManager({
                     onClick={() => openEditModal(member)}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <BsPencilFill className="h-4 w-4" />
                   </button>
                 )}
 
@@ -213,7 +213,7 @@ export function TeamMemberManager({
                     onClick={() => handleRemove(member.id)}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 cursor-pointer"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <BsTrashFill className="h-4 w-4" />
                   </button>
                 )}
               </div>
