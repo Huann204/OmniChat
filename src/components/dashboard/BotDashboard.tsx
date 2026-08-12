@@ -1,59 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { BotCard } from "./BotCard";
 import { ChannelTabs } from "./ChannelTabs";
-import { DashboardNavbar } from "./DashboardNavbar";
 import { DashboardToolbar } from "./DashboardToolbar";
 import { MergePagesModal } from "./MergePagesModal";
-import { NAV_TABS } from "@/lib/nav-tabs";
-import { toast } from "@/store/toast-store";
 import type { Bot, BotChannel } from "@/types/bot";
-import type { ShopRole } from "@/types/shopMember";
 
 interface BotDashboardProps {
   bots: Bot[];
-  userName: string;
-  userEmail: string;
-  // Nhân viên (role="member") không được vào Cài đặt — ẩn hẳn tab thay vì
-  // để bấm vào rồi bị bounce ngược, xem settings/layout.tsx (chặn thật ở đó).
-  myRole: ShopRole | null;
 }
 
-export function BotDashboard({ bots: initialBots, userName, userEmail, myRole }: BotDashboardProps) {
-  const router = useRouter();
-  const tabs = myRole === "member" ? NAV_TABS.filter((tab) => tab !== "Cài đặt") : NAV_TABS;
+// Navbar/tabs giờ sống ở AppShell (app/(app)/layout.tsx), dùng chung cho cả
+// nhóm route — component này chỉ còn render đúng phần nội dung bên dưới.
+export function BotDashboard({ bots: initialBots }: BotDashboardProps) {
   const [bots, setBots] = React.useState(initialBots);
   const [prevInitialBots, setPrevInitialBots] = React.useState(initialBots);
   const [search, setSearch] = React.useState("");
   const [channelFilter, setChannelFilter] = React.useState<BotChannel | "all">("all");
   const [mergeModalOpen, setMergeModalOpen] = React.useState(false);
-  // Không có tab nào active sẵn ở Dashboard — các tab (Hội thoại/Đơn hàng/...)
-  // là khu vực làm việc của livechat, chỉ nên sáng lên khi thật sự đang ở đó
-  // (đã bấm sang /livechat), không phải ngay khi vừa vào Dashboard.
-  const [activeTab, setActiveTab] = React.useState<string | undefined>(undefined);
-
-  // Chỉ "Hội thoại" là tab đã có thật — vào thẳng /livechat (không truyền
-  // pageId = mặc định gộp TOÀN BỘ Page hiện có, xem logic fallback trong
-  // livechat/page.tsx). Điều hướng thẳng bằng router.push, không còn vòng
-  // qua Server Action ghi cookie + redirect như trước — cách cũ khiến MỌI
-  // lượt vào Livechat tốn thêm 1 vòng round-trip thừa trước khi trang thật
-  // sự bắt đầu tải (đo được rõ trên production). Đơn hàng/Bài viết/Thống
-  // kê/Cài đặt chưa xây, bấm vào chỉ báo đang phát triển, không điều hướng
-  // đi đâu cả.
-  function handleTabChange(tab: string) {
-    if (tab === "Cài đặt") {
-      router.push("/settings");
-      return;
-    }
-    if (tab !== NAV_TABS[0]) {
-      toast.info("Tính năng đang được phát triển");
-      return;
-    }
-    setActiveTab(tab);
-    router.push("/livechat");
-  }
 
   // initialBots được tính lại ở server (getConnectedPages) mỗi khi
   // router.refresh() chạy — đồng bộ vào state cục bộ để danh sách hiện Page
@@ -81,17 +46,8 @@ export function BotDashboard({ bots: initialBots, userName, userEmail, myRole }:
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[rgb(80,109,173)] font-roboto">
-      <DashboardNavbar
-        userName={userName}
-        userEmail={userEmail}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        className="!bg-none bg-transparent border-none shrink-0"
-      />
-
-      <main className="w-full flex-1 min-h-0 bg-slate-100 pt-6 pb-6 shadow-2xl relative">
+    <>
+      <main className="w-full flex-1 min-h-0 bg-slate-100 pt-6 pb-6 shadow-2xl relative overflow-y-auto">
         <div className="mx-auto flex h-full w-[calc(100%-2rem)] max-w-[1144px] flex-col space-y-2 sm:w-[calc(100%-3rem)]">
           {/* Khối 1: Header + Toolbar */}
           <div className="shrink-0 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[8px] md:p-5">
@@ -132,6 +88,6 @@ export function BotDashboard({ bots: initialBots, userName, userEmail, myRole }:
         onClose={() => setMergeModalOpen(false)}
         bots={bots}
       />
-    </div>
+    </>
   );
 }

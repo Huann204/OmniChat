@@ -50,7 +50,7 @@ export async function login(
     };
   }
 
-  await createSession(data.accessToken, data.refreshToken, data.user);
+  await createSession(data.accessToken, data.refreshToken);
 
   // Không còn màn chọn Shop — luôn tự quyết định thẳng 1 Shop để vào:
   // ưu tiên Shop lần trước user đã chọn (lastShopId, cập nhật mỗi khi
@@ -106,7 +106,7 @@ export async function register(
 
   // register luôn trả về đúng 1 Shop mới tạo (xem auth.controller.ts#register)
   // nên chọn thẳng luôn, không cần qua màn chọn Shop.
-  await createSession(data.accessToken, data.refreshToken, data.user, data.shop.id);
+  await createSession(data.accessToken, data.refreshToken, data.shop.id);
   revalidatePath("/", "layout");
   return { success: true, redirectTo: "/dashboard" };
 }
