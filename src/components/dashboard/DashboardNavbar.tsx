@@ -32,20 +32,20 @@ export function DashboardNavbar({
 
   return (
     <header className={cn("bg-[rgb(80,109,173)]", className)}>
-      <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center gap-8 sm:w-[calc(100%-3rem)]">
-        <Link href={tabs ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2 mr-6">
-          <img src="/hchat.png" alt="Hchat Logo" className="h-10 w-auto object-contain" />
+      <div className="mx-auto flex h-14 w-full px-3 sm:w-[calc(100%-2rem)] max-w-[1144px] items-center gap-2 sm:gap-4 md:gap-8 sm:w-[calc(100%-3rem)]">
+        <Link href={tabs ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2 mr-1 sm:mr-4 md:mr-6">
+          <img src="/hchat.png" alt="Hchat Logo" className="h-8 sm:h-10 w-auto object-contain" />
         </Link>
 
         {tabs && (
-          <nav className="flex items-center gap-1 overflow-x-auto">
+          <nav className="flex items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => onTabChange?.(tab)}
                 className={cn(
-                  "shrink-0 rounded-lg px-3.5 py-2 text-sm font-normal transition-colors cursor-pointer",
+                  "shrink-0 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-normal transition-colors cursor-pointer",
                   tab === activeTab
                     ? "bg-white/20 text-white"
                     : "text-white hover:bg-white/10 hover:text-white"
@@ -57,7 +57,7 @@ export function DashboardNavbar({
           </nav>
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <ShopSwitcherMenu />
 
           {/* Avatar user */}

@@ -36,7 +36,7 @@ export function InboxIconRail({ className }: InboxIconRailProps = {}) {
   const [active, setActive] = React.useState<string>("chat");
 
   return (
-    <nav className={cn("flex w-14 shrink-0 flex-col items-center gap-2 border-r border-slate-200 bg-[rgb(80,109,173)] py-3", className)}>
+    <nav className={cn("hidden md:flex w-14 shrink-0 flex-col items-center gap-2 border-r border-slate-200 bg-[rgb(80,109,173)] py-3", className)}>
       {RAIL_ITEMS.map(({ id, icon: Icon, label }) => (
         <button
           key={id}

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MessageSquareQuote, PackageX, Plus } from "lucide-react";
+import { MessageSquareQuote, PackageX, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 
@@ -9,43 +9,71 @@ type InfoTab = "info" | "order";
 
 interface CustomerInfoPanelProps {
   hasActiveConversation?: boolean;
+  onClose?: () => void;
+  className?: string;
 }
 
-export function CustomerInfoPanel({ hasActiveConversation = true }: CustomerInfoPanelProps) {
+export function CustomerInfoPanel({
+  hasActiveConversation = true,
+  onClose,
+  className,
+}: CustomerInfoPanelProps) {
   const [tab, setTab] = React.useState<InfoTab>("info");
   const [note, setNote] = React.useState("");
 
   if (!hasActiveConversation) {
     return (
-      <div className="flex w-[27%] shrink-0 items-center justify-center border-l border-slate-200 bg-white">
+      <div
+        className={cn(
+          "flex w-full md:w-[27%] shrink-0 items-center justify-center border-l border-slate-200 bg-white h-full",
+          className
+        )}
+      >
         <p className="text-sm text-slate-400">Chưa có thông tin khách hàng</p>
       </div>
     );
   }
 
   return (
-    <div className="flex w-[27%] shrink-0 flex-col border-l border-slate-200 bg-white">
-      <div className="flex border-b border-slate-200">
-        <button
-          type="button"
-          onClick={() => setTab("info")}
-          className={cn(
-            "flex-1 border-b-2 py-3 text-sm font-semibold transition-colors cursor-pointer",
-            tab === "info" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
-          )}
-        >
-          Thông tin
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("order")}
-          className={cn(
-            "flex-1 border-b-2 py-3 text-sm font-semibold transition-colors cursor-pointer",
-            tab === "order" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
-          )}
-        >
-          Tạo đơn
-        </button>
+    <div
+      className={cn(
+        "flex w-full md:w-[27%] shrink-0 flex-col border-l border-slate-200 bg-white h-full",
+        className
+      )}
+    >
+      <div className="flex items-center justify-between border-b border-slate-200 px-3">
+        <div className="flex flex-1">
+          <button
+            type="button"
+            onClick={() => setTab("info")}
+            className={cn(
+              "flex-1 border-b-2 py-3 text-sm font-semibold transition-colors cursor-pointer",
+              tab === "info" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
+            )}
+          >
+            Thông tin
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("order")}
+            className={cn(
+              "flex-1 border-b-2 py-3 text-sm font-semibold transition-colors cursor-pointer",
+              tab === "order" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600"
+            )}
+          >
+            Tạo đơn
+          </button>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            className="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer xl:hidden"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">

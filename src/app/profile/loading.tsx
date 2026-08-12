@@ -7,21 +7,21 @@ export default async function ProfileLoading() {
   return (
     <div className="flex h-screen flex-col bg-[rgb(80,109,173)] font-roboto">
       <header className="shrink-0">
-        <div className="mx-auto flex h-14 w-[calc(100%-2rem)] max-w-[1144px] items-center gap-8 sm:w-[calc(100%-3rem)]">
-          <div className="flex shrink-0 items-center gap-2 mr-6">
+        <div className="mx-auto flex h-14 w-full px-3 sm:w-[calc(100%-2rem)] max-w-[1144px] items-center gap-2 sm:gap-4 md:gap-8 sm:w-[calc(100%-3rem)]">
+          <div className="flex shrink-0 items-center gap-2 mr-1 sm:mr-4 md:mr-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/hchat.png" alt="Hchat Logo" className="h-10 w-auto object-contain" />
+            <img src="/hchat.png" alt="Hchat Logo" className="h-8 sm:h-10 w-auto object-contain" />
           </div>
 
-          <nav className="flex items-center gap-1 overflow-x-auto">
+          <nav className="flex items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {["Hội thoại", "Đơn hàng", "Bài viết", "Thống kê", "Cài đặt"].map((tab) => (
-              <div key={tab} className="shrink-0 rounded-lg px-3.5 py-2 text-sm font-normal text-white">
+              <div key={tab} className="shrink-0 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-normal text-white">
                 {tab}
               </div>
             ))}
           </nav>
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
             <div className="flex items-center rounded-full p-1">
               {user ? (
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-slate-700">
