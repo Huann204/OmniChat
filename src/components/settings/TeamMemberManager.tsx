@@ -197,7 +197,7 @@ export function TeamMemberManager({
                   </button>
                 )}
 
-                {canManage && member.user.id !== myUserId && (
+                {canManage && member.user.id !== myUserId && member.role !== "owner" && (
                   <button
                     type="button"
                     aria-label="Xoá thành viên"
