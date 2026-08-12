@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { io, type Socket } from "socket.io-client";
-import { MessageSquareText } from "lucide-react";
+import { BsChatSquareTextFill } from "react-icons/bs";
 import { generateAiSuggestions } from "@/app/actions/aiAssistant";
 import {
   getOlderMessages,
@@ -613,7 +613,7 @@ export function InboxView({
             </div>
           ) : (
             <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-2 text-slate-400">
-              <MessageSquareText className="h-10 w-10" strokeWidth={1.5} />
+              <BsChatSquareTextFill className="h-10 w-10" />
               <p className="text-sm">Xin chọn 1 hội thoại từ danh sách bên trái</p>
             </div>
           )}

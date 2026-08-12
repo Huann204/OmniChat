@@ -3,7 +3,16 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
-import { Check, Clock, KeyRound, Layers3, Loader2, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import {
+  BsCheckLg,
+  BsFillClockFill,
+  BsKeyFill,
+  BsFillLayersFill,
+  BsArrowRepeat,
+  BsSearch,
+  BsSliders,
+} from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CONNECTION_PLATFORMS } from "@/lib/connection-platforms";
 import { cn } from "@/lib/utils";
@@ -47,7 +56,7 @@ export function AddConnectionModal({ open, onClose }: AddConnectionModalProps) {
             )}
           >
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-400">
-              <Clock className="h-3.5 w-3.5 text-white" />
+              <BsFillClockFill className="h-3.5 w-3.5 text-white" />
             </span>
             <span className="flex-1 truncate">Chờ kích hoạt</span>
           </button>
@@ -200,7 +209,7 @@ function FacebookConnectPanel({
                       </span>
                     )}
                   </span>
-                  {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                  {active && <BsCheckLg className="h-4 w-4 shrink-0 text-primary" />}
                 </button>
               );
             })}
@@ -411,7 +420,7 @@ function ZaloConnectPanel({
               }}
               className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
             >
-              <RefreshCw className="h-4 w-4" style={{ color: selected.accent }} />
+              <BsArrowRepeat className="h-4 w-4" style={{ color: selected.accent }} />
               Lấy mã QR mới
             </button>
           </>
@@ -484,7 +493,7 @@ function PendingActivationPanel() {
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm font-semibold text-slate-900">Chọn trang để kích hoạt</p>
           <div className="relative w-56">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={search}
@@ -492,7 +501,7 @@ function PendingActivationPanel() {
               placeholder="Tìm kiếm trang"
               className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-8 text-xs text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
             />
-            <SlidersHorizontal className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <BsSliders className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           </div>
         </div>
 
@@ -527,14 +536,14 @@ function PendingActivationPanel() {
             type="button"
             className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
           >
-            <KeyRound className="h-3.5 w-3.5" />
+            <BsKeyFill className="h-3.5 w-3.5" />
             Mã kết nối
           </button>
         </div>
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 py-10 text-center">
-        <Layers3 className="h-16 w-16 text-slate-200" strokeWidth={1.2} />
+        <BsFillLayersFill className="h-16 w-16 text-slate-200" />
         <h3 className="mt-2 text-base font-semibold text-slate-900">Không có trang nào 😵</h3>
         <p className="max-w-sm text-sm text-slate-500">
           {tab === "pending"

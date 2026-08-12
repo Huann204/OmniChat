@@ -1,7 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Check, Loader2, Phone, PhoneMissed, Smile, Reply, MoreHorizontal, User, X } from "lucide-react";
+import {
+  BsCheckLg,
+  BsFillTelephoneFill,
+  BsFillTelephoneXFill,
+  BsFillEmojiSmileFill,
+  BsReplyFill,
+  BsThreeDots,
+  BsPersonFill,
+  BsX,
+} from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { ATTACHMENT_LABELS } from "@/lib/message-format";
 import { cn } from "@/lib/utils";
 import type { ConversationMessage } from "@/types/conversation";
@@ -231,7 +241,7 @@ export function MessageThread({
             onClick={() => setLightboxUrl(null)}
             className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 cursor-pointer"
           >
-            <X className="h-5 w-5" />
+            <BsX className="h-5 w-5" />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -284,7 +294,7 @@ function MessageMeta({
             className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-black/5 hover:text-slate-600 cursor-pointer"
             aria-label="Thả cảm xúc"
           >
-            <Smile className="h-4 w-4" />
+            <BsFillEmojiSmileFill className="h-4 w-4" />
           </button>
           {pickerOpen && (
             <div className="absolute bottom-full z-20 mb-1 flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-1 shadow-lg">
@@ -314,7 +324,7 @@ function MessageMeta({
           className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-black/5 hover:text-slate-600 cursor-pointer"
           aria-label="Trả lời"
         >
-          <Reply className="h-4 w-4" />
+          <BsReplyFill className="h-4 w-4" />
         </button>
       )}
       <button
@@ -322,7 +332,7 @@ function MessageMeta({
         className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-black/5 hover:text-slate-600 cursor-pointer"
         aria-label="Tùy chọn khác"
       >
-        <MoreHorizontal className="h-4 w-4" />
+        <BsThreeDots className="h-4 w-4" />
       </button>
       <div className="ml-1 leading-tight">
         <p className="whitespace-nowrap text-xs font-medium text-slate-500">{name}</p>
@@ -356,7 +366,7 @@ function Avatar({
           />
         ) : (
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-400">
-            <User className="h-5 w-5" />
+            <BsPersonFill className="h-5 w-5" />
           </span>
         ))}
     </div>
@@ -447,7 +457,7 @@ function MessageRow({
     return (
       <div
         className={cn(
-          "group flex items-center gap-1.5 py-1",
+          "group flex items-end gap-1.5 py-1",
           isPage ? "justify-end" : "justify-start"
         )}
       >
@@ -524,6 +534,23 @@ function MessageRow({
           )}
         </div>
 
+        {isPage && (
+          <span className="mb-0.5 flex h-3 w-3 shrink-0 items-center justify-center">
+            {message.status === "sending" ? (
+              <Loader2 className="h-3 w-3 animate-spin text-slate-400" />
+            ) : message.status === "failed" ? (
+              <span
+                className="flex h-3 w-3 items-center justify-center rounded-full bg-red-100 text-[8px] font-bold text-red-500"
+                title="Gửi thất bại"
+              >
+                !
+              </span>
+            ) : (
+              <BsCheckLg className="h-3 w-3 text-slate-400" />
+            )}
+          </span>
+        )}
+
         {!isPage && (
           <MessageMeta
             name={senderName}
@@ -548,7 +575,7 @@ function MessageRow({
               isMissed ? "bg-rose-100 text-rose-500" : "bg-emerald-100 text-emerald-600"
             )}
           >
-            {isMissed ? <PhoneMissed className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+            {isMissed ? <BsFillTelephoneXFill className="h-4 w-4" /> : <BsFillTelephoneFill className="h-4 w-4" />}
           </span>
           <div>
             <p className="font-semibold text-slate-800">{message.text}</p>
@@ -608,18 +635,18 @@ function MessageRow({
       </div>
 
       {isPage && (
-        <span className="mb-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+        <span className="mb-0.5 flex h-3 w-3 shrink-0 items-center justify-center">
           {message.status === "sending" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+            <Loader2 className="h-3 w-3 animate-spin text-slate-400" />
           ) : message.status === "failed" ? (
             <span
-              className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-100 text-[9px] font-bold text-red-500"
+              className="flex h-3 w-3 items-center justify-center rounded-full bg-red-100 text-[8px] font-bold text-red-500"
               title="Gửi thất bại"
             >
               !
             </span>
           ) : (
-            <Check className="h-3.5 w-3.5 text-slate-400" />
+            <BsCheckLg className="h-3 w-3 text-slate-400" />
           )}
         </span>
       )}

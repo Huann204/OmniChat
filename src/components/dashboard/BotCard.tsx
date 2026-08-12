@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Loader2, MoreVertical, Pencil, Power, Trash2 } from "lucide-react";
+import { BsExclamationCircleFill, BsThreeDotsVertical, BsPencilFill, BsPower, BsTrashFill } from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import { setMergePagesCookie } from "@/lib/mergePagesCookie";
@@ -91,7 +92,7 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
             className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-500 transition-opacity group-hover:opacity-0"
             title="Bot đang tắt"
           >
-            <AlertCircle className="h-3.5 w-3.5" />
+            <BsExclamationCircleFill className="h-3.5 w-3.5" />
           </span>
         )}
 
@@ -108,7 +109,7 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
             menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
           )}
         >
-          <MoreVertical className="h-4 w-4" />
+          <BsThreeDotsVertical className="h-4 w-4" />
         </button>
 
         {menuOpen && (
@@ -131,7 +132,7 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
-                <Pencil className="h-3.5 w-3.5" /> Sửa
+                <BsPencilFill className="h-3.5 w-3.5" /> Sửa
               </button>
               <button
                 type="button"
@@ -143,7 +144,7 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
-                <Power className="h-3.5 w-3.5" /> {bot.isActive ? "Tắt bot" : "Bật bot"}
+                <BsPower className="h-3.5 w-3.5" /> {bot.isActive ? "Tắt bot" : "Bật bot"}
               </button>
               <button
                 type="button"
@@ -154,7 +155,7 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
               >
-                <Trash2 className="h-3.5 w-3.5" /> Xoá
+                <BsTrashFill className="h-3.5 w-3.5" /> Xoá
               </button>
             </div>
           </>

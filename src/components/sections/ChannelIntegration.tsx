@@ -1,8 +1,8 @@
 import { Section } from "@/components/ui/Section";
 import { Card } from "@/components/ui/Card";
 import { FadeIn } from "@/components/ui/FadeIn";
-import { FaInstagram, FaWhatsapp, FaTelegramPlane, FaGoogle } from "react-icons/fa";
-import { Globe } from "lucide-react";
+import { FaWhatsapp, FaTelegramPlane, FaGoogle } from "react-icons/fa";
+import { BsGlobe } from "react-icons/bs";
 
 export function ChannelIntegration() {
   const channels = [
@@ -27,9 +27,7 @@ export function ChannelIntegration() {
     {
       name: "Instagram",
       description: "Trả lời DM và comment tự động",
-      icon: (
-        <FaInstagram className="h-8 w-8 text-transparent bg-clip-text bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888]" />
-      ),
+      icon: <img src="/instagram.svg" alt="Instagram" className="h-8 w-8 object-contain" />,
       color: "hover:border-[#bc1888]/30",
     },
     {
@@ -47,7 +45,7 @@ export function ChannelIntegration() {
     {
       name: "Website Webchat",
       description: "Livechat trực tiếp trên website",
-      icon: <Globe className="h-8 w-8 text-primary" />,
+      icon: <BsGlobe className="h-8 w-8 text-primary" />,
       color: "hover:border-primary/30",
     },
     {

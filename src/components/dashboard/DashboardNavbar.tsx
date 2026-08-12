@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, User } from "lucide-react";
+import { BsFillBellFill, BsPersonFill } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ShopSwitcherMenu } from "@/components/dashboard/ShopSwitcherMenu";
@@ -90,7 +90,7 @@ export function DashboardNavbar({
                     onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-normal text-slate-700 hover:bg-slate-50"
                   >
-                    <User className="h-4 w-4" />
+                    <BsPersonFill className="h-4 w-4" />
                     Hồ sơ
                   </Link>
                   <LogoutButton
@@ -109,7 +109,7 @@ export function DashboardNavbar({
             aria-label="Thông báo"
             className="relative flex h-9 w-9 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/15 cursor-pointer"
           >
-            <Bell className="h-4.5 w-4.5" />
+            <BsFillBellFill className="h-4.5 w-4.5" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-red-400" />
           </button>
         </div>

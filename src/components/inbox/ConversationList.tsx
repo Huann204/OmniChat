@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, SlidersHorizontal, Users } from "lucide-react";
+import { BsSearch, BsSliders, BsFillPeopleFill } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import type { Conversation } from "@/types/conversation";
@@ -65,7 +65,7 @@ export function ConversationList({
     >
       <div className="flex items-center gap-2 border-b border-slate-100 p-3">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={search}
@@ -78,7 +78,7 @@ export function ConversationList({
           type="button"
           className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 cursor-pointer"
         >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
+          <BsSliders className="h-3.5 w-3.5" />
           Lọc theo
         </button>
       </div>
@@ -135,7 +135,7 @@ export function ConversationList({
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex min-w-0 items-center gap-1">
                     {conversation.isGroup && (
-                      <Users
+                      <BsFillPeopleFill
                         className="h-3.5 w-3.5 shrink-0 text-slate-400"
                         aria-label="Hội thoại nhóm"
                       />

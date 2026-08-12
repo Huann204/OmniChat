@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MessageSquareQuote, PackageX, Plus, X } from "lucide-react";
+import { BsChatQuoteFill, BsBoxSeam, BsPlusLg, BsX } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 
@@ -71,7 +71,7 @@ export function CustomerInfoPanel({
             aria-label="Đóng"
             className="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer xl:hidden"
           >
-            <X className="h-4 w-4" />
+            <BsX className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -79,7 +79,7 @@ export function CustomerInfoPanel({
       <div className="flex-1 overflow-y-auto p-4">
         <div className="flex flex-col items-center gap-3 rounded-xl bg-slate-50 p-4">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-primary shadow-sm">
-            <MessageSquareQuote className="h-6 w-6" />
+            <BsChatQuoteFill className="h-6 w-6" />
           </span>
           <textarea
             value={note}
@@ -100,11 +100,11 @@ export function CustomerInfoPanel({
 
         <div className="mt-3 flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-200 py-8">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-            <PackageX className="h-6 w-6" />
+            <BsBoxSeam className="h-6 w-6" />
           </span>
           <p className="text-sm text-slate-400">Chưa có lịch sử đơn hàng</p>
           <Button size="sm" onClick={() => setTab("order")}>
-            <Plus className="mr-1.5 h-4 w-4" />
+            <BsPlusLg className="mr-1.5 h-4 w-4" />
             Tạo đơn
           </Button>
         </div>

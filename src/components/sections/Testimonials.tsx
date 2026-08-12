@@ -1,6 +1,6 @@
 import { Section } from "@/components/ui/Section";
 import { Card } from "@/components/ui/Card";
-import { Star } from "lucide-react";
+import { BsFillStarFill } from "react-icons/bs";
 
 export function Testimonials() {
   const testimonials = [
@@ -43,7 +43,7 @@ export function Testimonials() {
           <Card key={index} className="p-8">
             <div className="flex items-center gap-1 mb-6 text-[#F59E0B]">
               {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} className="h-5 w-5 fill-current" />
+                <BsFillStarFill key={star} className="h-5 w-5" />
               ))}
             </div>
             <p className="text-slate-700 italic mb-8 leading-relaxed">

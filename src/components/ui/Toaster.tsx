@@ -2,16 +2,22 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
+import {
+  BsInfoCircleFill,
+  BsCheckCircleFill,
+  BsXCircleFill,
+  BsExclamationTriangleFill,
+  BsX,
+} from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import { useToastStore, type ToastItem, type ToastVariant } from "@/store/toast-store";
 
 const ICONS: Record<ToastVariant, React.ComponentType<{ className?: string }>> = {
-  default: Info,
-  info: Info,
-  success: CheckCircle2,
-  error: XCircle,
-  warning: AlertTriangle,
+  default: BsInfoCircleFill,
+  info: BsInfoCircleFill,
+  success: BsCheckCircleFill,
+  error: BsXCircleFill,
+  warning: BsExclamationTriangleFill,
 };
 
 const ICON_STYLES: Record<ToastVariant, string> = {
@@ -85,7 +91,7 @@ function ToastCard({ toast }: { toast: ToastItem }) {
         aria-label="Đóng thông báo"
         className="shrink-0 cursor-pointer rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
       >
-        <X className="h-4 w-4" />
+        <BsX className="h-4 w-4" />
       </button>
     </motion.div>
   );

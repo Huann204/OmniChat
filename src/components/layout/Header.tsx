@@ -6,7 +6,7 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store-provider";
-import { Menu, X } from "lucide-react";
+import { BsList, BsX } from "react-icons/bs";
 
 export function Header() {
   const user = useAuthStore((state) => state.user);
@@ -95,12 +95,11 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden p-2 text-slate-600"
+          className="md:hidden p-2 text-slate-600 cursor-pointer"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {isMobileMenuOpen ? <BsX className="h-6 w-6" /> : <BsList className="h-6 w-6" />}
         </button>
       </div>
 

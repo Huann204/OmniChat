@@ -5,7 +5,7 @@ import { Section } from "@/components/ui/Section";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { FadeIn } from "@/components/ui/FadeIn";
-import { Check } from "lucide-react";
+import { BsCheckLg } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 
 export function Pricing() {
@@ -150,7 +150,7 @@ export function Pricing() {
                 <ul className="space-y-4">
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <BsCheckLg className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                       <span className="text-sm text-slate-600 font-medium">{feature}</span>
                     </li>
                   ))}

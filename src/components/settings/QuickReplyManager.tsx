@@ -3,17 +3,17 @@
 import * as React from "react";
 import Image from "next/image";
 import {
-  Copy,
-  Download,
-  Image as ImageIcon,
-  ListChecks,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react";
+  BsCheck2All,
+  BsUpload,
+  BsDownload,
+  BsCopy,
+  BsFillImageFill,
+  BsPencilFill,
+  BsPlusLg,
+  BsSearch,
+  BsTrashFill,
+  BsX,
+} from "react-icons/bs";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { MediaPickerModal } from "@/components/media/MediaPickerModal";
@@ -145,22 +145,22 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
           <div className="flex flex-wrap items-center justify-between gap-3 px-3 sm:px-5 py-4">
             <div className="flex items-center gap-1.5">
               <button type="button" title="Chọn tất cả" onClick={notImplemented} className={ICON_BTN}>
-                <ListChecks className="h-4 w-4" />
+                <BsCheck2All className="h-4 w-4" />
               </button>
               <button type="button" title="Nhập từ file" onClick={notImplemented} className={ICON_BTN}>
-                <Upload className="h-4 w-4" />
+                <BsUpload className="h-4 w-4" />
               </button>
               <button type="button" title="Xuất file" onClick={notImplemented} className={ICON_BTN}>
-                <Download className="h-4 w-4" />
+                <BsDownload className="h-4 w-4" />
               </button>
               <button type="button" title="Sao chép" onClick={notImplemented} className={ICON_BTN}>
-                <Copy className="h-4 w-4" />
+                <BsCopy className="h-4 w-4" />
               </button>
             </div>
 
             <div className="flex w-full sm:w-auto items-center gap-2">
               <div className="relative flex-1 sm:flex-none">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={search}
@@ -174,7 +174,7 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
                 onClick={openAddModal}
                 className="flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-primary-hover cursor-pointer"
               >
-                <Plus className="h-4 w-4" />
+                <BsPlusLg className="h-4 w-4" />
                 Thêm mẫu
               </button>
             </div>
@@ -243,7 +243,7 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
                         onClick={() => openEditModal(item)}
                         className="cursor-pointer rounded-full p-1.5 text-slate-300 transition-colors hover:bg-primary/10 hover:text-primary"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <BsPencilFill className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
@@ -251,7 +251,7 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
                         onClick={() => handleDelete(item.id)}
                         className="cursor-pointer rounded-full p-1.5 text-slate-300 transition-colors hover:bg-red-50 hover:text-red-500"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <BsTrashFill className="h-4 w-4" />
                       </button>
                     </span>
                   </td>
@@ -312,7 +312,7 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
                       aria-label="Bỏ ảnh"
                       className="absolute right-0.5 top-0.5 flex h-4.5 w-4.5 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
                     >
-                      <X className="h-3 w-3" />
+                      <BsX className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
@@ -323,7 +323,7 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
               onClick={() => setPickerOpen(true)}
               className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-primary hover:text-primary cursor-pointer"
             >
-              <ImageIcon className="h-4 w-4" />
+              <BsFillImageFill className="h-4 w-4" />
               Chọn ảnh từ thư viện
             </button>
           </div>

@@ -1,6 +1,16 @@
 "use client";
 
-import { ArrowLeft, Link2, History, Smile, Users, FolderOpen, Mail, MoreHorizontal, PanelRight } from "lucide-react";
+import {
+  BsArrowLeft,
+  BsLink45Deg,
+  BsFillClockFill,
+  BsFillEmojiSmileFill,
+  BsFillPeopleFill,
+  BsFillFolderFill,
+  BsFillEnvelopeFill,
+  BsThreeDots,
+  BsLayoutSidebarReverse,
+} from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types/conversation";
 
@@ -39,7 +49,7 @@ export function ChatHeader({
             aria-label="Quay lại danh sách hội thoại"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 md:hidden cursor-pointer -ml-1"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <BsArrowLeft className="h-5 w-5" />
           </button>
         )}
         {conversation.customerAvatarUrl ? (
@@ -65,15 +75,15 @@ export function ChatHeader({
             {lastMessage?.time ? ` • ${lastMessage.time}` : ""}
           </p>
           <div className="mt-0.5 flex items-center gap-2 text-slate-400">
-            <Link2 className="h-3.5 w-3.5" />
-            <History className="h-3.5 w-3.5" />
-            <Smile className="h-3.5 w-3.5" />
+            <BsLink45Deg className="h-3.5 w-3.5" />
+            <BsFillClockFill className="h-3.5 w-3.5" />
+            <BsFillEmojiSmileFill className="h-3.5 w-3.5" />
           </div>
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-1 text-slate-400">
-        {[Users, FolderOpen, Mail].map((Icon, i) => (
+        {[BsFillPeopleFill, BsFillFolderFill, BsFillEnvelopeFill].map((Icon, i) => (
           <button
             key={i}
             type="button"
@@ -93,7 +103,7 @@ export function ChatHeader({
               showCustomerInfo ? "bg-primary/10 text-primary" : "hover:bg-slate-100 hover:text-slate-700"
             )}
           >
-            <PanelRight className="h-4 w-4" />
+            <BsLayoutSidebarReverse className="h-4 w-4" />
           </button>
         )}
         <span className="mx-0.5 sm:mx-1 h-5 w-px bg-slate-200" />
@@ -101,7 +111,7 @@ export function ChatHeader({
           type="button"
           className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
         >
-          <MoreHorizontal className="h-4 w-4" />
+          <BsThreeDots className="h-4 w-4" />
         </button>
       </div>
     </div>

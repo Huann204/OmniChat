@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Loader2, User } from "lucide-react";
+import { BsCameraFill, BsPersonFill } from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import {
   changePassword,
@@ -107,7 +108,7 @@ export function ProfileEditor({ initialUser }: { initialUser: SessionUser }) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarUrl} alt="Ảnh đại diện" className="h-full w-full object-cover" />
               ) : (
-                <User className="h-7 w-7" />
+                <BsPersonFill className="h-7 w-7" />
               )}
             </span>
             <button
@@ -120,7 +121,7 @@ export function ProfileEditor({ initialUser }: { initialUser: SessionUser }) {
               {avatarUploading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Camera className="h-3.5 w-3.5" />
+                <BsCameraFill className="h-3.5 w-3.5" />
               )}
             </button>
             <input
