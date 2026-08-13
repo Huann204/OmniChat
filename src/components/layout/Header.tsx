@@ -76,8 +76,12 @@ export function Header() {
                 href="/dashboard"
                 className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-primary"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                  {user.name.charAt(0).toUpperCase()}
+                <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    user.name.charAt(0).toUpperCase()
+                  )}
                 </span>
                 {user.name}
               </Link>
@@ -121,9 +125,16 @@ export function Header() {
             <>
               <Link
                 href="/dashboard"
-                className="text-base font-medium text-slate-800 p-2 text-center"
+                className="flex items-center justify-center gap-2 text-base font-medium text-slate-800 p-2 text-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
+                <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    user.name.charAt(0).toUpperCase()
+                  )}
+                </span>
                 {user.name}
               </Link>
               <LogoutButton variant="outline" className="w-full" />
