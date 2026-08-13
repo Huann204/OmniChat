@@ -34,7 +34,7 @@ export function Hero() {
 
         <FadeIn delay={0.2}>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter text-slate-900 leading-[1.1] max-w-4xl">
-            Quản lý tất cả tin nhắn khách hàng trong <span className="text-gradient">một nơi</span>
+            Quản lý tin nhắn đa kênh & <span className="text-gradient">AI Chatbot tự động</span>
           </h1>
         </FadeIn>
 
