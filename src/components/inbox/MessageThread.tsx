@@ -448,7 +448,7 @@ function MessageRow({
     );
   }
 
-  if (message.kind === "image" || message.kind === "sticker" || message.kind === "video") {
+  if (message.kind === "image" || message.kind === "sticker") {
     const urls = message.attachmentUrls ?? [];
     // Nhiều ảnh gộp chung 1 tin nhắn (message.attachments dạng mảng của
     // Facebook) — hiện thành lưới nhỏ trong cùng 1 bong bóng thay vì 1 ảnh
@@ -492,18 +492,7 @@ function MessageRow({
               {RAW_REACTION_EMOJI[message.reactionIcon] ?? "❤️"}
             </span>
           )}
-          {message.kind === "video" ? (
-            // Video xem trực tiếp bằng thẻ <video> có controls thật (play/
-            // pause/tua/âm lượng của trình duyệt) — khác ảnh, không mở được
-            // lightbox nên không gắn onClick/onImageClick.
-            <video
-              src={urls[0]}
-              controls
-              preload="metadata"
-              onLoadedData={onImageLoad}
-              className="max-h-[260px] max-w-[260px] rounded-2xl shadow-sm"
-            />
-          ) : isMultiImage ? (
+          {isMultiImage ? (
             <div className="flex max-w-[260px] flex-wrap gap-1">
               {urls.map((url, i) => (
                 // eslint-disable-next-line @next/next/no-img-element

@@ -23,6 +23,21 @@ const ATTACHMENT_KIND: Record<string, MessageKind> = {
   video: "video",
 };
 
+const VIDEO_EXTENSIONS = ["mp4", "mov", "webm", "mkv", "avi", "3gp", "m4v", "wmv"];
+
+// Zalo gửi file video (khách chọn từ máy, không phải quay trực tiếp trong
+// khung chat) qua CÙNG msgType "share.file" như file thường — Message.type
+// lưu lại là "file" chung chung, không có cách nào phân biệt được từ type đó.
+// Nhận diện thêm theo ĐUÔI FILE (đọc từ url hoặc tên gốc) để gắn đúng nhãn
+// "[Video]" thay vì "[Tệp đính kèm]" khi tin không có tên gốc — không ảnh
+// hưởng cách hiển thị (video vẫn render như file thường, chỉ bấm vào mới
+// xem được, xem MessageThread.tsx).
+function looksLikeVideo(attachment: RawAttachment): boolean {
+  const source = attachment.name || attachment.url;
+  const ext = source.split("?")[0].split(".").pop()?.toLowerCase();
+  return !!ext && VIDEO_EXTENSIONS.includes(ext);
+}
+
 export function messagePreviewText(
   text: string | undefined,
   attachments?: RawAttachment[]
@@ -41,7 +56,8 @@ export function messageKindAndContent(
 ): { kind: MessageKind; text?: string; attachmentUrls?: string[] } {
   const first = attachments?.[0];
   if (first) {
-    const kind = ATTACHMENT_KIND[first.type] ?? "file";
+    let kind = ATTACHMENT_KIND[first.type] ?? "file";
+    if (kind === "file" && looksLikeVideo(first)) kind = "video";
     // Ảnh có thể nhiều cái gộp chung 1 tin nhắn (Facebook trả về/mình gửi đi
     // đều qua attachments dạng mảng) — gom hết url ảnh lại để hiện chung 1
     // bong bóng. Sticker/video/file luôn chỉ có đúng 1 attachment.
