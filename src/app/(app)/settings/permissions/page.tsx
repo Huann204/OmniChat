@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { TeamMemberManager } from "@/components/settings/TeamMemberManager";
+
+export const metadata: Metadata = {
+  title: "Phân quyền",
+};
 import { getConnectedPages, getCurrentShopRole, getShopMembers, verifySession } from "@/lib/dal";
 
 export default async function PermissionsSettingsPage() {

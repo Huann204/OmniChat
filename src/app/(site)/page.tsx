@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "Nền tảng quản lý tin nhắn và AI Chatbot",
+};
 
 import { Hero } from "@/components/sections/Hero";
 import { ChannelIntegration } from "@/components/sections/ChannelIntegration";

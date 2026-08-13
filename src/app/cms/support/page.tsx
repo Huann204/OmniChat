@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { ShopSupportSearch } from "@/components/cms/ShopSupportSearch";
+
+export const metadata: Metadata = {
+  title: "Hỗ trợ CMS",
+};
 
 export default function CmsSupportPage() {
   return (
