@@ -25,7 +25,10 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Hchat | Nền tảng quản lý tin nhắn và AI Chatbot",
+  title: {
+    default: "Hchat | Nền tảng quản lý tin nhắn và AI Chatbot",
+    template: "%s | Hchat",
+  },
   description: "Quản lý tất cả tin nhắn khách hàng trong một nơi. Tự động hóa bán hàng với AI Chatbot thông minh trên Facebook, Zalo, Instagram, WhatsApp, và Website.",
   icons: {
     icon: "/favi.png",

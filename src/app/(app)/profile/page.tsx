@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { ProfileEditor } from "@/components/profile/ProfileEditor";
+
+export const metadata: Metadata = {
+  title: "Trang cá nhân",
+};
 import { verifySession } from "@/lib/dal";
 
 export default async function ProfilePage() {
