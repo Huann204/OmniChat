@@ -3,6 +3,10 @@ import type { Conversation, MessageKind } from "@/types/conversation";
 export interface RawAttachment {
   type: string;
   url: string;
+  // Tên file gốc — chỉ có ở file MÌNH gửi đi (xem
+  // server/src/models/message.model.ts#IMessageAttachment), tin nhận từ
+  // khách hiện không có tên gốc.
+  name?: string;
 }
 
 export const ATTACHMENT_LABELS: Record<string, string> = {
@@ -49,9 +53,12 @@ export function messageKindAndContent(
       kind,
       attachmentUrls: urls,
       // Ảnh/sticker có thể kèm chú thích (gõ chữ + gửi ảnh cùng 1 tin) —
-      // giữ lại `text` thật nếu có, chỉ fallback nhãn chung ("[Video]"...)
-      // cho các loại đính kèm không tự mang theo text hiển thị được.
-      text: kind === "image" || kind === "sticker" ? text || undefined : ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]",
+      // giữ lại `text` thật nếu có, còn lại ưu tiên hiện đúng tên file gốc
+      // (nếu có, chỉ có khi MÌNH gửi đi) thay vì nhãn chung chung.
+      text:
+        kind === "image" || kind === "sticker"
+          ? text || undefined
+          : first.name || ATTACHMENT_LABELS[first.type] || "[Tệp đính kèm]",
     };
   }
   return { kind: "text", text };

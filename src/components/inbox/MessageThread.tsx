@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   BsCheckLg,
+  BsFileEarmarkArrowDownFill,
   BsFillTelephoneFill,
   BsFillTelephoneXFill,
   BsFillEmojiSmileFill,
@@ -447,11 +448,12 @@ function MessageRow({
     );
   }
 
-  if (message.kind === "image" || message.kind === "sticker") {
+  if (message.kind === "image" || message.kind === "sticker" || message.kind === "video") {
     const urls = message.attachmentUrls ?? [];
     // Nhiều ảnh gộp chung 1 tin nhắn (message.attachments dạng mảng của
     // Facebook) — hiện thành lưới nhỏ trong cùng 1 bong bóng thay vì 1 ảnh
-    // lớn. Sticker luôn chỉ có đúng 1 ảnh nên không rơi vào nhánh này.
+    // lớn. Sticker/video luôn chỉ có đúng 1 attachment nên không rơi vào
+    // nhánh này.
     const isMultiImage = message.kind === "image" && urls.length > 1;
 
     return (
@@ -490,7 +492,18 @@ function MessageRow({
               {RAW_REACTION_EMOJI[message.reactionIcon] ?? "❤️"}
             </span>
           )}
-          {isMultiImage ? (
+          {message.kind === "video" ? (
+            // Video xem trực tiếp bằng thẻ <video> có controls thật (play/
+            // pause/tua/âm lượng của trình duyệt) — khác ảnh, không mở được
+            // lightbox nên không gắn onClick/onImageClick.
+            <video
+              src={urls[0]}
+              controls
+              preload="metadata"
+              onLoadedData={onImageLoad}
+              className="max-h-[260px] max-w-[260px] rounded-2xl shadow-sm"
+            />
+          ) : isMultiImage ? (
             <div className="flex max-w-[260px] flex-wrap gap-1">
               {urls.map((url, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -616,14 +629,35 @@ function MessageRow({
             {message.replyPreviewText}
           </div>
         )}
-        <div
-          className={cn(
-            "rounded-2xl px-4 py-2 text-sm shadow-sm",
-            isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
-          )}
-        >
-          {message.text}
-        </div>
+        {message.attachmentUrls?.[0] ? (
+          // File/audio/video không hiện được trực tiếp như ảnh — hiện thành
+          // 1 thẻ bấm mở/tải, khác hẳn bong bóng text thường (trước đây rơi
+          // vào nhánh này thì chỉ hiện được đúng label "[Tệp đính kèm]",
+          // không có link nào tới file thật dù URL đã có sẵn trong dữ liệu).
+          <a
+            href={message.attachmentUrls[0]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "flex items-center gap-2.5 rounded-2xl px-4 py-2.5 text-sm shadow-sm transition-colors",
+              isPage
+                ? "bg-[#d9fdd3] text-slate-800 hover:bg-[#c5f5bd]"
+                : "bg-white text-slate-800 hover:bg-slate-50"
+            )}
+          >
+            <BsFileEarmarkArrowDownFill className="h-5 w-5 shrink-0 text-slate-500" />
+            <span className="truncate underline underline-offset-2">{message.text}</span>
+          </a>
+        ) : (
+          <div
+            className={cn(
+              "rounded-2xl px-4 py-2 text-sm shadow-sm",
+              isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
+            )}
+          >
+            {message.text}
+          </div>
+        )}
         {message.reactionIcon && (
           <span
             className="absolute -bottom-2 right-1 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-xs shadow"

@@ -2,10 +2,11 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { apiFetch } from "./api";
+import { formatClock, formatTimeLabel, messageKindAndContent } from "./message-format";
 import { getCurrentShopId, getSessionToken } from "./session";
 import type { AiAssistantSettings } from "@/types/aiAssistant";
 import type { Bot } from "@/types/bot";
-import type { Conversation, MessageKind } from "@/types/conversation";
+import type { Conversation } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
 import type { QuickReply } from "@/types/quickReply";
 import type { ShopMember } from "@/types/shopMember";
@@ -169,7 +170,7 @@ interface RawMessage {
   id: string;
   sender: "customer" | "page";
   text?: string;
-  attachments?: { type: string; url: string }[];
+  attachments?: { type: string; url: string; name?: string }[];
   senderName?: string;
   senderAvatarUrl?: string;
   replyPreviewText?: string;
@@ -191,83 +192,6 @@ interface RawConversation {
   messages: RawMessage[];
 }
 
-const ATTACHMENT_LABELS: Record<string, string> = {
-  sticker: "[Nhãn dán]",
-  image: "[Hình ảnh]",
-  video: "[Video]",
-  audio: "[Tin nhắn thoại]",
-  file: "[Tệp đính kèm]",
-};
-
-function messagePreviewText(msg: RawMessage): string | undefined {
-  if (msg.text) return msg.text;
-  const first = msg.attachments?.[0];
-  if (first) return ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]";
-  return undefined;
-}
-
-// Dùng để render TRONG khung chat — khác với messagePreviewText (chỉ dùng
-// làm dòng preview cuối trong danh sách hội thoại). Ảnh/nhãn dán phải giữ
-// nguyên URL để hiển thị thật, không collapse về text.
-const ATTACHMENT_KIND: Record<string, MessageKind> = {
-  sticker: "sticker",
-  image: "image",
-  video: "video",
-};
-
-function messageKindAndContent(
-  msg: RawMessage
-): { kind: MessageKind; text?: string; attachmentUrls?: string[] } {
-  const first = msg.attachments?.[0];
-  if (first) {
-    const kind = ATTACHMENT_KIND[first.type] ?? "file";
-    // Ảnh có thể nhiều cái gộp chung 1 tin nhắn (message.attachments dạng
-    // mảng) — gom hết url ảnh lại để hiện chung 1 bong bóng. Sticker/video/
-    // file luôn chỉ có đúng 1 attachment.
-    const urls =
-      kind === "image"
-        ? (msg.attachments ?? []).filter((a) => a.type === "image").map((a) => a.url)
-        : [first.url];
-    return {
-      kind,
-      attachmentUrls: urls,
-      // Ảnh/sticker có thể kèm chú thích (gõ chữ + gửi ảnh cùng 1 tin) —
-      // giữ lại text thật của tin nhắn nếu có.
-      text: kind === "image" || kind === "sticker" ? msg.text || undefined : ATTACHMENT_LABELS[first.type] ?? "[Tệp đính kèm]",
-    };
-  }
-  return { kind: "text", text: msg.text };
-}
-
-const APP_TIME_ZONE = "Asia/Ho_Chi_Minh";
-
-function formatClock(iso: string): string {
-  return new Date(iso).toLocaleTimeString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: APP_TIME_ZONE,
-  });
-}
-
-function dateKey(date: Date): string {
-  return date.toLocaleDateString("en-CA", { timeZone: APP_TIME_ZONE });
-}
-
-function formatTimeLabel(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  if (dateKey(date) === dateKey(now)) return formatClock(iso);
-
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  if (dateKey(date) === dateKey(yesterday)) return "Hôm qua";
-
-  return date.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: APP_TIME_ZONE,
-  });
-}
-
 function mapRawConversations(raw: RawConversation[]): Conversation[] {
   return raw.map((c) => ({
     id: c.id,
@@ -282,7 +206,7 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
     isRead: c.isRead,
     hasMoreMessages: c.hasMoreMessages,
     messages: c.messages.map((m) => {
-      const { kind, text, attachmentUrls } = messageKindAndContent(m);
+      const { kind, text, attachmentUrls } = messageKindAndContent(m.text, m.attachments);
       return {
         id: m.id,
         sender: m.sender,
