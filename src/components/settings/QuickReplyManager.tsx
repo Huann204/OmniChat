@@ -275,60 +275,62 @@ export function QuickReplyManager({ initialItems }: QuickReplyManagerProps) {
         onClose={() => setModalOpen(false)}
         title={editingId ? "Sửa mẫu trả lời nhanh" : "Thêm mẫu trả lời nhanh"}
       >
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Ký tự tắt</label>
-            <Input
-              value={shortcutInput}
-              onChange={(e) => setShortcutInput(e.target.value)}
-              placeholder="vd: cskh"
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Tin nhắn</label>
-            <textarea
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              rows={4}
-              placeholder="Nội dung sẽ được chèn khi gõ ký tự tắt ở trên"
-              className="flex w-full rounded-xl border border-slate-200/60 bg-white/50 px-4 py-2 text-sm text-slate-900 shadow-sm transition-all duration-300 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="flex-1 space-y-4 overflow-y-auto p-5">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Ký tự tắt</label>
+              <Input
+                value={shortcutInput}
+                onChange={(e) => setShortcutInput(e.target.value)}
+                placeholder="vd: cskh"
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Tin nhắn</label>
+              <textarea
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                rows={4}
+                placeholder="Nội dung sẽ được chèn khi gõ ký tự tắt ở trên"
+                className="flex w-full rounded-xl border border-slate-200/60 bg-white/50 px-4 py-2 text-sm text-slate-900 shadow-sm transition-all duration-300 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary"
+              />
+            </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Ảnh đính kèm</label>
-            {attachedImages.length > 0 && (
-              <div className="mb-2 flex flex-wrap gap-2">
-                {attachedImages.map((item) => (
-                  <div
-                    key={item.id}
-                    className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white"
-                  >
-                    <Image src={item.url} alt="" fill className="object-cover" unoptimized />
-                    <button
-                      type="button"
-                      onClick={() => removeAttachedImage(item.id)}
-                      aria-label="Bỏ ảnh"
-                      className="absolute right-0.5 top-0.5 flex h-4.5 w-4.5 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Ảnh đính kèm</label>
+              {attachedImages.length > 0 && (
+                <div className="mb-2 flex max-h-48 flex-wrap gap-2 overflow-y-auto rounded-xl border border-slate-200/80 bg-slate-50/50 p-2">
+                  {attachedImages.map((item) => (
+                    <div
+                      key={item.id}
+                      className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white"
                     >
-                      <BsX className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-primary hover:text-primary cursor-pointer"
-            >
-              <BsFillImageFill className="h-4 w-4" />
-              Chọn ảnh từ thư viện
-            </button>
+                      <Image src={item.url} alt="" fill className="object-cover" unoptimized />
+                      <button
+                        type="button"
+                        onClick={() => removeAttachedImage(item.id)}
+                        aria-label="Bỏ ảnh"
+                        className="absolute right-0.5 top-0.5 flex h-4.5 w-4.5 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <BsX className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-primary hover:text-primary cursor-pointer"
+              >
+                <BsFillImageFill className="h-4 w-4" />
+                Chọn ảnh từ thư viện
+              </button>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-100 bg-white px-5 py-3.5">
             <button
               type="button"
               onClick={() => setModalOpen(false)}
