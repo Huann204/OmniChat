@@ -9,8 +9,6 @@ export interface AuthFormState {
   error?: string;
   success?: boolean;
   redirectTo?: string;
-  // Chỉ echo lại các field không nhạy cảm để prefill form khi submit lỗi
-  // (React 19 tự reset input không controlled sau mỗi lần gọi action).
   name?: string;
   email?: string;
 }
@@ -52,13 +50,6 @@ export async function login(
 
   await createSession(data.accessToken, data.refreshToken);
 
-  // Không còn màn chọn Shop — luôn tự quyết định thẳng 1 Shop để vào:
-  // ưu tiên Shop lần trước user đã chọn (lastShopId, cập nhật mỗi khi
-  // switchShop/createShop — chỉ dùng nếu vẫn còn là thành viên active,
-  // đề phòng đã bị xoá khỏi Shop đó từ lần đăng nhập trước); không có thì
-  // về Shop do chính họ sở hữu (role "owner", luôn có sẵn nhờ register tự
-  // tạo — xem auth.controller.ts#register); cuối cùng mới tới Shop bất kỳ
-  // đang có. Muốn đổi Shop khác thì dùng ShopSwitcherMenu trên navbar.
   const shops = await getMyShops();
   const defaultShop =
     shops.find((s) => s.id === data.user.lastShopId) ??
@@ -69,9 +60,6 @@ export async function login(
   }
 
   revalidatePath("/", "layout");
-  // Không dùng redirect() ở đây: điều hướng "mềm" của Next có thể tái sử dụng
-  // bản render đã cache của layout gốc (Header) từ trước khi đăng nhập. Trang
-  // gọi action này sẽ tự điều hướng cứng (window.location) khi thấy success.
   return { success: true, redirectTo: "/dashboard" };
 }
 
@@ -82,12 +70,16 @@ export async function register(
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
+  const confirmPassword = String(formData.get("confirmPassword") || "");
 
   if (!name || !email || !password) {
     return { error: "Vui lòng nhập đầy đủ thông tin", name, email };
   }
   if (password.length < 6) {
     return { error: "Mật khẩu phải có ít nhất 6 ký tự", name, email };
+  }
+  if (confirmPassword !== password) {
+    return { error: "Mật khẩu nhập lại không khớp", name, email };
   }
 
   let data: RegisterResponse;
@@ -104,8 +96,6 @@ export async function register(
     };
   }
 
-  // register luôn trả về đúng 1 Shop mới tạo (xem auth.controller.ts#register)
-  // nên chọn thẳng luôn, không cần qua màn chọn Shop.
   await createSession(data.accessToken, data.refreshToken, data.shop.id);
   revalidatePath("/", "layout");
   return { success: true, redirectTo: "/dashboard" };
