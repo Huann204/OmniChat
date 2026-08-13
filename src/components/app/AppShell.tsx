@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
+import { useLoadingBarStore } from "@/store/loading-bar-store";
 import type { ShopRole } from "@/types/shopMember";
 
 interface AppShellProps {
@@ -38,10 +39,12 @@ export function AppShell({ userName, userEmail, myRole, children }: AppShellProp
 
   function handleTabChange(tab: string) {
     if (tab === "Cài đặt") {
+      useLoadingBarStore.getState().setNavigating(true);
       router.push("/settings");
       return;
     }
     if (tab === NAV_TABS[0]) {
+      useLoadingBarStore.getState().setNavigating(true);
       router.push("/livechat");
       return;
     }

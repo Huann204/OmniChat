@@ -1,10 +1,26 @@
+"use client";
+
+import { useEffect } from "react";
+import { useLoadingBarStore } from "@/store/loading-bar-store";
 import { InboxIconRail } from "@/components/inbox/InboxIconRail";
+
+function LivechatLoadingBarTrigger() {
+  const setNavigating = useLoadingBarStore((state) => state.setNavigating);
+
+  useEffect(() => {
+    setNavigating(true);
+    return () => setNavigating(false);
+  }, [setNavigating]);
+
+  return null;
+}
 
 // Navbar giờ sống ở AppShell (app/(app)/layout.tsx) — đứng yên, không bị
 // Suspense của loading.tsx này bọc lại khi trang con đang tải.
 export default function LivechatLoading() {
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
+      <LivechatLoadingBarTrigger />
       <InboxIconRail className="!bg-none bg-transparent border-none" />
 
       <div className="flex flex-1 min-w-0 overflow-hidden rounded-tl-xl bg-white">

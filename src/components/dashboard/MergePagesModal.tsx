@@ -15,6 +15,7 @@ import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import { setMergePagesCookie } from "@/lib/mergePagesCookie";
+import { useLoadingBarStore } from "@/store/loading-bar-store";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 
@@ -101,11 +102,8 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
   }
 
   function handleConfirm() {
-    // Ghi cookie danh sách Page đã chọn ngay ở client rồi điều hướng thẳng —
-    // không còn vòng qua Server Action ghi cookie + redirect, cũng không lộ
-    // pageId qua query string (xem giải thích ở BotCard.tsx). onClose() không
-    // cần gọi: điều hướng cả trang đi, modal tự biến mất theo.
     setMergePagesCookie(Array.from(selectedIds));
+    useLoadingBarStore.getState().setNavigating(true);
     startNavigate(() => {
       router.push("/livechat");
     });
