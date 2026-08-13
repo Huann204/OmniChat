@@ -7,6 +7,8 @@ import {
   BsPlayCircleFill,
   BsSearch,
   BsTrashFill,
+  BsX,
+  BsEyeFill,
 } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -23,21 +25,39 @@ interface FilePickerModalProps {
 }
 
 // Nhãn hiện dưới tên file — khớp cách Messenger hiện "Tệp video · 17.8 MB",
-// "Tệp PDF · 309.2 KB" trong màn "Tệp và video âm thanh" (đây là màn tham
-// chiếu UI cho component này).
+// "Tệp PDF · 309.2 KB" trong màn "Tệp và video âm thanh".
 function typeLabel(item: MediaItem): string {
   if (item.resourceType === "video") return "Tệp video";
   if (item.format) return `Tệp ${item.format.toUpperCase()}`;
   return "Tệp";
 }
 
-function FileThumbnail({ item }: { item: MediaItem }) {
+function FileThumbnail({
+  item,
+  onPreviewClick,
+}: {
+  item: MediaItem;
+  onPreviewClick?: (e: React.MouseEvent) => void;
+}) {
   if (item.resourceType === "video") {
     return (
-      <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-800">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={item.url} alt="" className="h-full w-full object-cover opacity-70" />
-        <BsPlayCircleFill className="absolute h-6 w-6 text-white" />
+      <span
+        onClick={(e) => {
+          if (onPreviewClick) {
+            e.stopPropagation();
+            onPreviewClick(e);
+          }
+        }}
+        title="Bấm để xem trước video"
+        className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-900 group/thumb"
+      >
+        <video
+          src={`${item.url}#t=0.5`}
+          className="h-full w-full object-cover opacity-75"
+          muted
+          preload="metadata"
+        />
+        <BsPlayCircleFill className="absolute h-6 w-6 text-white shadow-md transition-transform group-hover/thumb:scale-110" />
       </span>
     );
   }
@@ -55,28 +75,27 @@ function FileThumbnail({ item }: { item: MediaItem }) {
   );
 }
 
-// Thư viện "Tệp và video" dùng chung cho khung chat — khác MediaPickerModal
-// (thư viện ảnh, hiện dạng lưới ảnh) vì file/video không xem trước được kiểu
-// đó, hiện dạng danh sách (tên + loại + dung lượng) giống Messenger. Chỉ
-// chọn được 1 item/lần (khác ảnh cho phép nhiều) — khớp đúng 1 file/tin nhắn
-// ở server (xem conversation.controller.ts#parseSendParts).
+// Thư viện "Tệp và video" dùng chung cho khung chat — dạng danh sách (tên + loại + dung lượng).
 export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProps) {
   const [search, setSearch] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
-  // id đang chờ xác nhận xoá — mở dialog xác nhận riêng thay vì xoá thẳng
-  // khi bấm nút thùng rác, tránh xoá nhầm (không phục hồi lại được).
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = React.useState(false);
+  const [previewItem, setPreviewItem] = React.useState<MediaItem | null>(null);
 
   const { items, page, pages, loading, loadingMore, deletingId, loadMore, addUploaded, removeItem } =
     useFileLibraryData(search);
   const { pending, addFiles } = useFileUpload(addUploaded);
 
-  // Reset tìm kiếm mỗi lần mở lại modal — tránh giữ bộ lọc từ lần mở trước.
+  // Reset tìm kiếm và preview mỗi lần mở lại modal
   const [prevOpen, setPrevOpen] = React.useState(open);
   if (open !== prevOpen) {
     setPrevOpen(open);
-    if (open) setSearch("");
+    if (open) {
+      setSearch("");
+      setPreviewItem(null);
+      setPendingDeleteId(null);
+    }
   }
 
   function handleSelect(item: MediaItem) {
@@ -89,13 +108,14 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
     setConfirmingDelete(true);
     await removeItem(pendingDeleteId);
     setConfirmingDelete(false);
+    if (previewItem?.id === pendingDeleteId) setPreviewItem(null);
     setPendingDeleteId(null);
   }
 
   const showEmptyState = !loading && items.length === 0 && pending.length === 0;
 
   return (
-    <Modal open={open} onClose={onClose} className="flex h-[min(80vh,640px)] w-full max-w-lg flex-col">
+    <Modal open={open} onClose={onClose} className="relative flex h-[min(80vh,640px)] w-full max-w-lg flex-col overflow-hidden">
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
         <h2 className="text-base font-semibold text-slate-900">Tệp và video âm thanh</h2>
         <button
@@ -154,7 +174,10 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
                   onClick={() => handleSelect(item)}
                   className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-2 py-2.5 text-left"
                 >
-                  <FileThumbnail item={item} />
+                  <FileThumbnail
+                    item={item}
+                    onPreviewClick={() => setPreviewItem(item)}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-900">
                       {item.originalFilename}
@@ -164,6 +187,19 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
                     </p>
                   </div>
                 </button>
+
+                {item.resourceType === "video" && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewItem(item)}
+                    title="Xem trước video"
+                    aria-label={`Xem trước ${item.originalFilename}`}
+                    className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-primary/10 hover:text-primary"
+                  >
+                    <BsPlayCircleFill className="h-4 w-4" />
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setPendingDeleteId(item.id)}
@@ -195,11 +231,6 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
         ref={inputRef}
         type="file"
         multiple
-        // HTML accept không hỗ trợ "loại trừ" (không thể ghi "không phải
-        // ảnh") — liệt kê thẳng các loại thường gặp NGOÀI ảnh để hộp thoại hệ
-        // điều hành tự lọc bớt, chỉ là gợi ý hiển thị (người dùng vẫn bấm
-        // được "Tất cả file" để lách qua) — chặn thật vẫn nằm ở
-        // useFileUpload.ts (client) và upload.middleware.ts (server).
         accept="video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.txt,.csv,.json"
         className="hidden"
         onChange={(e) => {
@@ -207,6 +238,74 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
           e.target.value = "";
         }}
       />
+
+      {/* Frame Xem Trước (Video Player / Details) */}
+      {previewItem && (
+        <div className="absolute inset-0 z-30 flex flex-col bg-white">
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-5 py-3">
+            <p className="truncate text-sm font-semibold text-slate-800">{previewItem.originalFilename}</p>
+            <button
+              type="button"
+              onClick={() => setPreviewItem(null)}
+              aria-label="Đóng xem trước"
+              className="cursor-pointer rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            >
+              <BsX className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="relative flex min-h-0 flex-1 items-center justify-center bg-slate-50 p-4 sm:p-6">
+            {previewItem.resourceType === "video" ? (
+              <video
+                src={previewItem.url}
+                controls
+                autoPlay
+                className="max-h-full max-w-full rounded-2xl bg-black shadow-xl border border-slate-200/80"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-center text-slate-800">
+                {previewItem.format === "pdf" ? (
+                  <BsFileEarmarkPdfFill className="h-16 w-16 text-red-500" />
+                ) : (
+                  <BsFileEarmarkFill className="h-16 w-16 text-slate-400" />
+                )}
+                <p className="text-sm font-medium">{previewItem.originalFilename}</p>
+                <p className="text-xs text-slate-500">{formatBytes(previewItem.bytes)}</p>
+                <a
+                  href={previewItem.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
+                  <BsEyeFill className="h-3.5 w-3.5" />
+                  Mở tệp trong tab mới
+                </a>
+              </div>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-200 px-5 py-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const id = previewItem.id;
+                setPendingDeleteId(id);
+              }}
+            >
+              Xoá file
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                const item = previewItem;
+                setPreviewItem(null);
+                handleSelect(item);
+              }}
+            >
+              Chọn file này
+            </Button>
+          </div>
+        </div>
+      )}
 
       {pendingDeleteId && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
