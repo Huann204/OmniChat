@@ -7,7 +7,6 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import { setMergePagesCookie } from "@/lib/mergePagesCookie";
-import { useLoadingBarStore } from "@/store/loading-bar-store";
 import type { Bot } from "@/types/bot";
 
 const AVATAR_COLORS = [
@@ -43,7 +42,6 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
   // vì lộ pageId trên URL nhìn rối mắt.
   function openInbox() {
     setMergePagesCookie([bot.id]);
-    useLoadingBarStore.getState().setNavigating(true);
     startNavigate(() => {
       router.push("/livechat");
     });

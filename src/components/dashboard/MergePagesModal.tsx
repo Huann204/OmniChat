@@ -15,7 +15,6 @@ import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import { setMergePagesCookie } from "@/lib/mergePagesCookie";
-import { useLoadingBarStore } from "@/store/loading-bar-store";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 
@@ -103,7 +102,6 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
 
   function handleConfirm() {
     setMergePagesCookie(Array.from(selectedIds));
-    useLoadingBarStore.getState().setNavigating(true);
     startNavigate(() => {
       router.push("/livechat");
     });
