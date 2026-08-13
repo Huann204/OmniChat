@@ -32,7 +32,7 @@ interface RawMessage {
   id: string;
   sender: "customer" | "page";
   text?: string;
-  attachments?: { type: string; url: string }[];
+  attachments?: { type: string; url: string; name?: string }[];
   senderName?: string;
   senderAvatarUrl?: string;
   replyPreviewText?: string;
@@ -91,6 +91,13 @@ export interface SendMessagePart {
   clientId: string;
   text?: string;
   imageUrls?: string[];
+  // File đính kèm bất kỳ (không phải ảnh) — đúng 1 file/phần, chọn từ
+  // FilePickerModal (xem MessageComposer.tsx). isVideo quyết định server lưu
+  // Message.attachments[].type là "video" hay "file" — để MessageThread.tsx
+  // render đúng player thay vì chỉ hiện link tải chung chung.
+  fileUrl?: string;
+  fileName?: string;
+  isVideo?: boolean;
   // Chỉ có ý nghĩa khi có `text` — id 1 tin nhắn của khách muốn "Trả lời
   // trích dẫn" (hiện chỉ Zalo hỗ trợ, xem MessageThread.tsx). Bỏ qua âm thầm
   // phía server nếu không đủ dữ liệu để trích dẫn.

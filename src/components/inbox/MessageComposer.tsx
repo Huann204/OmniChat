@@ -6,6 +6,7 @@ import {
   BsFillTelephoneFill,
   BsStickyFill,
   BsPaperclip,
+  BsFileEarmarkFill,
   BsFillImageFill,
   BsChatSquareTextFill,
   BsSendFill,
@@ -13,13 +14,29 @@ import {
   BsX,
 } from "react-icons/bs";
 import { cn } from "@/lib/utils";
+import { FilePickerModal } from "@/components/media/FilePickerModal";
 import { MediaPickerModal } from "@/components/media/MediaPickerModal";
 import type { MediaItem } from "@/types/media";
 import type { QuickReply } from "@/types/quickReply";
 import type { ReplyTarget } from "./MessageThread";
 
+interface AttachedFile {
+  url: string;
+  name: string;
+  // true nếu file chọn từ FilePickerModal có resourceType="video" — quyết
+  // định lưu Message.attachments[].type là "video" hay "file" (xem
+  // InboxView.tsx#handleSend), để MessageThread.tsx render đúng player thay
+  // vì chỉ hiện link tải chung chung.
+  isVideo?: boolean;
+}
+
 interface MessageComposerProps {
-  onSend: (text: string, imageUrls: string[], replyToMessageId?: string) => void | Promise<void>;
+  onSend: (
+    text: string,
+    imageUrls: string[],
+    replyToMessageId?: string,
+    file?: AttachedFile
+  ) => void | Promise<void>;
   // Mẫu trả lời nhanh của Shop — gõ "/" + ký tự tắt để gợi ý, hoặc bấm nút
   // ghi chú (StickyNote) để xem toàn bộ danh sách, xem
   // slashQuery/quickReplyDropdownItems bên dưới.
@@ -63,7 +80,13 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
   const [value, setValue] = React.useState("");
   const [isSending, setIsSending] = React.useState(false);
   const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [filePickerOpen, setFilePickerOpen] = React.useState(false);
   const [attachedImages, setAttachedImages] = React.useState<MediaItem[]>([]);
+  // File đính kèm bất kỳ (không phải ảnh) — đúng 1 file/lượt gửi, khác
+  // attachedImages (nhiều ảnh, chọn từ thư viện). Chọn từ FilePickerModal
+  // (đã upload sẵn trong thư viện, hoặc vừa upload xong ngay trong đó), không
+  // tự upload trực tiếp ở đây nữa.
+  const [attachedFile, setAttachedFile] = React.useState<AttachedFile | null>(null);
   // Bấm nút StickyNote để tự mở XEM HẾT danh sách mẫu (không cần gõ "/") —
   // khác slashQuery (tự mở khi đang gõ, lọc theo ký tự tắt).
   const [manualListOpen, setManualListOpen] = React.useState(false);
@@ -104,16 +127,18 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
 
   async function handleSend() {
     const trimmedText = value.trim();
-    if ((!trimmedText && attachedImages.length === 0) || isSending) return;
+    if ((!trimmedText && attachedImages.length === 0 && !attachedFile) || isSending) return;
 
     const imageUrls = attachedImages.map((item) => item.url);
     const replyToMessageId = replyingTo?.id;
+    const file = attachedFile ?? undefined;
     setValue("");
     setAttachedImages([]);
+    setAttachedFile(null);
     onCancelReply?.();
     setIsSending(true);
     try {
-      await onSend(trimmedText, imageUrls, replyToMessageId);
+      await onSend(trimmedText, imageUrls, replyToMessageId, file);
     } finally {
       setIsSending(false);
     }
@@ -125,6 +150,14 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
 
   function removeAttachment(id: string) {
     setAttachedImages((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function handlePickFile(item: MediaItem) {
+    setAttachedFile({
+      url: item.url,
+      name: item.originalFilename,
+      isVideo: item.resourceType === "video",
+    });
   }
 
   return (
@@ -169,6 +202,24 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
               </button>
             </div>
           ))}
+        </div>
+      )}
+      {attachedFile && (
+        <div className="mb-2 flex items-center gap-2 rounded-lg bg-slate-100 p-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-slate-500">
+            <BsFileEarmarkFill className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-xs text-slate-600">{attachedFile.name}</span>
+          {attachedFile && (
+            <button
+              type="button"
+              onClick={() => setAttachedFile(null)}
+              aria-label={`Bỏ ${attachedFile.name}`}
+              className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
+            >
+              <BsX className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       )}
 
@@ -247,6 +298,8 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
           </button>
           <button
             type="button"
+            onClick={() => setFilePickerOpen(true)}
+            aria-label="Đính kèm file"
             className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
           >
             <BsPaperclip className="h-4.5 w-4.5" />
@@ -288,6 +341,11 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
       </div>
 
       <MediaPickerModal open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={handlePickImages} />
+      <FilePickerModal
+        open={filePickerOpen}
+        onClose={() => setFilePickerOpen(false)}
+        onSelect={handlePickFile}
+      />
     </div>
   );
   }

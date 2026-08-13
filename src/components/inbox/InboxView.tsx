@@ -354,14 +354,35 @@ export function InboxView({
   // text và imageUrls là 2 tin nhắn RIÊNG BIỆT nếu cả 2 cùng có — nhưng nếu
   // chọn nhiều ảnh, cả nhóm ảnh đó gộp chung 1 tin (message.attachments dạng
   // mảng của Facebook), không tách thành nhiều tin/bong bóng riêng.
-  async function handleSend(text: string, imageUrls: string[], replyToMessageId?: string) {
+  async function handleSend(
+    text: string,
+    imageUrls: string[],
+    replyToMessageId?: string,
+    file?: { url: string; name: string; isVideo?: boolean }
+  ) {
     if (!activeConversation) return;
     const conversationId = activeConversation.id;
     const now = new Date().toISOString();
 
-    const parts: { clientId: string; text?: string; imageUrls?: string[]; replyToMessageId?: string }[] = [];
+    const parts: {
+      clientId: string;
+      text?: string;
+      imageUrls?: string[];
+      fileUrl?: string;
+      fileName?: string;
+      isVideo?: boolean;
+      replyToMessageId?: string;
+    }[] = [];
     if (text) parts.push({ clientId: `temp-${crypto.randomUUID()}`, text, replyToMessageId });
     if (imageUrls.length > 0) parts.push({ clientId: `temp-${crypto.randomUUID()}`, imageUrls });
+    if (file) {
+      parts.push({
+        clientId: `temp-${crypto.randomUUID()}`,
+        fileUrl: file.url,
+        fileName: file.name,
+        isVideo: file.isVideo,
+      });
+    }
     if (parts.length === 0) return;
 
     // Vừa gửi tin thì gợi ý đang hiện (nếu có) đã lỗi thời — xoá ngay, huỷ
@@ -378,9 +399,9 @@ export function InboxView({
       // đối chiếu reaction khách thả vào đúng tin thật sau này.
       clientId: part.clientId,
       sender: "page",
-      kind: part.imageUrls ? "image" : "text",
-      text: part.text,
-      attachmentUrls: part.imageUrls,
+      kind: part.imageUrls ? "image" : part.fileUrl ? (part.isVideo ? "video" : "file") : "text",
+      text: part.fileUrl ? part.fileName : part.text,
+      attachmentUrls: part.imageUrls ?? (part.fileUrl ? [part.fileUrl] : undefined),
       time: formatClock(now),
       createdAt: now,
       status: "sending",

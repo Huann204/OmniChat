@@ -22,6 +22,9 @@ interface ListMediaResult {
 export async function listMedia(params: {
   page?: number;
   search?: string;
+  // "image" (mặc định, thư viện ảnh — MediaPickerModal) hoặc "file" (video +
+  // file khác — FilePickerModal), khớp resourceTypeFilter ở media.controller.ts.
+  type?: "image" | "file";
 }): Promise<ListMediaResult> {
   const token = await getSessionToken();
   if (!token) return { items: [], total: 0, page: 1, pages: 1 };
@@ -29,6 +32,7 @@ export async function listMedia(params: {
   const query = new URLSearchParams();
   query.set("page", String(params.page ?? 1));
   if (params.search) query.set("search", params.search);
+  if (params.type) query.set("type", params.type);
 
   try {
     const data = await apiFetch<{ success: boolean } & ListMediaResult>(
