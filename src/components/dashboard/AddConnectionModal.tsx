@@ -420,23 +420,23 @@ function ZaloConnectPanel({
 
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
               {/* Mã QR với khung định vị 4 góc màu xanh (Viewfinder frame) */}
-              <div className="relative p-2 flex items-center justify-center shrink-0">
+              <div className="relative p-2.5 flex items-center justify-center shrink-0">
                 {/* 4 góc viền xanh ôm sát QR */}
-                <div className="absolute top-0 left-0 h-5 w-5 border-t-[2.5px] border-l-[2.5px] border-[#0068FF] rounded-tl-lg" />
-                <div className="absolute top-0 right-0 h-5 w-5 border-t-[2.5px] border-r-[2.5px] border-[#0068FF] rounded-tr-lg" />
-                <div className="absolute bottom-0 left-0 h-5 w-5 border-b-[2.5px] border-l-[2.5px] border-[#0068FF] rounded-bl-lg" />
-                <div className="absolute bottom-0 right-0 h-5 w-5 border-b-[2.5px] border-r-[2.5px] border-[#0068FF] rounded-br-lg" />
+                <div className="absolute top-0 left-0 h-6 w-6 border-t-[2.5px] border-l-[2.5px] border-[#0068FF] rounded-tl-xl" />
+                <div className="absolute top-0 right-0 h-6 w-6 border-t-[2.5px] border-r-[2.5px] border-[#0068FF] rounded-tr-xl" />
+                <div className="absolute bottom-0 left-0 h-6 w-6 border-b-[2.5px] border-l-[2.5px] border-[#0068FF] rounded-bl-xl" />
+                <div className="absolute bottom-0 right-0 h-6 w-6 border-b-[2.5px] border-r-[2.5px] border-[#0068FF] rounded-br-xl" />
 
                 {state.step === "connecting" ? (
-                  <div className="flex h-48 w-48 sm:h-52 sm:w-52 items-center justify-center rounded-md bg-slate-50/50">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#0068FF]" />
+                  <div className="flex h-56 w-56 sm:h-60 sm:w-60 items-center justify-center rounded-md bg-slate-50/50">
+                    <Loader2 className="h-9 w-9 animate-spin text-[#0068FF]" />
                   </div>
                 ) : (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={state.image}
                     alt="Mã QR đăng nhập Zalo"
-                    className="h-48 w-48 sm:h-52 sm:w-52 object-contain rounded-md"
+                    className="h-56 w-56 sm:h-60 sm:w-60 object-contain rounded-md"
                   />
                 )}
               </div>
