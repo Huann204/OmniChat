@@ -54,7 +54,7 @@ export interface Conversation {
   pageId: string;
   // Kênh của hội thoại — khớp CHANNEL_TYPE_* trong
   // server/src/models/connectedPage.model.ts (0 = Facebook, 1 = Zalo cá
-  // nhân), lấy thẳng từ Conversation.type ở backend.
+  // nhân, 2 = Telegram), lấy thẳng từ Conversation.type ở backend.
   type: number;
   customerName: string;
   customerAvatarUrl?: string;

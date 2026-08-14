@@ -2,6 +2,8 @@ import React from "react";
 import type { ComponentType, SVGProps } from "react";
 import { BotChannel } from "@/types/bot";
 import { FaWhatsapp } from "react-icons/fa";
+import { SiTelegram } from "react-icons/si";
+import { cn } from "@/lib/utils";
 
 export const CHANNEL_META: Record<
   BotChannel,
@@ -24,9 +26,17 @@ export const CHANNEL_META: Record<
     badgeBg: "bg-[#0068FF]",
     badgeText: "text-white",
   },
+  telegram: {
+    label: "Telegram",
+    icon: ({ className }: { className?: string }) =>
+      React.createElement(SiTelegram, { className: cn("text-[#0088cc]", className) }),
+    badgeBg: "bg-[#0088cc]",
+    badgeText: "text-white",
+  },
   whatsapp: {
     label: "WhatsApp",
-    icon: FaWhatsapp,
+    icon: ({ className }: { className?: string }) =>
+      React.createElement(FaWhatsapp, { className: cn("text-[#25D366]", className) }),
     badgeBg: "bg-[#25D366]",
     badgeText: "text-white",
   },

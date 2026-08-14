@@ -130,8 +130,10 @@ interface ConnectedPageRaw {
 // có package dùng chung giữa 2 repo nên phải giữ đồng bộ thủ công.
 const CHANNEL_TYPE_FACEBOOK = 0;
 const CHANNEL_TYPE_ZALO_PERSONAL = 1;
+const CHANNEL_TYPE_TELEGRAM = 2;
 
 function channelFromType(type: number): Bot["channel"] {
+  if (type === CHANNEL_TYPE_TELEGRAM) return "telegram";
   if (type === CHANNEL_TYPE_ZALO_PERSONAL) return "zalo";
   if (type === CHANNEL_TYPE_FACEBOOK) return "facebook";
   return "facebook";

@@ -13,6 +13,7 @@ import { getLastMessagePreview } from "@/lib/message-format";
 const CHANNEL_META_BY_TYPE = {
   0: CHANNEL_META.facebook,
   1: CHANNEL_META.zalo,
+  2: CHANNEL_META.telegram,
 } as const;
 
 const AVATAR_COLORS = [
