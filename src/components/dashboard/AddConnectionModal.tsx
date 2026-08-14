@@ -47,17 +47,17 @@ export function AddConnectionModal({ open, onClose }: AddConnectionModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="Thêm kết nối" className="max-w-4xl">
       <div className="flex min-h-[440px]">
-        <div className="w-56 shrink-0 overflow-y-auto border-r border-slate-200 py-2">
+        <div className="w-56 shrink-0 overflow-y-auto border-r border-slate-200 p-2 space-y-1">
           <button
             type="button"
             onClick={() => setSelectedKey(PENDING_KEY)}
             className={cn(
-              "flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors",
-              isPending ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"
+              "flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+              isPending ? "bg-slate-100 text-slate-900 font-semibold" : "text-slate-700 hover:bg-slate-50"
             )}
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-400">
-              <BsFillClockFill className="h-3.5 w-3.5 text-white" />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#fbbf24] shadow-xs">
+              <BsFillClockFill className="h-4 w-4 text-white" />
             </span>
             <span className="flex-1 truncate">Chờ kích hoạt</span>
           </button>
@@ -71,19 +71,28 @@ export function AddConnectionModal({ open, onClose }: AddConnectionModalProps) {
                 type="button"
                 onClick={() => setSelectedKey(platform.key)}
                 className={cn(
-                  "flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors",
-                  active ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"
+                  "flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+                  active ? "bg-slate-100 text-slate-900 font-semibold" : "text-slate-700 hover:bg-slate-50"
                 )}
               >
-                <span
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                  style={{ background: platform.badgeBg }}
-                >
-                  <PlatformIcon className="h-3.5 w-3.5 text-white" />
-                </span>
+                {platform.imageSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={platform.imageSrc}
+                    alt={platform.label}
+                    className="h-8 w-8 shrink-0 rounded-lg object-contain shadow-xs"
+                  />
+                ) : (
+                  <span
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-xs"
+                    style={{ background: platform.badgeBg }}
+                  >
+                    <PlatformIcon className="h-4 w-4 text-white" />
+                  </span>
+                )}
                 <span className="flex-1 truncate">{platform.label}</span>
                 {platform.beta && (
-                  <span className="shrink-0 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                  <span className="shrink-0 rounded-full bg-amber-100/90 px-2 py-0.5 text-[11px] font-medium text-amber-800">
                     Beta
                   </span>
                 )}
@@ -252,16 +261,28 @@ function FacebookConnectPanel({
 
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-10 text-center">
         <div className="flex items-center gap-2">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary-gradient text-sm font-bold text-white">
-            C
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/favi.png"
+            alt="Hchat Logo"
+            className="h-11 w-11 shrink-0 rounded-lg object-contain shadow-xs"
+          />
           <span className="h-[1px] w-6 bg-slate-300" />
-          <span
-            className="flex h-11 w-11 items-center justify-center rounded-full"
-            style={{ background: selected.badgeBg }}
-          >
-            <SelectedIcon className="h-5 w-5 text-white" />
-          </span>
+          {selected.imageSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={selected.imageSrc}
+              alt={selected.label}
+              className="h-11 w-11 shrink-0 rounded-lg object-contain shadow-xs"
+            />
+          ) : (
+            <span
+              className="flex h-11 w-11 items-center justify-center rounded-lg shadow-xs"
+              style={{ background: selected.badgeBg }}
+            >
+              <SelectedIcon className="h-5 w-5 text-white" />
+            </span>
+          )}
         </div>
 
         <h3 className="text-lg font-semibold text-slate-900">
@@ -277,6 +298,9 @@ function FacebookConnectPanel({
         >
           {step === "loading" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
+          ) : selected.imageSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={selected.imageSrc} alt="" className="h-4 w-4 shrink-0 object-contain" />
           ) : (
             <SelectedIcon className="h-4 w-4" style={{ color: selected.accent }} />
           )}
@@ -408,7 +432,7 @@ function ZaloConnectPanel({
           <>
             <div className="flex items-center gap-2">
               <span
-                className="flex h-11 w-11 items-center justify-center rounded-full"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl shadow-xs"
                 style={{ background: selected.badgeBg }}
               >
                 <SelectedIcon className="h-5 w-5 text-white" />
@@ -452,16 +476,28 @@ function ConnectPlatformPanel({
 
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-10 text-center">
         <div className="flex items-center gap-2">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary-gradient text-sm font-bold text-white">
-            C
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/favi.png"
+            alt="Hchat Logo"
+            className="h-11 w-11 shrink-0 rounded-lg object-contain shadow-xs"
+          />
           <span className="h-[1px] w-6 bg-slate-300" />
-          <span
-            className="flex h-11 w-11 items-center justify-center rounded-full"
-            style={{ background: selected.badgeBg }}
-          >
-            <SelectedIcon className="h-5 w-5 text-white" />
-          </span>
+          {selected.imageSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={selected.imageSrc}
+              alt={selected.label}
+              className="h-11 w-11 shrink-0 rounded-lg object-contain shadow-xs"
+            />
+          ) : (
+            <span
+              className="flex h-11 w-11 items-center justify-center rounded-lg shadow-xs"
+              style={{ background: selected.badgeBg }}
+            >
+              <SelectedIcon className="h-5 w-5 text-white" />
+            </span>
+          )}
         </div>
 
         <h3 className="text-lg font-semibold text-slate-900">
@@ -474,7 +510,12 @@ function ConnectPlatformPanel({
           onClick={onConnect}
           className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         >
-          <SelectedIcon className="h-4 w-4" style={{ color: selected.accent }} />
+          {selected.imageSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={selected.imageSrc} alt="" className="h-4 w-4 shrink-0 object-contain" />
+          ) : (
+            <SelectedIcon className="h-4 w-4" style={{ color: selected.accent }} />
+          )}
           Kết nối với {selected.label}
         </button>
 
