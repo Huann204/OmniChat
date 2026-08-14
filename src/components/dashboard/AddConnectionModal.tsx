@@ -24,6 +24,7 @@ import {
   listFacebookPages,
   type FacebookPageOption,
 } from "@/app/actions/facebook";
+import { TelegramConnectPanel } from "./TelegramConnectPanel";
 
 interface AddConnectionModalProps {
   open: boolean;
@@ -97,6 +98,8 @@ export function AddConnectionModal({ open, onClose }: AddConnectionModalProps) {
           <FacebookConnectPanel selected={selected} onClose={onClose} />
         ) : selected?.key === "zalo-personal" ? (
           <ZaloConnectPanel selected={selected} onClose={onClose} />
+        ) : selected?.key === "telegram" ? (
+          <TelegramConnectPanel selected={selected} onClose={onClose} />
         ) : selected ? (
           <ConnectPlatformPanel selected={selected} onConnect={handleConnect} />
         ) : null}
