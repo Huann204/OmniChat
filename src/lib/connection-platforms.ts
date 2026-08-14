@@ -35,13 +35,21 @@ export const CONNECTION_PLATFORMS: ConnectionPlatform[] = [
     description:
       "Mở khoá mục tiêu mua hàng qua tin nhắn trên Ads Manager, tự động tối ưu quảng cáo Facebook với CAPI.",
   },
-    {
+  {
     key: "zalo-personal",
     label: "Zalo Cá nhân",
     icon: SiZalo,
     badgeBg: "#0068FF",
     accent: "#0068FF",
     description: "Quét mã QR để kết nối tài khoản Zalo cá nhân, nhận và trả lời tin nhắn ngay trong hộp thư chung.",
+  },
+  {
+    key: "telegram",
+    label: "Telegram",
+    icon: SiTelegram,
+    badgeBg: "#0088cc",
+    accent: "#0088cc",
+    description: "Quét mã QR để kết nối tài khoản Telegram cá nhân, nhận và trả lời tin nhắn ngay trong hộp thư chung.",
   },
   {
     key: "instagram",
@@ -75,14 +83,6 @@ export const CONNECTION_PLATFORMS: ConnectionPlatform[] = [
     badgeBg: "#25D366",
     accent: "#25D366",
     description: "Kết nối số WhatsApp Business để nhắn tin và tự động hoá chăm sóc khách hàng.",
-  },
-  {
-    key: "telegram",
-    label: "Telegram",
-    icon: SiTelegram,
-    badgeBg: "#26A5E4",
-    accent: "#26A5E4",
-    description: "Quét mã QR để kết nối tài khoản Telegram cá nhân, nhận và trả lời tin nhắn ngay trong hộp thư chung.",
   },
   {
     key: "booking",

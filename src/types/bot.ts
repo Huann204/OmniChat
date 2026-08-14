@@ -1,4 +1,4 @@
-export type BotChannel = "facebook" | "zalo" | "whatsapp";
+export type BotChannel = "facebook" | "zalo" | "telegram" | "whatsapp";
 
 export interface Bot {
   id: string;
