@@ -169,7 +169,7 @@ export function TelegramConnectPanel({
           <>
             <div className="flex items-center gap-2">
               <span
-                className="flex h-11 w-11 items-center justify-center rounded-full"
+                className="flex h-11 w-11 items-center justify-center rounded-lg shadow-xs"
                 style={{ background: selected.badgeBg }}
               >
                 <SelectedIcon className="h-5 w-5 text-white" />
