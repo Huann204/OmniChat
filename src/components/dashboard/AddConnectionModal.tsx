@@ -11,6 +11,9 @@ import {
   BsArrowRepeat,
   BsSearch,
   BsSliders,
+  BsGear,
+  BsQrCodeScan,
+  BsQuestionCircle,
 } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
@@ -403,33 +406,95 @@ function ZaloConnectPanel({
         </p>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-10 text-center">
-        {state.step === "connecting" && (
-          <>
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-slate-500">Đang khởi tạo mã QR...</p>
-          </>
-        )}
+      <div className="flex flex-1 flex-col items-center justify-center p-6 md:p-8">
+        {(state.step === "connecting" || state.step === "qr") && (
+          <div className="w-full max-w-2xl">
+            {state.step === "qr" && state.scannedBy && (
+              <div className="mb-6 flex items-center gap-2 rounded-xl bg-blue-50/80 border border-blue-200/80 px-4 py-3 text-sm text-blue-800">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600 shrink-0" />
+                <span>
+                  Đã quét bởi <strong>{state.scannedBy.displayName}</strong> — vui lòng xác nhận đăng nhập trên điện thoại
+                </span>
+              </div>
+            )}
 
-        {state.step === "qr" && (
-          <>
-            <h3 className="text-lg font-semibold text-slate-900">
-              Quét mã QR bằng Zalo trên điện thoại
-            </h3>
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={state.image} alt="Mã QR đăng nhập Zalo" className="h-48 w-48" />
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+              {/* Mã QR với khung định vị 4 góc màu xanh (Viewfinder frame) */}
+              <div className="relative p-2 flex items-center justify-center shrink-0">
+                {/* 4 góc viền xanh ôm sát QR */}
+                <div className="absolute top-0 left-0 h-5 w-5 border-t-[2.5px] border-l-[2.5px] border-[#0068FF] rounded-tl-lg" />
+                <div className="absolute top-0 right-0 h-5 w-5 border-t-[2.5px] border-r-[2.5px] border-[#0068FF] rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 h-5 w-5 border-b-[2.5px] border-l-[2.5px] border-[#0068FF] rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 h-5 w-5 border-b-[2.5px] border-r-[2.5px] border-[#0068FF] rounded-br-lg" />
+
+                {state.step === "connecting" ? (
+                  <div className="flex h-48 w-48 sm:h-52 sm:w-52 items-center justify-center rounded-md bg-slate-50/50">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#0068FF]" />
+                  </div>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={state.image}
+                    alt="Mã QR đăng nhập Zalo"
+                    className="h-48 w-48 sm:h-52 sm:w-52 object-contain rounded-md"
+                  />
+                )}
+              </div>
+
+              {/* Hướng dẫn chi tiết bên phải */}
+              <div className="flex-1 text-left">
+                <h3 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight mb-3">
+                  Quét QR để kết nối Zalo với Hchat
+                </h3>
+
+                <ol className="space-y-2.5 text-xs sm:text-sm text-slate-600 font-medium">
+                  <li className="flex items-center gap-1.5 flex-wrap">
+                    <span>1. Mở ứng dụng Zalo</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/zalo.png" alt="Zalo" className="h-4 w-4 object-contain rounded shadow-2xs inline-block" />
+                    <span>trên di động</span>
+                  </li>
+                  <li className="flex items-center gap-1.5 flex-wrap">
+                    <span>2. Ở mục</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
+                      <BsGear className="h-3.5 w-3.5 text-slate-600" /> Cài đặt,
+                    </span>
+                    <span>nhấn nút quét QR</span>
+                    <BsQrCodeScan className="h-3.5 w-3.5 text-slate-700 shrink-0" />
+                  </li>
+                  <li className="flex items-center gap-1 flex-wrap">
+                    <span>3. Quét mã QR để đăng nhập</span>
+                  </li>
+                </ol>
+
+                <hr className="my-4 border-slate-200/80" />
+
+                <div className="flex items-start gap-2 text-[11px] sm:text-xs text-slate-500 leading-relaxed">
+                  <BsQuestionCircle className="h-3.5 w-3.5 shrink-0 text-slate-400 mt-0.5" />
+                  <p>
+                    Sau khi đăng nhập Zalo trên Hchat, bạn vui lòng{" "}
+                    <strong className="font-bold text-slate-700">KHÔNG</strong> quét đăng nhập lại trên Zalo phiên bản website (
+                    <a
+                      href="https://chat.zalo.me/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-slate-500 underline hover:text-slate-700"
+                    >
+                      https://chat.zalo.me/
+                    </a>
+                    ) để tránh làm gián đoạn luồng tin đồng bộ về Hchat.{" "}
+                    <a href="#" className="text-primary font-medium underline hover:text-primary-hover">
+                      Hướng dẫn kết nối
+                    </a>
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="max-w-sm text-sm text-slate-500">
-              {state.scannedBy
-                ? `Đã quét bởi ${state.scannedBy.displayName} — vui lòng xác nhận trên điện thoại`
-                : "Mở Zalo trên điện thoại → Quét QR → chọn mã này"}
-            </p>
-          </>
+          </div>
         )}
 
         {state.step === "error" && (
-          <>
+          <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
             <div className="flex items-center gap-2">
               <span
                 className="flex h-11 w-11 items-center justify-center rounded-2xl shadow-xs"
@@ -450,7 +515,7 @@ function ZaloConnectPanel({
               <BsArrowRepeat className="h-4 w-4" style={{ color: selected.accent }} />
               Lấy mã QR mới
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

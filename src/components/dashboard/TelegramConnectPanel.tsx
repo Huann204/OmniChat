@@ -3,7 +3,13 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
-import { BsArrowRepeat } from "react-icons/bs";
+import {
+  BsArrowRepeat,
+  BsGear,
+  BsQrCodeScan,
+  BsQuestionCircle,
+  BsPcDisplayHorizontal,
+} from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { CONNECTION_PLATFORMS } from "@/lib/connection-platforms";
 import { toast } from "@/store/toast-store";
@@ -112,27 +118,69 @@ export function TelegramConnectPanel({
         </p>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-10 text-center">
-        {state.step === "connecting" && (
-          <>
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-slate-500">Đang khởi tạo mã QR...</p>
-          </>
-        )}
+      <div className="flex flex-1 flex-col items-center justify-center p-6 md:p-8">
+        {(state.step === "connecting" || state.step === "qr") && (
+          <div className="w-full max-w-2xl">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+              {/* Mã QR với viền định vị xanh (Viewfinder frame) */}
+              <div className="relative p-2 flex items-center justify-center shrink-0">
+                {/* 4 góc viền xanh ôm sát QR */}
+                <div className="absolute top-0 left-0 h-5 w-5 border-t-[2.5px] border-l-[2.5px] border-[#0088cc] rounded-tl-lg" />
+                <div className="absolute top-0 right-0 h-5 w-5 border-t-[2.5px] border-r-[2.5px] border-[#0088cc] rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 h-5 w-5 border-b-[2.5px] border-l-[2.5px] border-[#0088cc] rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 h-5 w-5 border-b-[2.5px] border-r-[2.5px] border-[#0088cc] rounded-br-lg" />
 
-        {state.step === "qr" && (
-          <>
-            <h3 className="text-lg font-semibold text-slate-900">
-              Quét mã QR bằng Telegram trên điện thoại
-            </h3>
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={state.image} alt="Mã QR đăng nhập Telegram" className="h-48 w-48" />
+                {state.step === "connecting" ? (
+                  <div className="flex h-48 w-48 sm:h-52 sm:w-52 items-center justify-center rounded-md bg-slate-50/50">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#0088cc]" />
+                  </div>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={state.image}
+                    alt="Mã QR đăng nhập Telegram"
+                    className="h-48 w-48 sm:h-52 sm:w-52 object-contain rounded-md"
+                  />
+                )}
+              </div>
+
+              {/* Hướng dẫn chi tiết bên phải */}
+              <div className="flex-1 text-left">
+                <h3 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight mb-3">
+                  Quét QR để đăng nhập Telegram
+                </h3>
+
+                <ol className="space-y-2.5 text-xs sm:text-sm text-slate-600 font-medium">
+                  <li className="flex items-center gap-1.5 flex-wrap">
+                    <span>1. Mở ứng dụng Telegram</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/tele.png" alt="Telegram" className="h-4 w-4 object-contain rounded shadow-2xs inline-block" />
+                    <span>trên di động</span>
+                  </li>
+                  <li className="flex items-center gap-1.5 flex-wrap">
+                    <span>2. Ở mục</span>
+                    <strong className="font-semibold text-slate-800">Cài đặt</strong>,
+                    <span>chọn thiết bị</span>
+                    <BsPcDisplayHorizontal className="h-4 w-4 text-slate-600 shrink-0 inline-block" />
+                  </li>
+                  <li className="flex items-center gap-1.5 flex-wrap">
+                    <span>3. Nhấn Link Desktop Device</span>
+                    <BsQrCodeScan className="h-4 w-4 text-slate-700 shrink-0 inline-block" />
+                    <span>và quét QR để đăng nhập</span>
+                  </li>
+                </ol>
+
+                <hr className="my-4 border-slate-200/80" />
+
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <BsQuestionCircle className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <a href="#" className="text-primary font-medium underline hover:text-primary-hover">
+                    Hướng dẫn kết nối
+                  </a>
+                </div>
+              </div>
             </div>
-            <p className="max-w-sm text-sm text-slate-500">
-              Mở Telegram trên điện thoại → Cài đặt → Thiết bị → Quét mã QR
-            </p>
-          </>
+          </div>
         )}
 
         {state.step === "password" && (
