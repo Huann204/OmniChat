@@ -39,7 +39,7 @@ export const CONNECTION_PLATFORMS: ConnectionPlatform[] = [
   },
   {
     key: "zalo-personal",
-    label: "Zalo Cá nhân",
+    label: "Zalo",
     icon: SiZalo,
     imageSrc: "/zalo.png",
     badgeBg: "#0068FF",
@@ -129,14 +129,14 @@ export const CONNECTION_PLATFORMS: ConnectionPlatform[] = [
     accent: "#EE4D2D",
     description: "Đồng bộ tin nhắn và đơn hàng Shopee để chăm sóc khách mua sắm kịp thời.",
   },
-  {
-    key: "zalo",
-    label: "Zalo",
-    icon: SiZalo,
-    imageSrc: "/zalo.png",
-    badgeBg: "#0068FF",
-    accent: "#0068FF",
-    beta: true,
-    description: "Kết nối Official Account để nhắn tin và chăm sóc khách hàng qua Zalo.",
-  },
+  // {
+  //   key: "zalo",
+  //   label: "Zalo",
+  //   icon: SiZalo,
+  //   imageSrc: "/zalo.png",
+  //   badgeBg: "#0068FF",
+  //   accent: "#0068FF",
+  //   beta: true,
+  //   description: "Kết nối Official Account để nhắn tin và chăm sóc khách hàng qua Zalo.",
+  // },
 ];
