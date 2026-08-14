@@ -82,7 +82,7 @@ export const CONNECTION_PLATFORMS: ConnectionPlatform[] = [
     icon: SiTelegram,
     badgeBg: "#26A5E4",
     accent: "#26A5E4",
-    description: "Quản lý bot và tin nhắn Telegram cùng lúc với các kênh khác.",
+    description: "Quét mã QR để kết nối tài khoản Telegram cá nhân, nhận và trả lời tin nhắn ngay trong hộp thư chung.",
   },
   {
     key: "booking",
