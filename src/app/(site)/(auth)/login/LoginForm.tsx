@@ -81,7 +81,7 @@ export default function LoginForm() {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="password" className="text-xs sm:text-sm font-semibold text-slate-700">Mật khẩu</Label>
-            <Link href="#" className="text-xs text-primary hover:text-primary-hover font-medium transition-colors hover:underline">
+            <Link href="/forgot-password" className="text-xs text-primary hover:text-primary-hover font-medium transition-colors hover:underline">
               Quên mật khẩu?
             </Link>
           </div>
