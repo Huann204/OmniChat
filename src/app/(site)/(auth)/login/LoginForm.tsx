@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useActionState, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,18 +13,19 @@ import { toast } from '@/store/toast-store';
 const initialState: AuthFormState = {};
 
 export default function LoginForm() {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(login, initialState);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (state?.success) {
       toast.success('Đăng nhập thành công!');
-      const timer = setTimeout(() => {
-        window.location.href = state.redirectTo ?? '/dashboard';
-      }, 500);
-      return () => clearTimeout(timer);
+      // router.push (chuyển trang mềm, không reload) thay vì
+      // window.location.href — server action đã revalidatePath("/","layout")
+      // nên layout/dashboard tự lấy session mới, không cần load lại cả trang.
+      router.push(state.redirectTo ?? '/dashboard');
     }
-  }, [state?.success]);
+  }, [state?.success, state?.redirectTo, router]);
 
   useEffect(() => {
     if (state?.error) {

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useActionState, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,6 +13,7 @@ import { toast } from '@/store/toast-store';
 const initialState: AuthFormState = {};
 
 export default function RegisterForm() {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(register, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -37,12 +39,11 @@ export default function RegisterForm() {
   useEffect(() => {
     if (state?.success) {
       toast.success('Đăng ký tài khoản thành công!');
-      const timer = setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 500);
-      return () => clearTimeout(timer);
+      // router.push (chuyển trang mềm) thay vì window.location.href — cùng
+      // lý do như LoginForm.tsx.
+      router.push('/dashboard');
     }
-  }, [state?.success]);
+  }, [state?.success, router]);
 
   useEffect(() => {
     if (state?.error) {
