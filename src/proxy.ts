@@ -15,9 +15,15 @@ const API_URL = process.env.API_URL || 'http://localhost:3000/api';
 
 const protectedPrefixes = ['/dashboard'];
 const authPaths = ['/login', '/register'];
-// Trang chủ + 2 trang auth là public duy nhất ở cấp root — bất kỳ segment gốc
-// nào khác (vd. /[pageId] của trang chi tiết bot) đều coi là cần đăng nhập.
-const publicRootPaths = ['/', ...authPaths];
+// Quên/đặt lại mật khẩu CỐ TÌNH không nằm trong authPaths (không kích hoạt
+// nhánh isAuthPage bên dưới) — user vẫn phải xem/dùng được 2 trang này ngay
+// cả khi đang có session hợp lệ (vd bấm link trong email lúc đang đăng nhập
+// sẵn ở tab/thiết bị khác), không muốn tự động đá về /dashboard như /login.
+const otherPublicAuthPaths = ['/forgot-password', '/reset-password'];
+// Trang chủ + các trang auth là public duy nhất ở cấp root — bất kỳ segment
+// gốc nào khác (vd. /[pageId] của trang chi tiết bot) đều coi là cần đăng
+// nhập.
+const publicRootPaths = ['/', ...authPaths, ...otherPublicAuthPaths];
 
 function isExpiredOrInvalid(accessToken: string | undefined): boolean {
   if (!accessToken) return true;
