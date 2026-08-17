@@ -123,7 +123,7 @@ interface ConnectedPageRaw {
   name: string;
   category?: string;
   picture?: string;
-  active: boolean;
+  status: Bot["status"];
 }
 
 // Khớp CHANNEL_TYPE_* trong server/src/models/connectedPage.model.ts — không
@@ -158,7 +158,7 @@ export const getConnectedPages = cache(async (): Promise<Bot[]> => {
       name: p.name,
       channel: channelFromType(p.type),
       profileUrl: p.type === CHANNEL_TYPE_FACEBOOK ? `https://facebook.com/${p.pageId}` : "",
-      isActive: p.active,
+      status: p.status,
       messageCount: 0,
       orderCount: 0,
       avatarUrl: p.picture,

@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { disconnectPage, reconnectPage } from "@/app/actions/facebook";
+import { toast } from "@/store/toast-store";
 import { BotCard } from "./BotCard";
 import { ChannelTabs } from "./ChannelTabs";
 import { DashboardToolbar } from "./DashboardToolbar";
@@ -41,8 +43,30 @@ export function BotDashboard({ bots: initialBots }: BotDashboardProps) {
 
   function handleToggleActive(id: string) {
     setBots((prev) =>
-      prev.map((bot) => (bot.id === id ? { ...bot, isActive: !bot.isActive } : bot))
+      prev.map((bot) =>
+        bot.id === id ? { ...bot, status: bot.status === "active" ? "inactive" : "active" } : bot
+      )
     );
+  }
+
+  async function handleDisconnect(id: string) {
+    const { page, error } = await disconnectPage(id);
+    if (!page) {
+      toast.error(error || "Không ngắt kết nối được");
+      return;
+    }
+    setBots((prev) => prev.filter((bot) => bot.id !== id));
+    toast.success("Đã ngắt kết nối");
+  }
+
+  async function handleReconnect(id: string) {
+    const { page, error } = await reconnectPage(id);
+    if (!page) {
+      toast.error(error || "Làm mới kết nối thất bại");
+      return;
+    }
+    setBots((prev) => prev.map((bot) => (bot.id === id ? { ...bot, status: page.status } : bot)));
+    toast.success("Đã làm mới kết nối thành công");
   }
 
   return (
@@ -69,7 +93,14 @@ export function BotDashboard({ bots: initialBots }: BotDashboardProps) {
             <div className="flex-1 overflow-y-auto p-4 md:p-5">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredBots.map((bot, index) => (
-                  <BotCard key={bot.id} bot={bot} index={index} onToggleActive={handleToggleActive} />
+                  <BotCard
+                    key={bot.id}
+                    bot={bot}
+                    index={index}
+                    onToggleActive={handleToggleActive}
+                    onDisconnect={handleDisconnect}
+                    onReconnect={handleReconnect}
+                  />
                 ))}
               </div>
 
