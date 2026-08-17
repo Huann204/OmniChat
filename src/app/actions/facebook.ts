@@ -17,7 +17,7 @@ export interface ConnectedFacebookPage {
   name: string;
   category?: string;
   picture?: string;
-  active: boolean;
+  status: "active" | "inactive" | "deleted";
 }
 
 async function authHeader() {
@@ -66,6 +66,45 @@ export async function connectFacebookPage(
   } catch (err) {
     return {
       error: err instanceof ApiError ? err.message : "Không kết nối được Page này",
+    };
+  }
+}
+
+// Dùng chung cho mọi kênh (Facebook/Zalo/Telegram) dù route nằm dưới
+// "/facebook" — đúng chỗ các operation ConnectedPage chung khác đã sống (xem
+// listConnectedPages ở server). CHỈ đổi status sang "deleted", không tắt
+// session Zalo/Telegram đang sống (xem facebook.controller.ts#disconnectPage).
+export async function disconnectPage(
+  pageId: string
+): Promise<{ page?: ConnectedFacebookPage; error?: string }> {
+  try {
+    const data = await apiFetch<{ success: boolean; page: ConnectedFacebookPage }>(
+      `/facebook/pages/${pageId}`,
+      { method: "DELETE", headers: await authHeader() }
+    );
+    return { page: data.page };
+  } catch (err) {
+    return {
+      error: err instanceof ApiError ? err.message : "Không ngắt kết nối được",
+    };
+  }
+}
+
+// Chỉ có ý nghĩa với Zalo/Telegram (có khái niệm "phiên sống" bị rớt) — làm
+// mới lại phiên bằng credentials đã lưu, không cần quét QR (xem
+// facebook.controller.ts#reconnectPage).
+export async function reconnectPage(
+  pageId: string
+): Promise<{ page?: ConnectedFacebookPage; error?: string }> {
+  try {
+    const data = await apiFetch<{ success: boolean; page: ConnectedFacebookPage }>(
+      `/facebook/pages/${pageId}/reconnect`,
+      { method: "POST", headers: await authHeader() }
+    );
+    return { page: data.page };
+  } catch (err) {
+    return {
+      error: err instanceof ApiError ? err.message : "Làm mới kết nối thất bại",
     };
   }
 }

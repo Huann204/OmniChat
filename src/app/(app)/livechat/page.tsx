@@ -23,7 +23,7 @@ const EMPTY_BOT: Bot = {
   name: "Chưa kết nối Page",
   channel: "facebook",
   profileUrl: "",
-  isActive: false,
+  status: "inactive",
   messageCount: 0,
   orderCount: 0,
 };
@@ -89,7 +89,7 @@ export default async function MultiPagesPage() {
     name: selectedPages.length > 1 ? `${selectedPages.length} trang đã gộp` : selectedPages[0].name,
     channel: selectedPages[0]?.channel || "facebook",
     profileUrl: selectedPages[0].profileUrl,
-    isActive: selectedPages.some((p) => p.isActive),
+    status: selectedPages.some((p) => p.status === "active") ? "active" : "inactive",
     messageCount: 0,
     orderCount: 0,
     avatarUrl: selectedPages[0].avatarUrl,

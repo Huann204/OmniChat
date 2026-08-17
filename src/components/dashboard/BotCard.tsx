@@ -2,7 +2,14 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { BsExclamationCircleFill, BsThreeDotsVertical, BsPencilFill, BsPower, BsTrashFill } from "react-icons/bs";
+import {
+  BsExclamationCircleFill,
+  BsThreeDotsVertical,
+  BsPencilFill,
+  BsPower,
+  BsTrashFill,
+  BsArrowRepeat,
+} from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
@@ -24,12 +31,29 @@ interface BotCardProps {
   bot: Bot;
   index: number;
   onToggleActive: (id: string) => void;
+  onDisconnect: (id: string) => void;
+  onReconnect: (id: string) => Promise<void>;
 }
 
-export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
+export function BotCard({ bot, index, onToggleActive, onDisconnect, onReconnect }: BotCardProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = React.useState(false);
+  const [reconnecting, setReconnecting] = React.useState(false);
   const [isNavigating, startNavigate] = React.useTransition();
+  // Chỉ Zalo/Telegram có khái niệm "phiên sống" bị rớt cần làm mới —
+  // Facebook chỉ có 1 access token thụ động, luôn sẵn sàng, không cần nút
+  // này (xem facebook.controller.ts#reconnectPage).
+  const canReconnect = bot.channel === "zalo" || bot.channel === "telegram";
+
+  async function handleReconnect(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenuOpen(false);
+    setReconnecting(true);
+    await onReconnect(bot.id);
+    setReconnecting(false);
+  }
   const channel = CHANNEL_META[bot.channel];
   const ChannelIcon = channel.icon;
   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
@@ -85,15 +109,25 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
         </div>
       </div>
 
-      {/* Góc phải: cảnh báo khi bị tắt, hoặc menu ngữ cảnh khi hover */}
+      {/* Góc phải: cảnh báo khi bị tắt (hoặc spinner lúc đang kết nối lại), hoặc menu ngữ cảnh khi hover */}
       <div className="absolute right-3 top-3">
-        {!bot.isActive && !menuOpen && (
+        {reconnecting ? (
           <span
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-500 transition-opacity group-hover:opacity-0"
-            title="Bot đang tắt"
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary"
+            title="Đang làm mới kết nối..."
           >
-            <BsExclamationCircleFill className="h-3.5 w-3.5" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           </span>
+        ) : (
+          bot.status !== "active" &&
+          !menuOpen && (
+            <span
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-500 transition-opacity group-hover:opacity-0"
+              title="Bot đang tắt"
+            >
+              <BsExclamationCircleFill className="h-3.5 w-3.5" />
+            </span>
+          )
         )}
 
         <button
@@ -144,14 +178,24 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
-                <BsPower className="h-3.5 w-3.5" /> {bot.isActive ? "Tắt bot" : "Bật bot"}
+                <BsPower className="h-3.5 w-3.5" /> {bot.status === "active" ? "Tắt bot" : "Bật bot"}
               </button>
+              {canReconnect && (
+                <button
+                  type="button"
+                  onClick={handleReconnect}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
+                >
+                  <BsArrowRepeat className="h-3.5 w-3.5" /> Làm mới kết nối
+                </button>
+              )}
               <button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setMenuOpen(false);
+                  setConfirmDisconnect(true);
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
               >
@@ -161,6 +205,55 @@ export function BotCard({ bot, index, onToggleActive }: BotCardProps) {
           </>
         )}
       </div>
+
+      {confirmDisconnect && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setConfirmDisconnect(false);
+          }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <BsTrashFill className="h-5 w-5 shrink-0 text-red-500" />
+              <p className="text-sm font-medium text-slate-900">
+                Ngắt kết nối &quot;{bot.name}&quot;? Hội thoại cũ vẫn được giữ lại, nhưng bot sẽ
+                không còn nhận/gửi tin nhắn được nữa. Không thể hoàn tác.
+              </p>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setConfirmDisconnect(false);
+                }}
+                className="cursor-pointer rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+              >
+                Huỷ
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setConfirmDisconnect(false);
+                  onDisconnect(bot.id);
+                }}
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+              >
+                Ngắt kết nối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
