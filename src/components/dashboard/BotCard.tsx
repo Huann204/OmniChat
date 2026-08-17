@@ -6,7 +6,6 @@ import {
   BsExclamationCircleFill,
   BsThreeDotsVertical,
   BsPencilFill,
-  BsPower,
   BsTrashFill,
   BsArrowRepeat,
 } from "react-icons/bs";
@@ -15,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import { setMergePagesCookie } from "@/lib/mergePagesCookie";
 import type { Bot } from "@/types/bot";
+import { DisconnectBotModal } from "@/components/dashboard/DisconnectBotModal";
 
 const AVATAR_COLORS = [
   "bg-blue-500",
@@ -168,18 +168,6 @@ export function BotCard({ bot, index, onToggleActive, onDisconnect, onReconnect 
               >
                 <BsPencilFill className="h-3.5 w-3.5" /> Sửa
               </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onToggleActive(bot.id);
-                  setMenuOpen(false);
-                }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                <BsPower className="h-3.5 w-3.5" /> {bot.status === "active" ? "Tắt bot" : "Bật bot"}
-              </button>
               {canReconnect && (
                 <button
                   type="button"
@@ -199,61 +187,20 @@ export function BotCard({ bot, index, onToggleActive, onDisconnect, onReconnect 
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
               >
-                <BsTrashFill className="h-3.5 w-3.5" /> Xoá
+                <BsTrashFill className="h-3.5 w-3.5" /> Ngắt kết nối
               </button>
             </div>
           </>
         )}
       </div>
 
-      {confirmDisconnect && (
-        <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setConfirmDisconnect(false);
-          }}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start gap-3">
-              <BsTrashFill className="h-5 w-5 shrink-0 text-red-500" />
-              <p className="text-sm font-medium text-slate-900">
-                Ngắt kết nối &quot;{bot.name}&quot;? Hội thoại cũ vẫn được giữ lại, nhưng bot sẽ
-                không còn nhận/gửi tin nhắn được nữa. Không thể hoàn tác.
-              </p>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setConfirmDisconnect(false);
-                }}
-                className="cursor-pointer rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
-              >
-                Huỷ
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setConfirmDisconnect(false);
-                  onDisconnect(bot.id);
-                }}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
-              >
-                Ngắt kết nối
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DisconnectBotModal
+        open={confirmDisconnect}
+        onClose={() => setConfirmDisconnect(false)}
+        onConfirm={() => onDisconnect(bot.id)}
+        bot={bot}
+        index={index}
+      />
     </div>
   );
 }
