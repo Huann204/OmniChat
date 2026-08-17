@@ -527,7 +527,7 @@ function MessageRow({
           {message.text && (
             <div
               className={cn(
-                "max-w-sm rounded-2xl px-4 py-2 text-sm shadow-sm",
+                "max-w-sm whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm shadow-sm",
                 isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
               )}
             >
@@ -640,7 +640,7 @@ function MessageRow({
         ) : (
           <div
             className={cn(
-              "rounded-2xl px-4 py-2 text-sm shadow-sm",
+              "whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm shadow-sm",
               isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
             )}
           >
