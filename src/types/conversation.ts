@@ -66,6 +66,9 @@ export interface Conversation {
   tags: ConversationTag[];
   lastSeenLabel: string;
   timeLabel: string;
+  // ISO timestamp gốc — dùng làm cursor phân trang khi tải thêm hội thoại cũ
+  // hơn (before/beforeId), khác `timeLabel` vốn chỉ để hiển thị (đã format).
+  lastMessageAt: string;
   isRead: boolean;
   messages: ConversationMessage[];
   // Còn tin nhắn cũ hơn chưa tải hay không — dùng để quyết định có tải thêm

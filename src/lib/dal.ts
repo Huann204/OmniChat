@@ -199,7 +199,10 @@ interface RawMessage {
   createdAt: string;
 }
 
-interface RawConversation {
+// Export để actions/conversation.ts tái dùng cho getMoreConversations —
+// tránh lặp lại logic map (đã có bài học trước đây khi dal.ts/message-format.ts
+// từng có 2 bản implement lệch nhau, xem messageKindAndContent).
+export interface RawConversation {
   id: string;
   pageId: string;
   type: number;
@@ -213,7 +216,7 @@ interface RawConversation {
   messages: RawMessage[];
 }
 
-function mapRawConversations(raw: RawConversation[]): Conversation[] {
+export function mapRawConversations(raw: RawConversation[]): Conversation[] {
   return raw.map((c) => ({
     id: c.id,
     pageId: c.pageId,
@@ -224,6 +227,7 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
     tags: c.tags,
     lastSeenLabel: "",
     timeLabel: formatTimeLabel(c.lastMessageAt),
+    lastMessageAt: c.lastMessageAt,
     isRead: c.isRead,
     hasMoreMessages: c.hasMoreMessages,
     messages: c.messages.map((m) => {
@@ -246,20 +250,25 @@ function mapRawConversations(raw: RawConversation[]): Conversation[] {
 }
 
 // Lấy hội thoại + tin nhắn của 1 hoặc nhiều Page cùng lúc (xem gộp tạm thời)
-// — dồn chung vào 1 danh sách, không lưu lại việc gộp này ở đâu cả.
+// — dồn chung vào 1 danh sách, không lưu lại việc gộp này ở đâu cả. Chỉ tải
+// TRANG ĐẦU (CONVERSATION_LIST_PAGE_SIZE hội thoại mới nhất) — cuộn xuống
+// cuối danh sách tải thêm qua getMoreConversations (actions/conversation.ts).
 export const getConversationsForPages = cache(
-  async (pageIds: string[]): Promise<Conversation[]> => {
+  async (pageIds: string[]): Promise<{ conversations: Conversation[]; hasMore: boolean }> => {
     const token = await getSessionToken();
-    if (!token || pageIds.length === 0) return [];
+    if (!token || pageIds.length === 0) return { conversations: [], hasMore: false };
 
     try {
-      const data = await apiFetch<{ success: boolean; conversations: RawConversation[] }>(
-        `/conversations?pageIds=${encodeURIComponent(pageIds.join(","))}`,
-        { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
-      );
-      return mapRawConversations(data.conversations);
+      const data = await apiFetch<{
+        success: boolean;
+        hasMore: boolean;
+        conversations: RawConversation[];
+      }>(`/conversations?pageIds=${encodeURIComponent(pageIds.join(","))}`, {
+        headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) },
+      });
+      return { conversations: mapRawConversations(data.conversations), hasMore: data.hasMore };
     } catch {
-      return [];
+      return { conversations: [], hasMore: false };
     }
   }
 );

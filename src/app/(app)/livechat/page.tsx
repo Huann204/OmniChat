@@ -61,6 +61,7 @@ export default async function MultiPagesPage() {
       <InboxView
         bot={EMPTY_BOT}
         initialConversations={[]}
+        initialHasMoreConversations={false}
         socketPageIds={[]}
         pagesById={{}}
         quickReplies={quickReplies}
@@ -70,7 +71,9 @@ export default async function MultiPagesPage() {
     );
   }
 
-  const conversations = await getConversationsForPages(selectedPages.map((p) => p.id));
+  const { conversations, hasMore: hasMoreConversations } = await getConversationsForPages(
+    selectedPages.map((p) => p.id)
+  );
 
   // Tra theo pageId thật (Facebook) — trùng với Conversation.pageId trả về
   // từ backend — để ConversationList hiện đúng avatar + tên Page nguồn.
@@ -99,6 +102,7 @@ export default async function MultiPagesPage() {
     <InboxView
       bot={virtualBot}
       initialConversations={conversations}
+      initialHasMoreConversations={hasMoreConversations}
       socketPageIds={selectedPages.map((p) => p.id)}
       pagesById={pagesById}
       quickReplies={quickReplies}
