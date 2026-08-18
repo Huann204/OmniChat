@@ -5,6 +5,7 @@ import { io, type Socket } from "socket.io-client";
 import { BsChatSquareTextFill } from "react-icons/bs";
 import { generateAiSuggestions } from "@/app/actions/aiAssistant";
 import {
+  getMoreConversations,
   getOlderMessages,
   markConversationRead,
   reactToMessage,
@@ -75,6 +76,10 @@ interface MessageReactionEvent {
 interface InboxViewProps {
   bot: Bot;
   initialConversations: Conversation[];
+  // Còn hội thoại cũ hơn chưa tải hay không (trang đầu — xem
+  // getConversationsForPages) — dùng để quyết định có tải thêm khi cuộn
+  // xuống cuối danh sách hội thoại hay không.
+  initialHasMoreConversations: boolean;
   // Danh sách Page thật cần join room realtime — mặc định chỉ [bot.id].
   // Truyền nhiều id khi đang xem gộp tạm thời nhiều Page cùng lúc.
   socketPageIds?: string[];
@@ -97,6 +102,7 @@ interface InboxViewProps {
 export function InboxView({
   bot,
   initialConversations,
+  initialHasMoreConversations,
   socketPageIds,
   pagesById,
   quickReplies,
@@ -104,6 +110,8 @@ export function InboxView({
   aiAssistantSettings,
 }: InboxViewProps) {
   const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
+  const [hasMoreConversations, setHasMoreConversations] = React.useState(initialHasMoreConversations);
+  const [isLoadingMoreConversations, setIsLoadingMoreConversations] = React.useState(false);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   // Đang trả lời trích dẫn tin nào (bấm nút Trả lời trong MessageThread) —
@@ -226,6 +234,14 @@ export function InboxView({
         const index = prev.findIndex((c) => c.id === payload.conversationId);
 
         if (index === -1) {
+          // Nhánh này chạy cho CẢ 2 trường hợp: khách nhắn lần đầu (hội
+          // thoại thật sự mới), LẪN 1 hội thoại đã có từ trước nhưng chưa
+          // được tải vào danh sách (nằm ở trang sau, do danh sách hội thoại
+          // giờ phân trang — xem getConversationsForPages). Không phân biệt
+          // được 2 case này chỉ từ payload socket, nên mặc định
+          // hasMoreMessages:true (an toàn hơn: sai với case "mới thật" chỉ
+          // tốn 1 lượt gọi API tải thêm trả về rỗng, còn để false mà sai với
+          // case "hội thoại cũ" sẽ mất khả năng xem lại lịch sử tin nhắn).
           const newConversation: Conversation = {
             id: payload.conversation.id,
             pageId: payload.conversation.pageId,
@@ -239,8 +255,9 @@ export function InboxView({
             tags: [],
             lastSeenLabel: "",
             timeLabel: formatTimeLabel(payload.conversation.lastMessageAt),
+            lastMessageAt: payload.conversation.lastMessageAt,
             isRead: false,
-            hasMoreMessages: false,
+            hasMoreMessages: true,
             messages: [newMessage],
           };
           return [newConversation, ...prev];
@@ -263,6 +280,7 @@ export function InboxView({
         const updated = { ...conversation };
         updated.messages = [...updated.messages, newMessage];
         updated.timeLabel = formatTimeLabel(payload.conversation.lastMessageAt);
+        updated.lastMessageAt = payload.conversation.lastMessageAt;
         updated.isRead = isActive;
 
         const rest = prev.filter((_, i) => i !== index);
@@ -531,6 +549,29 @@ export function InboxView({
     );
   }
 
+  // Tải thêm hội thoại cũ hơn khi cuộn xuống cuối danh sách hội thoại —
+  // cursor lấy từ hội thoại CUỐI CÙNG đang có ở client (cuối mảng
+  // conversations, vì mảng luôn sort mới nhất trước). Nối vào CUỐI mảng
+  // (không cần khôi phục vị trí cuộn như handleLoadMoreMessages, vì thêm vào
+  // cuối không làm nội dung đang xem bị dịch chuyển).
+  async function handleLoadMoreConversations() {
+    if (!hasMoreConversations || isLoadingMoreConversations || conversations.length === 0) return;
+
+    const oldest = conversations[conversations.length - 1];
+    setIsLoadingMoreConversations(true);
+    try {
+      const { conversations: more, hasMore } = await getMoreConversations(
+        pageIds,
+        oldest.lastMessageAt,
+        oldest.id
+      );
+      setConversations((prev) => [...prev, ...more]);
+      setHasMoreConversations(hasMore);
+    } finally {
+      setIsLoadingMoreConversations(false);
+    }
+  }
+
   // Bật/tắt 1 thẻ cho hội thoại đang mở — cập nhật UI (QuickTagBar +
   // badge dưới ConversationList) NGAY, không đợi API xong mới hiện (optimistic),
   // rồi mới gọi setConversationTags chạy nền. Lỗi thì tự lùi lại trạng thái cũ.
@@ -590,6 +631,9 @@ export function InboxView({
             onSearchChange={setSearch}
             onSelect={handleSelect}
             pagesById={pagesById}
+            hasMore={hasMoreConversations}
+            onLoadMore={handleLoadMoreConversations}
+            loadingMore={isLoadingMoreConversations}
           />
 
           {activeConversation ? (

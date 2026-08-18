@@ -2,10 +2,16 @@
 
 import * as React from "react";
 import { BsSearch, BsSliders, BsFillPeopleFill } from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import type { Conversation } from "@/types/conversation";
 import { getLastMessagePreview } from "@/lib/message-format";
+
+// Mirror ngưỡng cuộn của MessageThread.tsx (LOAD_MORE_SCROLL_THRESHOLD) —
+// khác chiều: đây là cuộn XUỐNG cuối (tải hội thoại cũ hơn), không phải cuộn
+// LÊN đầu (tải tin nhắn cũ hơn).
+const LOAD_MORE_SCROLL_THRESHOLD = 80;
 
 // Khớp CHANNEL_TYPE_* trong server/src/models/connectedPage.model.ts — không
 // có package dùng chung giữa 2 repo nên phải giữ đồng bộ thủ công (xem
@@ -41,6 +47,13 @@ interface ConversationListProps {
   // bên dưới mỗi hội thoại để phân biệt hội thoại đến từ Page nào.
   pagesById?: Record<string, PageInfo>;
   className?: string;
+  // Phân trang danh sách hội thoại — cuộn xuống cuối tải thêm (xem
+  // InboxView.tsx#handleLoadMoreConversations). LƯU Ý: `search` chỉ lọc
+  // TRONG SỐ hội thoại đã tải, chưa tìm được xuyên suốt hội thoại chưa cuộn
+  // tới (trade-off đã chấp nhận, xem plan).
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  loadingMore?: boolean;
 }
 
 export function ConversationList({
@@ -51,10 +64,22 @@ export function ConversationList({
   onSelect,
   pagesById,
   className,
+  hasMore,
+  onLoadMore,
+  loadingMore,
 }: ConversationListProps) {
   const filtered = conversations.filter((c) =>
     c.customerName.toLowerCase().includes(search.trim().toLowerCase())
   );
+
+  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
+    if (!hasMore || !onLoadMore || loadingMore) return;
+    const el = e.currentTarget;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (distanceFromBottom < LOAD_MORE_SCROLL_THRESHOLD) {
+      onLoadMore();
+    }
+  }
 
   return (
     <div
@@ -84,7 +109,10 @@ export function ConversationList({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
         {filtered.length === 0 && (
           <p className="mt-10 text-center text-sm text-slate-400">Chưa có hội thoại nào</p>
         )}
@@ -234,6 +262,12 @@ export function ConversationList({
             </button>
           );
         })}
+
+        {loadingMore && (
+          <div className="flex items-center justify-center py-3">
+            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+          </div>
+        )}
       </div>
     </div>
   );

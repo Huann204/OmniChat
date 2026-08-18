@@ -1,9 +1,10 @@
 "use server";
 
 import { ApiError, apiFetch } from "@/lib/api";
+import { mapRawConversations, type RawConversation } from "@/lib/dal";
 import { formatClock, messageKindAndContent } from "@/lib/message-format";
 import { getCurrentShopId, getSessionToken } from "@/lib/session";
-import type { ConversationMessage } from "@/types/conversation";
+import type { Conversation, ConversationMessage } from "@/types/conversation";
 
 async function authHeaders(token: string) {
   const shopId = await getCurrentShopId();
@@ -79,6 +80,33 @@ export async function getOlderMessages(
     };
   } catch {
     return { messages: [], hasMore: false };
+  }
+}
+
+// Tải thêm hội thoại cũ hơn khi client cuộn xuống cuối danh sách /livechat —
+// before/beforeId là cursor: lastMessageAt + id của hội thoại CUỐI CÙNG đang
+// có ở client (mirror đúng cách getOlderMessages làm cho tin nhắn).
+export async function getMoreConversations(
+  pageIds: string[],
+  before: string,
+  beforeId: string
+): Promise<{ conversations: Conversation[]; hasMore: boolean }> {
+  const token = await getSessionToken();
+  if (!token || pageIds.length === 0) return { conversations: [], hasMore: false };
+
+  try {
+    const data = await apiFetch<{
+      success: boolean;
+      hasMore: boolean;
+      conversations: RawConversation[];
+    }>(
+      `/conversations?pageIds=${encodeURIComponent(pageIds.join(","))}&before=${encodeURIComponent(before)}&beforeId=${encodeURIComponent(beforeId)}`,
+      { headers: await authHeaders(token) }
+    );
+
+    return { conversations: mapRawConversations(data.conversations), hasMore: data.hasMore };
+  } catch {
+    return { conversations: [], hasMore: false };
   }
 }
 
