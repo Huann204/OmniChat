@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { BsTrashFill, BsExclamationCircleFill } from "react-icons/bs";
+import Link from "next/link";
+import { BsTrashFill, BsExclamationCircleFill, BsPencilFill, BsBoxArrowUpRight } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { deletePost, type PostItem } from "@/app/actions/post";
 import { toast } from "@/store/toast-store";
@@ -69,16 +70,36 @@ export function PostList({ posts, emptyLabel }: PostListProps) {
                 {post.errorMessage}
               </p>
             )}
+            {post.status === "published" && post.facebookPostId && (
+              <a
+                href={`https://www.facebook.com/${post.facebookPostId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+              >
+                <BsBoxArrowUpRight className="h-3 w-3" /> Xem trên Facebook
+              </a>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setConfirmId(post.id)}
-            className="shrink-0 cursor-pointer rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
-            aria-label="Xoá bài viết"
-          >
-            <BsTrashFill className="h-4 w-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {post.status === "draft" && (
+              <Link
+                href={`/posts/compose?draftId=${post.id}`}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+              >
+                <BsPencilFill className="h-3.5 w-3.5" /> Chỉnh sửa
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setConfirmId(post.id)}
+              className="cursor-pointer rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+              aria-label="Xoá bài viết"
+            >
+              <BsTrashFill className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       ))}
 
