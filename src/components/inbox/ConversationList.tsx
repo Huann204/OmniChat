@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BsSearch, BsSliders, BsFillPeopleFill } from "react-icons/bs";
+import { BsSearch, BsSliders, BsFillPeopleFill, BsX } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
@@ -41,16 +41,19 @@ interface ConversationListProps {
   conversations: Conversation[];
   activeId: string | null;
   search: string;
+  // Gõ là đổi state ngay (InboxView tự debounce 400ms rồi mới gọi API tìm
+  // kiếm xuyên suốt toàn bộ hội thoại — xem InboxView.tsx). `conversations`
+  // truyền vào đây LUÔN là danh sách đúng cần hiện (không tự lọc gì thêm ở
+  // component này).
   onSearchChange: (value: string) => void;
+  searching?: boolean;
   onSelect: (id: string) => void;
   // Chỉ truyền khi đang xem gộp nhiều Page — hiện avatar + tên Page nguồn
   // bên dưới mỗi hội thoại để phân biệt hội thoại đến từ Page nào.
   pagesById?: Record<string, PageInfo>;
   className?: string;
   // Phân trang danh sách hội thoại — cuộn xuống cuối tải thêm (xem
-  // InboxView.tsx#handleLoadMoreConversations). LƯU Ý: `search` chỉ lọc
-  // TRONG SỐ hội thoại đã tải, chưa tìm được xuyên suốt hội thoại chưa cuộn
-  // tới (trade-off đã chấp nhận, xem plan).
+  // InboxView.tsx#handleLoadMoreConversations).
   hasMore?: boolean;
   onLoadMore?: () => void;
   loadingMore?: boolean;
@@ -61,6 +64,7 @@ export function ConversationList({
   activeId,
   search,
   onSearchChange,
+  searching,
   onSelect,
   pagesById,
   className,
@@ -68,10 +72,6 @@ export function ConversationList({
   onLoadMore,
   loadingMore,
 }: ConversationListProps) {
-  const filtered = conversations.filter((c) =>
-    c.customerName.toLowerCase().includes(search.trim().toLowerCase())
-  );
-
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     if (!hasMore || !onLoadMore || loadingMore) return;
     const el = e.currentTarget;
@@ -91,14 +91,28 @@ export function ConversationList({
     >
       <div className="flex items-center gap-2 border-b border-slate-100 p-3">
         <div className="relative flex-1">
-          <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          {searching ? (
+            <Loader2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400" />
+          ) : (
+            <BsSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          )}
           <input
             type="text"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Tìm kiếm"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-8 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => onSearchChange("")}
+              aria-label="Xóa tìm kiếm"
+              className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 cursor-pointer"
+            >
+              <BsX className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <button
           type="button"
@@ -113,11 +127,11 @@ export function ConversationList({
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
-        {filtered.length === 0 && (
+        {conversations.length === 0 && (
           <p className="mt-10 text-center text-sm text-slate-400">Chưa có hội thoại nào</p>
         )}
 
-        {filtered.map((conversation, index) => {
+        {conversations.map((conversation, index) => {
           const preview = getLastMessagePreview(conversation);
           const isActive = conversation.id === activeId;
           const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];

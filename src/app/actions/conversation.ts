@@ -85,28 +85,55 @@ export async function getOlderMessages(
 
 // Tải thêm hội thoại cũ hơn khi client cuộn xuống cuối danh sách /livechat —
 // before/beforeId là cursor: lastMessageAt + id của hội thoại CUỐI CÙNG đang
-// có ở client (mirror đúng cách getOlderMessages làm cho tin nhắn).
+// có ở client (mirror đúng cách getOlderMessages làm cho tin nhắn). Bỏ trống
+// cả 2 (không truyền) để lấy lại đúng TRANG ĐẦU — dùng khi cần nạp lại danh
+// sách từ đầu cho chắc (VD: xóa hết ô tìm kiếm, xem InboxView.tsx) thay vì tự
+// ghép lại state đang có sẵn ở client.
 export async function getMoreConversations(
   pageIds: string[],
-  before: string,
-  beforeId: string
+  before?: string,
+  beforeId?: string
 ): Promise<{ conversations: Conversation[]; hasMore: boolean }> {
   const token = await getSessionToken();
   if (!token || pageIds.length === 0) return { conversations: [], hasMore: false };
 
   try {
+    const params = new URLSearchParams({ pageIds: pageIds.join(",") });
+    if (before && beforeId) {
+      params.set("before", before);
+      params.set("beforeId", beforeId);
+    }
     const data = await apiFetch<{
       success: boolean;
       hasMore: boolean;
       conversations: RawConversation[];
-    }>(
-      `/conversations?pageIds=${encodeURIComponent(pageIds.join(","))}&before=${encodeURIComponent(before)}&beforeId=${encodeURIComponent(beforeId)}`,
-      { headers: await authHeaders(token) }
-    );
+    }>(`/conversations?${params.toString()}`, { headers: await authHeaders(token) });
 
     return { conversations: mapRawConversations(data.conversations), hasMore: data.hasMore };
   } catch {
     return { conversations: [], hasMore: false };
+  }
+}
+
+// Tìm hội thoại theo tên khách (debounce phía client sau khi ngừng gõ) — tìm
+// xuyên suốt TOÀN BỘ hội thoại của các Page đang xem, không chỉ trong số đã
+// tải sẵn ở client. Không phân trang tiếp (không before/beforeId) — chỉ lấy
+// tối đa 1 trang kết quả.
+export async function searchConversations(
+  pageIds: string[],
+  q: string
+): Promise<{ conversations: Conversation[] }> {
+  const token = await getSessionToken();
+  if (!token || pageIds.length === 0 || !q.trim()) return { conversations: [] };
+
+  try {
+    const data = await apiFetch<{ success: boolean; conversations: RawConversation[] }>(
+      `/conversations?pageIds=${encodeURIComponent(pageIds.join(","))}&q=${encodeURIComponent(q.trim())}`,
+      { headers: await authHeaders(token) }
+    );
+    return { conversations: mapRawConversations(data.conversations) };
+  } catch {
+    return { conversations: [] };
   }
 }
 
