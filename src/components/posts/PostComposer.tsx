@@ -5,24 +5,37 @@ import { useRouter } from "next/navigation";
 import { BsImageFill, BsX, BsSendFill, BsFillClockFill, BsFileEarmarkText } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { MediaPickerModal } from "@/components/media/MediaPickerModal";
-import { createPost } from "@/app/actions/post";
+import { createPost, updatePost, type PostItem } from "@/app/actions/post";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 import type { MediaItem } from "@/types/media";
 
 interface PostComposerProps {
   facebookPages: Bot[];
+  // Có giá trị khi mở lại 1 bài nháp đã lưu để đăng/hẹn giờ (xem
+  // PostList.tsx#"Đăng bài này") — submit sẽ gọi updatePost() thay vì
+  // createPost() để KHÔNG tạo thêm bản ghi mới.
+  editingPost?: PostItem;
 }
 
 type SubmitMode = "publish" | "schedule" | "draft";
 
+// Chỉ cần đúng url để gửi lên server — các field còn lại của MediaItem điền
+// giá trị vô hại, không ảnh hưởng gì (cùng pattern quickReplyImageToMediaItem
+// trong MessageComposer.tsx).
+function imageUrlToMediaItem(url: string): MediaItem {
+  return { id: url, url, resourceType: "image", bytes: 0, originalFilename: "", createdAt: "" };
+}
+
 // v1 chỉ hỗ trợ 0 hoặc 1 ảnh/bài (xem plan) — MediaPickerModal multiple=false
 // nên luôn trả về đúng 1 item.
-export function PostComposer({ facebookPages }: PostComposerProps) {
+export function PostComposer({ facebookPages, editingPost }: PostComposerProps) {
   const router = useRouter();
   const [pageId, setPageId] = React.useState(facebookPages[0]?.id ?? "");
-  const [content, setContent] = React.useState("");
-  const [image, setImage] = React.useState<MediaItem | null>(null);
+  const [content, setContent] = React.useState(editingPost?.content ?? "");
+  const [image, setImage] = React.useState<MediaItem | null>(
+    editingPost?.imageUrl ? imageUrlToMediaItem(editingPost.imageUrl) : null
+  );
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [scheduledFor, setScheduledFor] = React.useState("");
   // Lazy initializer — chỉ tính 1 lần lúc mount, tránh gọi Date.now() (hàm
@@ -41,7 +54,7 @@ export function PostComposer({ facebookPages }: PostComposerProps) {
   }
 
   async function handleSubmit(mode: SubmitMode) {
-    if (!pageId) {
+    if (!editingPost && !pageId) {
       toast.error("Vui lòng chọn Page");
       return;
     }
@@ -55,13 +68,25 @@ export function PostComposer({ facebookPages }: PostComposerProps) {
     }
 
     setSubmitting(mode);
-    const { post, error } = await createPost({
-      pageId,
-      content,
-      imageUrl: image?.url,
-      mode,
-      scheduledFor: mode === "schedule" ? new Date(scheduledFor).toISOString() : undefined,
-    });
+    const scheduledForIso =
+      mode === "schedule" ? new Date(scheduledFor).toISOString() : undefined;
+
+    const { post, error } = editingPost
+      ? await updatePost(editingPost.id, {
+          content,
+          imageUrl: image?.url ?? null,
+          scheduledFor: scheduledForIso,
+          // "draft" nghĩa là chỉ lưu lại nội dung, không chuyển trạng thái —
+          // updatePost() không nhận mode:"draft" (xem UpdatePostInput).
+          mode: mode === "draft" ? undefined : mode,
+        })
+      : await createPost({
+          pageId,
+          content,
+          imageUrl: image?.url,
+          mode,
+          scheduledFor: scheduledForIso,
+        });
     setSubmitting(null);
 
     if (!post) {
@@ -82,7 +107,7 @@ export function PostComposer({ facebookPages }: PostComposerProps) {
     reset();
   }
 
-  if (facebookPages.length === 0) {
+  if (!editingPost && facebookPages.length === 0) {
     return (
       <div className="rounded-2xl border border-slate-200/70 bg-white p-8 text-center shadow-[8px]">
         <p className="text-sm text-slate-500">
@@ -94,20 +119,24 @@ export function PostComposer({ facebookPages }: PostComposerProps) {
 
   return (
     <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[8px] md:p-5">
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-slate-700 sm:text-sm">Đăng lên Page</label>
-        <select
-          value={pageId}
-          onChange={(e) => setPageId(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-        >
-          {facebookPages.map((page) => (
-            <option key={page.id} value={page.id}>
-              {page.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Đang sửa 1 bài nháp có sẵn -> Page đã cố định lúc tạo, không đổi
+          được nữa qua form này. */}
+      {!editingPost && (
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-slate-700 sm:text-sm">Đăng lên Page</label>
+          <select
+            value={pageId}
+            onChange={(e) => setPageId(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+          >
+            {facebookPages.map((page) => (
+              <option key={page.id} value={page.id}>
+                {page.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-slate-700 sm:text-sm">Nội dung</label>

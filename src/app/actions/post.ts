@@ -56,6 +56,10 @@ export interface UpdatePostInput {
   content?: string;
   imageUrl?: string | null;
   scheduledFor?: string;
+  // Chỉ truyền khi CHUYỂN trạng thái bài nháp/đã lên lịch có sẵn (đăng ngay
+  // hoặc đổi sang hẹn giờ) — không truyền thì chỉ sửa nội dung, giữ nguyên
+  // status hiện tại (xem post.controller.ts#updatePost).
+  mode?: "publish" | "schedule";
 }
 
 export async function updatePost(
