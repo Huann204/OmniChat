@@ -8,6 +8,7 @@ import type { AiAssistantSettings } from "@/types/aiAssistant";
 import type { Bot } from "@/types/bot";
 import type { Conversation } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
+import type { PostItem, PostStatus } from "@/app/actions/post";
 import type { QuickReply } from "@/types/quickReply";
 import type { ShopMember } from "@/types/shopMember";
 
@@ -167,6 +168,24 @@ export const getConnectedPages = cache(async (): Promise<Bot[]> => {
     return [];
   }
 });
+
+// Không dùng cache() — trang Bài viết cần dữ liệu mới nhất mỗi lần vào (vừa
+// tạo/xoá bài xong quay lại danh sách), khác getConnectedPages (Page ít đổi,
+// cache trong 1 lượt render là hợp lý).
+export async function getPosts(status?: PostStatus): Promise<PostItem[]> {
+  const token = await getSessionToken();
+  if (!token) return [];
+
+  try {
+    const query = status ? `?status=${status}` : "";
+    const data = await apiFetch<{ success: boolean; posts: PostItem[] }>(`/posts${query}`, {
+      headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) },
+    });
+    return data.posts;
+  } catch {
+    return [];
+  }
+}
 
 interface RawMessage {
   id: string;
