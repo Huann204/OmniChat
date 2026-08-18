@@ -45,9 +45,9 @@ export function DashboardNavbar({
                 tab === "Hội thoại"
                   ? "/livechat"
                   : tab === "Bài viết"
-                  ? "/posts"
+                  ? "/posts/compose"
                   : tab === "Cài đặt"
-                  ? "/settings"
+                  ? "/settings/reply-support"
                   : undefined;
 
               const isCurrentActive = tab === activeTab;
