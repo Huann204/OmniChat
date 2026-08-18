@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
@@ -32,24 +32,11 @@ function tabForPathname(pathname: string): string | undefined {
 // mỗi lần chuyển trang — đây là nguyên nhân khiến header trước đây trông như
 // "load lại" mỗi lần điều hướng dù dữ liệu user không đổi.
 export function AppShell({ userName, userEmail, myRole, children }: AppShellProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const tabs = myRole === "member" ? NAV_TABS.filter((tab) => tab !== "Cài đặt") : NAV_TABS;
   const activeTab = tabForPathname(pathname);
 
-  function handleTabChange(tab: string) {
-    if (tab === "Cài đặt") {
-      router.push("/settings");
-      return;
-    }
-    if (tab === NAV_TABS[0]) {
-      router.push("/livechat");
-      return;
-    }
-    if (tab === "Bài viết") {
-      router.push("/posts");
-      return;
-    }
+  function handleTabChange() {
     toast.info("Tính năng đang được phát triển");
   }
 
