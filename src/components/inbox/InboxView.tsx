@@ -9,6 +9,7 @@ import {
   getOlderMessages,
   markConversationRead,
   reactToMessage,
+  searchConversations,
   sendMessage,
 } from "@/app/actions/conversation";
 import { setConversationTags } from "@/app/actions/conversationTag";
@@ -114,6 +115,11 @@ export function InboxView({
   const [isLoadingMoreConversations, setIsLoadingMoreConversations] = React.useState(false);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
+  // null = không đang tìm kiếm (hiện `conversations` bình thường) — khác
+  // mảng rỗng (đang tìm kiếm nhưng không ra kết quả nào). Tách biệt hoàn
+  // toàn khỏi `conversations`, xem effect debounce bên dưới.
+  const [searchResults, setSearchResults] = React.useState<Conversation[] | null>(null);
+  const [isSearching, setIsSearching] = React.useState(false);
   // Đang trả lời trích dẫn tin nào (bấm nút Trả lời trong MessageThread) —
   // hiện thành 1 khung trên MessageComposer, xem handleReply/handleSend.
   const [replyingTo, setReplyingTo] = React.useState<ReplyTarget | null>(null);
@@ -130,6 +136,59 @@ export function InboxView({
   React.useEffect(() => {
     activeIdRef.current = activeId;
   }, [activeId]);
+
+  // Tìm hội thoại theo tên khách — debounce 400ms sau khi ngừng gõ mới gọi
+  // API (tránh gọi liên tục theo từng ký tự), tìm xuyên suốt TOÀN BỘ hội
+  // thoại của các Page đang xem chứ không chỉ trong số đã tải sẵn. Dùng hàm
+  // xử lý sự kiện thường (không phải useEffect) — chỉ chạy đúng lúc người
+  // dùng thật sự gõ, không chạy dư 1 lần lúc mount như effect theo dõi
+  // `search` sẽ bị.
+  const searchDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequestIdRef = React.useRef(0);
+
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    if (searchDebounceTimerRef.current) clearTimeout(searchDebounceTimerRef.current);
+
+    if (!value.trim()) {
+      // Xóa hết ô tìm kiếm — thoát tìm kiếm NGAY (không chờ debounce), tải
+      // lại đúng trang đầu để nạp sạch `conversations` (đơn giản hơn tự ghép
+      // lại state cũ ở client).
+      setSearchResults(null);
+      setIsSearching(false);
+      const requestId = ++searchRequestIdRef.current;
+      void (async () => {
+        const { conversations: fresh, hasMore } = await getMoreConversations(pageIds);
+        if (searchRequestIdRef.current !== requestId) return;
+        setConversations((prev) => {
+          // Trang đầu mới tải có thể KHÔNG chứa hội thoại đang mở chat dở
+          // (VD: vừa mở từ kết quả tìm kiếm, hoặc lâu rồi khách đó không
+          // nhắn nên rơi khỏi top N mới nhất) — giữ lại đúng hội thoại đó
+          // (từ state TRƯỚC khi nạp lại) để không "mất" hội thoại đang xem
+          // giữa chừng.
+          if (!activeId || fresh.some((c) => c.id === activeId)) return fresh;
+          const stillActive = prev.find((c) => c.id === activeId);
+          return stillActive ? [stillActive, ...fresh] : fresh;
+        });
+        setHasMoreConversations(hasMore);
+      })();
+      return;
+    }
+
+    setIsSearching(true);
+    const requestId = ++searchRequestIdRef.current;
+    searchDebounceTimerRef.current = setTimeout(() => {
+      void (async () => {
+        const { conversations: results } = await searchConversations(pageIds, value);
+        // Bị request mới hơn (gõ tiếp sau đó, hoặc đã xóa hết ô tìm kiếm)
+        // vượt mặt — bỏ qua kết quả trả về muộn này, tránh ghi đè nhầm lên
+        // trạng thái đúng hơn.
+        if (searchRequestIdRef.current !== requestId) return;
+        setSearchResults(results);
+        setIsSearching(false);
+      })();
+    }, 400);
+  }
 
   // Âm thanh báo tin nhắn mới — tạo 1 lần, phát lại (không tạo mới mỗi lần)
   // để không phải tải lại file mỗi khi có tin đến.
@@ -380,7 +439,19 @@ export function InboxView({
   function handleSelect(id: string) {
     setActiveId(id);
     setReplyingTo(null);
-    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, isRead: true } : c)));
+    setConversations((prev) => {
+      if (prev.some((c) => c.id === id)) {
+        return prev.map((c) => (c.id === id ? { ...c, isRead: true } : c));
+      }
+      // Hội thoại chỉ có trong searchResults, chưa từng nằm trong
+      // `conversations` (VD: nằm ở "trang sau" chưa cuộn tới, tìm ra qua ô
+      // tìm kiếm) — "thăng cấp" vào conversations ngay khi mở, để mọi thao
+      // tác sau đó (gửi tin, thả tag, reaction, tải thêm tin cũ...) đều tìm
+      // thấy đúng qua conversations.find như bình thường, không phải sửa lại
+      // từng chỗ để biết tới searchResults.
+      const fromSearch = searchResults?.find((c) => c.id === id);
+      return fromSearch ? [{ ...fromSearch, isRead: true }, ...prev] : prev;
+    });
     void markConversationRead(id);
 
     const trigger = aiAssistantSettingsRef.current?.suggestReplyTrigger;
@@ -599,7 +670,15 @@ export function InboxView({
         oldest.lastMessageAt,
         oldest.id
       );
-      setConversations((prev) => [...prev, ...more]);
+      setConversations((prev) => {
+        // Lọc bỏ hội thoại đã có sẵn trong `prev` — có thể trùng với trang
+        // vừa tải nếu trước đó đã "thăng cấp" 1 hội thoại từ kết quả tìm
+        // kiếm lên đầu mảng (xem handleSelect), làm cursor (dựa vào hội
+        // thoại CUỐI mảng) không còn khớp đúng vị trí thật của nó nữa —
+        // trang sau vẫn có thể trả về đúng hội thoại đó lần nữa.
+        const existingIds = new Set(prev.map((c) => c.id));
+        return [...prev, ...more.filter((c) => !existingIds.has(c.id))];
+      });
       setHasMoreConversations(hasMore);
     } finally {
       setIsLoadingMoreConversations(false);
@@ -659,15 +738,16 @@ export function InboxView({
 
         <div className="relative flex flex-1 min-w-0 bg-white rounded-tl-xl overflow-hidden">
           <ConversationList
-            conversations={conversations}
+            conversations={searchResults ?? conversations}
             activeId={activeId}
             search={search}
-            onSearchChange={setSearch}
+            onSearchChange={handleSearchChange}
+            searching={isSearching}
             onSelect={handleSelect}
             pagesById={pagesById}
-            hasMore={hasMoreConversations}
-            onLoadMore={handleLoadMoreConversations}
-            loadingMore={isLoadingMoreConversations}
+            hasMore={searchResults ? false : hasMoreConversations}
+            onLoadMore={searchResults ? undefined : handleLoadMoreConversations}
+            loadingMore={searchResults ? false : isLoadingMoreConversations}
           />
 
           {activeConversation ? (
