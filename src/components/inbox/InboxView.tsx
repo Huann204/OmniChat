@@ -230,6 +230,8 @@ export function InboxView({
         createdAt: payload.message.createdAt,
       };
 
+      let isNewlyDiscovered = false;
+
       setConversations((prev) => {
         const index = prev.findIndex((c) => c.id === payload.conversationId);
 
@@ -242,6 +244,11 @@ export function InboxView({
           // hasMoreMessages:true (an toàn hơn: sai với case "mới thật" chỉ
           // tốn 1 lượt gọi API tải thêm trả về rỗng, còn để false mà sai với
           // case "hội thoại cũ" sẽ mất khả năng xem lại lịch sử tin nhắn).
+          // Vừa dựng xong chỉ có ĐÚNG 1 tin (tin vừa tới) — nếu đây thực ra
+          // là hội thoại cũ, lịch sử tin nhắn trước đó sẽ tự tải ngầm ngay
+          // bên dưới (isNewlyDiscovered), không bắt người dùng phải tự cuộn
+          // lên hay F5 mới thấy.
+          isNewlyDiscovered = true;
           const newConversation: Conversation = {
             id: payload.conversation.id,
             pageId: payload.conversation.pageId,
@@ -286,6 +293,33 @@ export function InboxView({
         const rest = prev.filter((_, i) => i !== index);
         return [updated, ...rest];
       });
+
+      if (isNewlyDiscovered) {
+        // Tải ngầm lịch sử tin nhắn cũ hơn ngay (cursor = chính tin vừa
+        // dựng, vì đây là tin DUY NHẤT đang có trong hội thoại giả lập ở
+        // trên) — để nếu đây là khách cũ, mở hội thoại lên là thấy đủ ngữ
+        // cảnh luôn, không cần tự cuộn lên hay F5. Nếu đúng là khách nhắn
+        // lần đầu thật, gọi API chỉ trả về mảng rỗng, vô hại.
+        void getOlderMessages(payload.conversationId, newMessage.createdAt, newMessage.id).then(
+          ({ messages: olderMessages, hasMore }) => {
+            if (olderMessages.length === 0) {
+              setConversations((prev) =>
+                prev.map((c) =>
+                  c.id === payload.conversationId ? { ...c, hasMoreMessages: hasMore } : c
+                )
+              );
+              return;
+            }
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id === payload.conversationId
+                  ? { ...c, messages: [...olderMessages, ...c.messages], hasMoreMessages: hasMore }
+                  : c
+              )
+            );
+          }
+        );
+      }
 
       if (payload.conversationId === activeIdRef.current) {
         void markConversationRead(payload.conversationId);
