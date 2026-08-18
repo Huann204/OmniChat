@@ -40,21 +40,43 @@ export function DashboardNavbar({
 
         {tabs && (
           <nav className="flex items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => onTabChange?.(tab)}
-                className={cn(
-                  "shrink-0 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-normal transition-colors cursor-pointer",
-                  tab === activeTab
-                    ? "bg-white/20 text-white"
-                    : "text-white hover:bg-white/10 hover:text-white"
-                )}
-              >
-                {tab}
-              </button>
-            ))}
+            {tabs.map((tab) => {
+              const href =
+                tab === "Hội thoại"
+                  ? "/livechat"
+                  : tab === "Bài viết"
+                  ? "/posts"
+                  : tab === "Cài đặt"
+                  ? "/settings"
+                  : undefined;
+
+              const isCurrentActive = tab === activeTab;
+              const classNameStr = cn(
+                "shrink-0 rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-normal transition-colors cursor-pointer",
+                isCurrentActive
+                  ? "bg-white/20 text-white"
+                  : "text-white hover:bg-white/10 hover:text-white"
+              );
+
+              if (href) {
+                return (
+                  <Link key={tab} href={href} className={classNameStr}>
+                    {tab}
+                  </Link>
+                );
+              }
+
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => onTabChange?.(tab)}
+                  className={classNameStr}
+                >
+                  {tab}
+                </button>
+              );
+            })}
           </nav>
         )}
 
