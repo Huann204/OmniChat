@@ -15,7 +15,7 @@ interface ModalProps {
 }
 
 function subscribe() {
-  return () => {};
+  return () => { };
 }
 function getClientSnapshot() {
   return true;
