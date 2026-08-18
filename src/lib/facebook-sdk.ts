@@ -81,7 +81,7 @@ export async function loginWithFacebook(): Promise<string> {
           reject(new Error("Bạn đã huỷ đăng nhập hoặc chưa cấp quyền cho Facebook"));
         }
       },
-      { scope: "pages_show_list,pages_messaging,pages_manage_posts" }
+      { scope: "pages_show_list,pages_messaging,pages_manage_posts,pages_read_engagement" }
     );
   });
 }
