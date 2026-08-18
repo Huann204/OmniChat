@@ -63,6 +63,12 @@ function loadSdk(): Promise<void> {
 // pages_show_list: liệt kê Page user quản lý (kèm ảnh đại diện, không cần
 // thêm quyền gì khác cho việc đó).
 // pages_messaging: bắt buộc để subscribe Page nhận webhook "messages".
+// pages_manage_posts: bắt buộc để đăng/xoá bài viết qua Graph API
+// (/{pageId}/feed, /{pageId}/photos — xem services/facebookPost.service.ts).
+// QUAN TRỌNG: quyền mới chỉ áp dụng cho token cấp SAU khi thêm dòng này —
+// Page đã kết nối TỪ TRƯỚC (token cũ không có quyền này) phải kết nối lại
+// (bấm "Kết nối với Facebook" lại) mới đăng bài được, không tự có quyền hồi
+// tố.
 export async function loginWithFacebook(): Promise<string> {
   await loadSdk();
 
@@ -75,7 +81,7 @@ export async function loginWithFacebook(): Promise<string> {
           reject(new Error("Bạn đã huỷ đăng nhập hoặc chưa cấp quyền cho Facebook"));
         }
       },
-      { scope: "pages_show_list,pages_messaging" }
+      { scope: "pages_show_list,pages_messaging,pages_manage_posts" }
     );
   });
 }
