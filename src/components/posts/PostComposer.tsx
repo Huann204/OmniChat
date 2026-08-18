@@ -73,20 +73,20 @@ export function PostComposer({ facebookPages, editingPost }: PostComposerProps) 
 
     const { post, error } = editingPost
       ? await updatePost(editingPost.id, {
-          content,
-          imageUrl: image?.url ?? null,
-          scheduledFor: scheduledForIso,
-          // "draft" nghĩa là chỉ lưu lại nội dung, không chuyển trạng thái —
-          // updatePost() không nhận mode:"draft" (xem UpdatePostInput).
-          mode: mode === "draft" ? undefined : mode,
-        })
+        content,
+        imageUrl: image?.url ?? null,
+        scheduledFor: scheduledForIso,
+        // "draft" nghĩa là chỉ lưu lại nội dung, không chuyển trạng thái —
+        // updatePost() không nhận mode:"draft" (xem UpdatePostInput).
+        mode: mode === "draft" ? undefined : mode,
+      })
       : await createPost({
-          pageId,
-          content,
-          imageUrl: image?.url,
-          mode,
-          scheduledFor: scheduledForIso,
-        });
+        pageId,
+        content,
+        imageUrl: image?.url,
+        mode,
+        scheduledFor: scheduledForIso,
+      });
     setSubmitting(null);
 
     if (!post) {
