@@ -174,22 +174,22 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
                 const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
                 const channelMeta = CHANNEL_META[page.channel];
                 const ChannelIcon = channelMeta?.icon;
-                
+
                 return (
                   <button
                     key={page.id}
                     type="button"
                     onClick={() => toggleOne(page.id)}
                     className={cn(
-                      "relative flex w-full items-center gap-3 rounded-xl border p-3 pr-6 text-left transition-colors cursor-pointer",
+                      "relative flex w-full items-center gap-3.5 rounded-2xl border p-4 pr-9 text-left transition-all cursor-pointer",
                       active
-                        ? "border-blue-200 bg-blue-50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
+                        ? "border-blue-300/60 bg-[#dbeafe]"
+                        : "border-slate-200 bg-white hover:border-slate-300 shadow-sm"
                     )}
                   >
                     <span
                       className={cn(
-                        "flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-base font-bold text-white",
+                        "flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full text-xl font-bold text-white shadow-xs",
                         avatarColor
                       )}
                     >
@@ -206,25 +206,20 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-slate-900">
+                      <span className="block truncate text-[15px] font-medium text-slate-800 leading-snug">
                         {page.name}
                       </span>
-                      <span className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+                      <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
                         {ChannelIcon && (
-                          <ChannelIcon className={cn("h-3.5 w-3.5 shrink-0", channelMeta.badgeBg.replace("bg-", "text-"))} />
+                          <ChannelIcon className="h-4 w-4 shrink-0 object-contain" />
                         )}
                         <span className="truncate">{page.pageId}</span>
                       </span>
                     </span>
 
-                    <span
-                      className={cn(
-                        "absolute -right-1.5 -top-1.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-2 ring-white transition-colors",
-                        active ? "bg-primary text-white" : "border border-slate-300 bg-white"
-                      )}
-                    >
-                      {active && (
-                        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3">
+                    {active && (
+                      <span className="absolute top-3.5 right-3.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white">
+                        <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5">
                           <path
                             d="M5 13l4 4L19 7"
                             stroke="currentColor"
@@ -233,8 +228,8 @@ export function MergePagesModal({ open, onClose, bots }: MergePagesModalProps) {
                             strokeLinejoin="round"
                           />
                         </svg>
-                      )}
-                    </span>
+                      </span>
+                    )}
                   </button>
                 );
               })}
