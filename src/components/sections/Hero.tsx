@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Section";
 import { FadeIn } from "@/components/ui/FadeIn";
@@ -46,13 +47,17 @@ export function Hero() {
 
         <FadeIn delay={0.4}>
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mt-4">
-            <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-base">
-              Bắt đầu dùng thử miễn phí
-            </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 h-14 px-8 text-base border-slate-200 hover:bg-slate-50 hover:text-slate-900 bg-white shadow-sm">
-              <PlayCircle className="h-5 w-5" />
-              Xem demo thực tế
-            </Button>
+            <Link href="/register" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-base">
+                Bắt đầu dùng thử miễn phí
+              </Button>
+            </Link>
+            <Link href="#pricing" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 h-14 px-8 text-base border-slate-200 hover:bg-slate-50 hover:text-slate-900 bg-white shadow-sm">
+                <PlayCircle className="h-5 w-5" />
+                Xem demo thực tế
+              </Button>
+            </Link>
           </div>
           <p className="text-sm text-slate-500 font-medium mt-6">
             Miễn phí 14 ngày • Không cần thẻ tín dụng • Setup trong 5 phút

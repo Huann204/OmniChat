@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Section } from "@/components/ui/Section";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -138,12 +139,14 @@ export function Pricing() {
                 </p>
               </div>
 
-              <Button 
-                variant={plan.isPopular ? "primary" : "outline"} 
-                className="w-full mb-8 h-12 text-base"
-              >
-                Chọn gói
-              </Button>
+              <Link href={`/register?plan=${plan.name.toLowerCase()}`} className="w-full mb-8">
+                <Button 
+                  variant={plan.isPopular ? "primary" : "outline"} 
+                  className="w-full h-12 text-base"
+                >
+                  Chọn gói
+                </Button>
+              </Link>
 
               <div className="flex-1 border-t border-slate-100 pt-6">
                 <p className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">Bao gồm:</p>
