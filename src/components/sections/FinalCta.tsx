@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 
@@ -15,13 +16,15 @@ export function FinalCta() {
         <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl leading-relaxed">
           Tham gia cùng 10.000+ doanh nghiệp đang tăng trưởng với Hchat. Bắt đầu miễn phí ngay hôm nay, không cần thẻ tín dụng.
         </p>
-        <Button 
-          size="lg" 
-          variant="primary"
-          className="h-14 px-10 text-lg shadow-[0_8px_20px_-6px_rgba(8,102,255,0.4)]"
-        >
-          Bắt đầu miễn phí ngay
-        </Button>
+        <Link href="/register">
+          <Button 
+            size="lg" 
+            variant="primary"
+            className="h-14 px-10 text-lg shadow-[0_8px_20px_-6px_rgba(8,102,255,0.4)]"
+          >
+            Bắt đầu miễn phí ngay
+          </Button>
+        </Link>
       </div>
     </Section>
   );

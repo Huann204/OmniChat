@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { FadeIn } from "@/components/ui/FadeIn";
@@ -67,9 +68,11 @@ export function AiAssistant() {
             </ul>
 
             <FadeIn delay={0.7}>
-              <Button size="lg" className="bg-gradient-to-r from-[#0866FF] to-[#00C6FF] text-white hover:opacity-90 shadow-lg h-14 px-8 text-base">
-                Kích hoạt AI ngay
-              </Button>
+              <Link href="/register">
+                <Button size="lg" className="bg-gradient-to-r from-[#0866FF] to-[#00C6FF] text-white hover:opacity-90 shadow-lg h-14 px-8 text-base">
+                  Kích hoạt AI ngay
+                </Button>
+              </Link>
             </FadeIn>
           </div>
 
