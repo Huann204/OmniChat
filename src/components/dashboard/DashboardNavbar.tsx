@@ -44,6 +44,8 @@ export function DashboardNavbar({
               const href =
                 tab === "Hội thoại"
                   ? "/livechat"
+                  : tab === "Khách hàng"
+                  ? "/customers"
                   : tab === "Bài viết"
                   ? "/posts/compose"
                   : tab === "Cài đặt"

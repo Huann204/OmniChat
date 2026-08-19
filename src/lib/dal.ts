@@ -8,6 +8,7 @@ import type { AiAssistantSettings } from "@/types/aiAssistant";
 import type { Bot } from "@/types/bot";
 import type { Conversation } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
+import type { CustomerItem } from "@/app/actions/customer";
 import type { PostItem, PostStatus } from "@/app/actions/post";
 import type { QuickReply } from "@/types/quickReply";
 import type { ShopMember } from "@/types/shopMember";
@@ -184,6 +185,48 @@ export async function getPosts(status?: PostStatus): Promise<PostItem[]> {
     return data.posts;
   } catch {
     return [];
+  }
+}
+
+export interface CustomerListResult {
+  items: CustomerItem[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+const EMPTY_CUSTOMER_LIST: CustomerListResult = { items: [], total: 0, page: 1, pages: 1 };
+
+// Không dùng cache() — có thể vừa sửa phone/note ở trang chi tiết xong quay
+// lại danh sách, cần thấy ngay, khác getConnectedPages (ít đổi trong 1 lượt
+// render).
+export async function getCustomers(page = 1): Promise<CustomerListResult> {
+  const token = await getSessionToken();
+  if (!token) return EMPTY_CUSTOMER_LIST;
+
+  try {
+    const data = await apiFetch<{ success: boolean } & CustomerListResult>(
+      `/customers?page=${page}`,
+      { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
+    );
+    return data;
+  } catch {
+    return EMPTY_CUSTOMER_LIST;
+  }
+}
+
+export async function getCustomerDetail(customerId: string): Promise<CustomerItem | null> {
+  const token = await getSessionToken();
+  if (!token) return null;
+
+  try {
+    const data = await apiFetch<{ success: boolean; customer: CustomerItem }>(
+      `/customers/${customerId}`,
+      { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
+    );
+    return data.customer;
+  } catch {
+    return null;
   }
 }
 

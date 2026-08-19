@@ -21,6 +21,7 @@ interface AppShellProps {
 // bản activeTab độc lập (dễ lệch nhau), giờ chỉ có đúng 1 nguồn sự thật.
 function tabForPathname(pathname: string): string | undefined {
   if (pathname.startsWith("/livechat")) return NAV_TABS[0];
+  if (pathname.startsWith("/customers")) return "Khách hàng";
   if (pathname.startsWith("/posts")) return "Bài viết";
   if (pathname.startsWith("/settings")) return "Cài đặt";
   return undefined;
