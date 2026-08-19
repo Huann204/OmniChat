@@ -21,7 +21,7 @@ import type { ConversationMessage } from "@/types/conversation";
 // server/src/models/connectedPage.model.ts — chỉ Zalo hỗ trợ "Trả lời"/"Thả
 // icon" (Facebook không có API cho 2 việc này, xem
 // server/src/services/channels/types.ts).
-const ZALO_CHANNEL_TYPE = 1;
+const ZALO_CHANNEL_TYPE = 1; 
 
 // Bộ icon cho AGENT chọn khi thả — khớp ZALO_REACTIONS trong
 // server/src/services/channels/zalo.channel.ts, gửi lên server bằng KEY (vd
