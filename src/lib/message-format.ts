@@ -56,8 +56,13 @@ export function messageKindAndContent(
 ): { kind: MessageKind; text?: string; attachmentUrls?: string[] } {
   const first = attachments?.[0];
   if (first) {
-    let kind = ATTACHMENT_KIND[first.type] ?? "file";
-    if (kind === "file" && looksLikeVideo(first)) kind = "video";
+    const kind = ATTACHMENT_KIND[first.type] ?? "file";
+    // File video (khách chọn từ máy, msgType chung "share.file" của Zalo) —
+    // CỐ TÌNH giữ nguyên kind "file" (hiện thẻ link "bấm mở tab mới" như cũ,
+    // KHÔNG nhúng <video> trực tiếp) — khác hẳn video "thật" (msgType riêng,
+    // vd Zalo chat.video.msg) mới được nhúng <video>, xem MessageThread.tsx.
+    // Chỉ mượn nhãn "[Video]" cho đẹp thay vì "[Tệp đính kèm]" chung chung.
+    const looksVideoFile = kind === "file" && looksLikeVideo(first);
     // Ảnh có thể nhiều cái gộp chung 1 tin nhắn (Facebook trả về/mình gửi đi
     // đều qua attachments dạng mảng) — gom hết url ảnh lại để hiện chung 1
     // bong bóng. Sticker/video/file luôn chỉ có đúng 1 attachment.
@@ -68,13 +73,18 @@ export function messageKindAndContent(
     return {
       kind,
       attachmentUrls: urls,
-      // Ảnh/sticker có thể kèm chú thích (gõ chữ + gửi ảnh cùng 1 tin) —
-      // giữ lại `text` thật nếu có, còn lại ưu tiên hiện đúng tên file gốc
-      // (nếu có, chỉ có khi MÌNH gửi đi) thay vì nhãn chung chung.
+      // Ảnh/sticker/video "thật" (nhúng trực tiếp trong khung chat) có thể
+      // kèm chú thích (gõ chữ + gửi cùng 1 tin) — giữ lại `text` thật nếu có,
+      // KHÔNG hiện tên file/nhãn chung chung đè lên (đã có video/ảnh hiện
+      // trực tiếp rồi, không cần thêm tên bên dưới). File thật (kể cả file
+      // trông giống video) vẫn ưu tiên hiện đúng tên file gốc (nếu có, chỉ
+      // có khi MÌNH gửi đi) thay vì nhãn chung chung.
       text:
-        kind === "image" || kind === "sticker"
+        kind === "image" || kind === "sticker" || kind === "video"
           ? text || undefined
-          : first.name || ATTACHMENT_LABELS[first.type] || "[Tệp đính kèm]",
+          : first.name ||
+            (looksVideoFile ? ATTACHMENT_LABELS.video : ATTACHMENT_LABELS[first.type]) ||
+            "[Tệp đính kèm]",
     };
   }
   return { kind: "text", text };
