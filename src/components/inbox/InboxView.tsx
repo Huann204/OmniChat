@@ -848,6 +848,7 @@ export function InboxView({
           {/* Customer info panel on Desktop (md screen size and above) */}
           <CustomerInfoPanel
             hasActiveConversation={!!activeConversation}
+            conversationId={activeConversation?.id}
             className="hidden md:flex"
           />
 
@@ -861,6 +862,7 @@ export function InboxView({
               <div className="relative z-10 w-full max-w-xs sm:max-w-sm h-full bg-white shadow-2xl animate-in slide-in-from-right duration-200">
                 <CustomerInfoPanel
                   hasActiveConversation={!!activeConversation}
+                  conversationId={activeConversation?.id}
                   onClose={() => setShowCustomerInfo(false)}
                 />
               </div>
