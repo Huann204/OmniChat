@@ -42,6 +42,9 @@ export function ZaloFriendListModal({
     const result = await listZaloFriends(targetPageId);
     setLoading(false);
     setFriends(result.items);
+    // Báo rõ lỗi thật ra thay vì im lặng hiện y hệt "0 bạn bè" — tránh nhầm
+    // "thật sự không có" với "gọi API thất bại" (VD mất phiên đăng nhập).
+    if (result.error) toast.error(result.error);
   }, []);
 
   // Mở modal (hoặc đổi Page đang chọn) thì tự tải lại — set trong lúc render

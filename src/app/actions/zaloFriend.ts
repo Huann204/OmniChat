@@ -66,9 +66,18 @@ export async function sendZaloFriendRequest(
 
 export interface ZaloFriendListResult {
   items: ZaloFriendItem[];
+  // Có giá trị khi gọi API thất bại — PHÂN BIỆT với "items: [] vì thật sự
+  // rỗng" (VD mất phiên đăng nhập Zalo, lỗi mạng...). Trước đây nuốt lỗi
+  // thành mảng rỗng, khiến "lỗi" và "0 kết quả" hiện y hệt nhau, không biết
+  // đâu mà debug.
+  error?: string;
 }
 
 const EMPTY_FRIEND_LIST: ZaloFriendListResult = { items: [] };
+
+function emptyWithError(err: unknown, fallback: string): ZaloFriendListResult {
+  return { items: [], error: err instanceof ApiError ? err.message : fallback };
+}
 
 // Bấm "Nhắn tin" cạnh 1 người trong danh sách bạn bè — tìm hoặc tạo mới hội
 // thoại với người này, trả về conversationId để FE mở lên trong Livechat
@@ -113,8 +122,8 @@ export async function listZaloFriendRequests(pageId: string): Promise<ZaloFriend
       }
     );
     return data;
-  } catch {
-    return EMPTY_FRIEND_LIST;
+  } catch (err) {
+    return emptyWithError(err, "Không tải được lời mời kết bạn đến");
   }
 }
 
@@ -169,8 +178,8 @@ export async function listZaloSentFriendRequests(pageId: string): Promise<ZaloFr
       }
     );
     return data;
-  } catch {
-    return EMPTY_FRIEND_LIST;
+  } catch (err) {
+    return emptyWithError(err, "Không tải được lời mời kết bạn đã gửi");
   }
 }
 
@@ -209,7 +218,7 @@ export async function listZaloFriends(pageId: string): Promise<ZaloFriendListRes
       }
     );
     return data;
-  } catch {
-    return EMPTY_FRIEND_LIST;
+  } catch (err) {
+    return emptyWithError(err, "Không tải được danh sách bạn bè");
   }
 }
