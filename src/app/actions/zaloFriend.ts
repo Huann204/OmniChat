@@ -9,9 +9,9 @@ export interface ZaloFoundUser {
   avatarUrl?: string;
   isFriend: boolean;
   hasSentRequest: boolean;
-  // true nếu người này đã gửi lời mời kết bạn cho MÌNH trước đó — zca-js
-  // không có cách nào tự động PHÁT HIỆN việc này (không có API/sự kiện liệt
-  // kê lời mời đến), chỉ biết được khi đã tra đúng người qua tìm kiếm này.
+  // true nếu người này đã gửi lời mời kết bạn cho MÌNH trước đó — xem thêm
+  // listZaloFriendRequests() bên dưới để liệt kê ĐẦY ĐỦ mọi lời mời đến
+  // (field này chỉ biết được khi đã tra đúng người qua tìm kiếm này).
   hasIncomingRequest: boolean;
 }
 
@@ -91,6 +91,102 @@ export async function openZaloConversation(
     return { conversationId: data.conversationId };
   } catch (err) {
     return { error: err instanceof ApiError ? err.message : "Không mở được hội thoại" };
+  }
+}
+
+// Danh sách lời mời kết bạn GỬI ĐẾN mình (xem
+// zaloFriend.controller.ts#listZaloFriendRequests) — cũng không phân trang,
+// danh sách này thường ngắn hơn nhiều so với bạn bè.
+export async function listZaloFriendRequests(pageId: string): Promise<ZaloFriendListResult> {
+  const token = await getSessionToken();
+  if (!token) return EMPTY_FRIEND_LIST;
+
+  try {
+    const shopId = await getCurrentShopId();
+    const data = await apiFetch<{ success: boolean } & ZaloFriendListResult>(
+      `/zalo/${pageId}/friend-requests`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(shopId ? { "X-Shop-Id": shopId } : {}),
+        },
+      }
+    );
+    return data;
+  } catch {
+    return EMPTY_FRIEND_LIST;
+  }
+}
+
+export async function acceptZaloFriendRequest(
+  pageId: string,
+  userId: string
+): Promise<{ error?: string }> {
+  try {
+    await apiFetch(`/zalo/${pageId}/friend-requests/accept`, {
+      method: "POST",
+      headers: await authHeader(),
+      body: JSON.stringify({ userId }),
+    });
+    return {};
+  } catch (err) {
+    return { error: err instanceof ApiError ? err.message : "Chấp nhận lời mời thất bại" };
+  }
+}
+
+export async function rejectZaloFriendRequest(
+  pageId: string,
+  userId: string
+): Promise<{ error?: string }> {
+  try {
+    await apiFetch(`/zalo/${pageId}/friend-requests/reject`, {
+      method: "POST",
+      headers: await authHeader(),
+      body: JSON.stringify({ userId }),
+    });
+    return {};
+  } catch (err) {
+    return { error: err instanceof ApiError ? err.message : "Từ chối lời mời thất bại" };
+  }
+}
+
+// Danh sách lời mời kết bạn MÌNH ĐÃ GỬI, chưa được chấp nhận (không có
+// `phone` — zca-js không trả kèm SĐT cho danh sách này, khác friends/lời mời
+// đến).
+export async function listZaloSentFriendRequests(pageId: string): Promise<ZaloFriendListResult> {
+  const token = await getSessionToken();
+  if (!token) return EMPTY_FRIEND_LIST;
+
+  try {
+    const shopId = await getCurrentShopId();
+    const data = await apiFetch<{ success: boolean } & ZaloFriendListResult>(
+      `/zalo/${pageId}/friend-requests/sent`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(shopId ? { "X-Shop-Id": shopId } : {}),
+        },
+      }
+    );
+    return data;
+  } catch {
+    return EMPTY_FRIEND_LIST;
+  }
+}
+
+export async function undoZaloFriendRequest(
+  pageId: string,
+  userId: string
+): Promise<{ error?: string }> {
+  try {
+    await apiFetch(`/zalo/${pageId}/friend-requests/undo`, {
+      method: "POST",
+      headers: await authHeader(),
+      body: JSON.stringify({ userId }),
+    });
+    return {};
+  } catch (err) {
+    return { error: err instanceof ApiError ? err.message : "Thu hồi lời mời thất bại" };
   }
 }
 
