@@ -55,7 +55,8 @@ interface NewMessageEvent {
     sender: "customer" | "page";
     text?: string;
     attachments?: { type: string; url: string }[];
-    // Chỉ có khi hội thoại là nhóm và tin do 1 thành viên khác gửi.
+    // Khách trong nhóm (sender="customer") hoặc tên nhân viên đã gửi
+    // (sender="page", server resolve từ Message.sentBy) — xem MessageThread.tsx.
     senderName?: string;
     senderAvatarUrl?: string;
     // Snippet khung trích dẫn nếu tin này LÀ 1 lời trả lời — xem
