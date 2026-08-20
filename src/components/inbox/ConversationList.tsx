@@ -1,12 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { BsSearch, BsSliders, BsFillPeopleFill, BsX } from "react-icons/bs";
+import {
+  BsSearch,
+  BsSliders,
+  BsFillPeopleFill,
+  BsX,
+  BsPlusLg,
+  BsPersonPlusFill,
+} from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "@/lib/bot-channel";
 import type { Conversation } from "@/types/conversation";
 import { getLastMessagePreview } from "@/lib/message-format";
+import { ZaloAddFriendModal } from "./ZaloAddFriendModal";
+import { ZaloFriendListModal } from "./ZaloFriendListModal";
+import type { ZaloPageOption } from "./ZaloPageSelect";
 
 // Mirror ngưỡng cuộn của MessageThread.tsx (LOAD_MORE_SCROLL_THRESHOLD) —
 // khác chiều: đây là cuộn XUỐNG cuối (tải hội thoại cũ hơn), không phải cuộn
@@ -57,6 +67,16 @@ interface ConversationListProps {
   hasMore?: boolean;
   onLoadMore?: () => void;
   loadingMore?: boolean;
+  // Page Zalo cá nhân đang kết nối (id Mongo, không phải id Zalo thật) — dùng
+  // cho nút "+" (Danh sách bạn bè/Kết bạn, xem ZaloFriendListModal/
+  // ZaloAddFriendModal). Rỗng thì không hiện nút "+".
+  zaloPages?: ZaloPageOption[];
+  // Bấm "Nhắn tin" cạnh 1 người trong ZaloFriendListModal — mở/tạo hội thoại
+  // với người đó trong Livechat, xem InboxView.tsx#handleOpenZaloConversation.
+  onOpenConversation?: (
+    conversationId: string,
+    preview: { name: string; avatarUrl?: string; pageId: string }
+  ) => void;
 }
 
 export function ConversationList({
@@ -71,7 +91,25 @@ export function ConversationList({
   hasMore,
   onLoadMore,
   loadingMore,
+  zaloPages = [],
+  onOpenConversation,
 }: ConversationListProps) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [addFriendOpen, setAddFriendOpen] = React.useState(false);
+  const [friendListOpen, setFriendListOpen] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     if (!hasMore || !onLoadMore || loadingMore) return;
     const el = e.currentTarget;
@@ -121,7 +159,60 @@ export function ConversationList({
           <BsSliders className="h-3.5 w-3.5" />
           Lọc theo
         </button>
+
+        {zaloPages.length > 0 && (
+          <div ref={menuRef} className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Thêm"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 cursor-pointer"
+            >
+              <BsPlusLg className="h-4 w-4" />
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-full z-20 mt-1.5 w-52 rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setFriendListOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
+                >
+                  <BsFillPeopleFill className="h-4 w-4 text-slate-400" />
+                  Danh sách bạn bè
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setAddFriendOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
+                >
+                  <BsPersonPlusFill className="h-4 w-4 text-slate-400" />
+                  Kết bạn
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      <ZaloAddFriendModal
+        open={addFriendOpen}
+        onClose={() => setAddFriendOpen(false)}
+        zaloPages={zaloPages}
+        onOpenConversation={onOpenConversation}
+      />
+      <ZaloFriendListModal
+        open={friendListOpen}
+        onClose={() => setFriendListOpen(false)}
+        zaloPages={zaloPages}
+        onOpenConversation={onOpenConversation}
+      />
 
       <div
         onScroll={handleScroll}

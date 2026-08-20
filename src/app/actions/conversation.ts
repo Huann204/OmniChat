@@ -59,18 +59,26 @@ function mapRawMessage(m: RawMessage): ConversationMessage {
 }
 
 // Tải thêm tin nhắn cũ hơn khi client cuộn lên đầu khung chat — before/
-// beforeId là cursor: createdAt + id của tin cũ nhất đang có ở client.
+// beforeId là cursor: createdAt + id của tin cũ nhất đang có ở client. Bỏ
+// trống cả 2 (không truyền) để lấy đúng N tin MỚI NHẤT — dùng lúc vừa mở 1
+// hội thoại chưa có sẵn tin nào ở client (VD: bấm "Nhắn tin" từ danh sách
+// bạn bè Zalo, xem InboxView.tsx#handleOpenZaloConversation).
 export async function getOlderMessages(
   conversationId: string,
-  before: string,
-  beforeId: string
+  before?: string,
+  beforeId?: string
 ): Promise<{ messages: ConversationMessage[]; hasMore: boolean }> {
   const token = await getSessionToken();
   if (!token) return { messages: [], hasMore: false };
 
   try {
+    const params = new URLSearchParams();
+    if (before && beforeId) {
+      params.set("before", before);
+      params.set("beforeId", beforeId);
+    }
     const data = await apiFetch<{ success: boolean; hasMore: boolean; messages: RawMessage[] }>(
-      `/conversations/${conversationId}/messages?before=${encodeURIComponent(before)}&beforeId=${encodeURIComponent(beforeId)}`,
+      `/conversations/${conversationId}/messages?${params.toString()}`,
       { headers: await authHeaders(token) }
     );
 

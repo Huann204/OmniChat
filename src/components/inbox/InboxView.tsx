@@ -35,6 +35,7 @@ import { QuickTagBar } from "./QuickTagBar";
 import { AiSuggestionBar } from "./AiSuggestionBar";
 import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
 import { CustomerInfoPanel } from "./CustomerInfoPanel";
+import type { ZaloPageOption } from "./ZaloPageSelect";
 
 interface NewMessageEvent {
   conversationId: string;
@@ -87,6 +88,9 @@ interface InboxViewProps {
   // Tra cứu tên + avatar Page theo pageId — chỉ cần truyền khi xem gộp nhiều
   // Page, để hiện rõ mỗi hội thoại thuộc Page nào.
   pagesById?: Record<string, { name: string; avatarUrl?: string }>;
+  // Page Zalo cá nhân đang kết nối — cho nút "+" (Danh sách bạn bè/Kết bạn)
+  // trong ConversationList, xem ZaloAddFriendModal/ZaloFriendListModal.
+  zaloPages?: ZaloPageOption[];
   // Mẫu trả lời nhanh của Shop — gõ ký tự tắt trong khung soạn tin để chèn
   // nhanh (xem MessageComposer). Snapshot lúc tải trang, không tự đồng bộ
   // real-time nếu sửa ở Cài đặt trong lúc đang mở sẵn Livechat ở tab khác.
@@ -106,6 +110,7 @@ export function InboxView({
   initialHasMoreConversations,
   socketPageIds,
   pagesById,
+  zaloPages,
   quickReplies,
   conversationTags,
   aiAssistantSettings,
@@ -469,6 +474,46 @@ export function InboxView({
     }
   }
 
+  // Bấm "Nhắn tin" cạnh 1 người trong danh sách bạn bè Zalo (xem
+  // ZaloFriendListModal) — conversationId có thể là hội thoại ĐÃ CÓ (backend
+  // tìm-hoặc-tạo, xem zaloFriend.controller.ts#openZaloConversation) nên
+  // luôn tải lại lịch sử tin nhắn thật ngay sau khi mở, không tin vào
+  // placeholder rỗng vừa dựng (mirror cách "isNewlyDiscovered" ở socket
+  // handler phía trên đang làm cho trường hợp tương tự).
+  async function handleOpenZaloConversation(
+    conversationId: string,
+    preview: { name: string; avatarUrl?: string; pageId: string }
+  ) {
+    setConversations((prev) => {
+      if (prev.some((c) => c.id === conversationId)) return prev;
+      const placeholder: Conversation = {
+        id: conversationId,
+        pageId: preview.pageId,
+        // 1 = CHANNEL_TYPE_ZALO_PERSONAL (server/src/models/connectedPage.model.ts)
+        // — chỉ Zalo mới có danh sách bạn bè, không cần đọc động từ đâu khác.
+        type: 1,
+        customerName: preview.name,
+        customerAvatarUrl: preview.avatarUrl,
+        isGroup: false,
+        tags: [],
+        lastSeenLabel: "",
+        timeLabel: formatTimeLabel(new Date().toISOString()),
+        lastMessageAt: new Date().toISOString(),
+        isRead: true,
+        hasMoreMessages: true,
+        messages: [],
+      };
+      return [placeholder, ...prev];
+    });
+
+    handleSelect(conversationId);
+
+    const { messages, hasMore } = await getOlderMessages(conversationId);
+    setConversations((prev) =>
+      prev.map((c) => (c.id === conversationId ? { ...c, messages, hasMoreMessages: hasMore } : c))
+    );
+  }
+
   // Hiện ngay các tin "đang gửi" (optimistic) bằng clientId tự sinh — khi tin
   // thật dội về qua socket, handler ở trên sẽ nhận ra (khớp clientId) và bỏ
   // qua, không thêm trùng. Ở đây chỉ cần tự đổi trạng thái sending -> sent
@@ -745,6 +790,8 @@ export function InboxView({
             searching={isSearching}
             onSelect={handleSelect}
             pagesById={pagesById}
+            zaloPages={zaloPages}
+            onOpenConversation={handleOpenZaloConversation}
             hasMore={searchResults ? false : hasMoreConversations}
             onLoadMore={searchResults ? undefined : handleLoadMoreConversations}
             loadingMore={searchResults ? false : isLoadingMoreConversations}
