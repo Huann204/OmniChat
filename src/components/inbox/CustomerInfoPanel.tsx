@@ -193,8 +193,16 @@ export function CustomerInfoPanel({
               dưới, luôn hiện cố định) — nhiều ghi chú thì tự cuộn trong đúng
               khung này, không đẩy cả panel dài ra. */}
           <div className="h-45 overflow-y-auto">
-            {notes === null ? (
-              <p className="py-3 text-center text-xs text-slate-400">Đang tải ghi chú...</p>
+            {!notes || notes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-3 text-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/note.png"
+                  alt="Chưa có ghi chú"
+                  className="h-24 w-auto object-contain"
+                />
+                <p className="mt-2 text-xs font-medium text-slate-500">Bạn chưa có ghi chú nào</p>
+              </div>
             ) : (
               <div className="flex flex-col gap-2">
                 {notes.map((note) => (
@@ -278,17 +286,6 @@ export function CustomerInfoPanel({
                     )}
                   </div>
                 ))}
-                {notes.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-3 text-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/note.png"
-                      alt="Chưa có ghi chú"
-                      className="h-24 w-auto object-contain"
-                    />
-                    <p className="mt-2 text-xs font-medium text-slate-500">Bạn chưa có ghi chú nào</p>
-                  </div>
-                )}
               </div>
             )}
           </div>
