@@ -569,7 +569,10 @@ export function InboxView({
       clientId: part.clientId,
       sender: "page",
       kind: part.imageUrls ? "image" : part.fileUrl ? (part.isVideo ? "video" : "file") : "text",
-      text: part.fileUrl ? part.fileName : part.text,
+      // Video "thật" nhúng trực tiếp trong khung chat — KHÔNG hiện tên file
+      // đè bên dưới (giống ảnh/sticker), khác file thường vẫn cần tên để
+      // hiện trên thẻ link "bấm mở tab mới" (xem messageKindAndContent).
+      text: part.fileUrl ? (part.isVideo ? undefined : part.fileName) : part.text,
       attachmentUrls: part.imageUrls ?? (part.fileUrl ? [part.fileUrl] : undefined),
       time: formatClock(now),
       createdAt: now,
