@@ -29,9 +29,11 @@ export interface ConversationMessage {
   // server xác nhận) — undefined nghĩa là tin đã xác nhận từ trước (tải từ
   // DB, hoặc do khách/nơi khác gửi), coi như "sent".
   status?: "sending" | "sent" | "failed";
-  // Chỉ có khi hội thoại là nhóm (Conversation.isGroup) và tin do 1 thành
-  // viên khác gửi — tên/avatar riêng của đúng người đó, khác với
-  // customerName/customerAvatarUrl (tên/avatar của cả nhóm).
+  // 2 ý nghĩa tuỳ sender: sender="customer" trong hội thoại NHÓM (Conversation.isGroup)
+  // — tên/avatar riêng của đúng thành viên khách đã gửi, khác
+  // customerName/customerAvatarUrl (tên/avatar cả nhóm). sender="page" — tên
+  // NHÂN VIÊN thật đã gửi (server resolve từ Message.sentBy), rơi về "Bạn"
+  // nếu chưa resolve được, xem MessageThread.tsx.
   senderName?: string;
   senderAvatarUrl?: string;
   // "Trả lời"/"Thả icon" — hiện chỉ Zalo hỗ trợ (Facebook không có API cho 2

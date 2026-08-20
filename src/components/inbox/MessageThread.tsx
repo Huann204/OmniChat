@@ -411,11 +411,11 @@ function MessageRow({
   }
 
   const isPage = message.sender === "page";
-  // Nhóm (nhiều người gửi khác nhau): dùng tên/avatar riêng của đúng người
-  // đã gửi tin này nếu có (message.senderName/senderAvatarUrl) — chỉ Zalo
-  // nhóm mới có, còn 1-1/Facebook thì các field này undefined nên tự rơi về
-  // customerName/customerAvatarUrl như cũ, không đổi hành vi.
-  const senderName = isPage ? "Bạn" : message.senderName ?? customerName;
+  // Dùng chung message.senderName cho cả 2 trường hợp: khách trong nhóm
+  // (tên riêng người đã gửi, khác customerName của cả nhóm) và tin Page (tên
+  // nhân viên thật, server resolve từ Message.sentBy) — rơi về "Bạn"/
+  // customerName nếu chưa có (tin cũ, hoặc Facebook echo không qua app này).
+  const senderName = message.senderName ?? (isPage ? "Bạn" : customerName);
   const senderAvatarUrl = isPage ? undefined : message.senderAvatarUrl ?? customerAvatarUrl;
 
   // Trả lời trích dẫn: cả Facebook lẫn Zalo đều hỗ trợ thật (Facebook qua
