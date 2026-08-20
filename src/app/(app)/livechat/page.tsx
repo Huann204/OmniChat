@@ -44,6 +44,17 @@ export default async function MultiPagesPage() {
       getMergePagesCookie(),
     ]);
 
+  // Page Zalo cá nhân đang kết nối VÀ còn phiên đăng nhập sống (status
+  // "active") — cho nút "+" (Danh sách bạn bè/Kết bạn) trong ConversationList.
+  // Loại bớt Page "inactive" (mất phiên nhưng chưa ngắt kết nối hẳn) ngay từ
+  // dropdown, tránh chọn nhầm rồi mới báo lỗi lúc gọi API tìm/nhắn (xem
+  // zaloFriend.controller.ts#getOwnedZaloApi). Lấy từ TOÀN BỘ connectedPages
+  // (không phải chỉ selectedPages đang xem) — dùng công cụ này không phụ
+  // thuộc đang gộp xem Page nào.
+  const zaloPages = connectedPages
+    .filter((p) => p.channel === "zalo" && p.status === "active")
+    .map((p) => ({ id: p.id, name: p.name, avatarUrl: p.avatarUrl, externalPageId: p.pageId }));
+
   const requestedIdSet = new Set(requestedIds);
   let selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
 
@@ -64,6 +75,7 @@ export default async function MultiPagesPage() {
         initialHasMoreConversations={false}
         socketPageIds={[]}
         pagesById={{}}
+        zaloPages={zaloPages}
         quickReplies={quickReplies}
         conversationTags={conversationTags}
         aiAssistantSettings={aiAssistantSettings}
@@ -105,6 +117,7 @@ export default async function MultiPagesPage() {
       initialHasMoreConversations={hasMoreConversations}
       socketPageIds={selectedPages.map((p) => p.id)}
       pagesById={pagesById}
+      zaloPages={zaloPages}
       quickReplies={quickReplies}
       conversationTags={conversationTags}
       aiAssistantSettings={aiAssistantSettings}
