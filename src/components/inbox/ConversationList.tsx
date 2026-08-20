@@ -8,6 +8,7 @@ import {
   BsX,
   BsPlusLg,
   BsPersonPlusFill,
+  BsEnvelopeFill,
 } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ import type { Conversation } from "@/types/conversation";
 import { getLastMessagePreview } from "@/lib/message-format";
 import { ZaloAddFriendModal } from "./ZaloAddFriendModal";
 import { ZaloFriendListModal } from "./ZaloFriendListModal";
+import { ZaloFriendRequestsModal } from "./ZaloFriendRequestsModal";
 import type { ZaloPageOption } from "./ZaloPageSelect";
 
 // Mirror ngưỡng cuộn của MessageThread.tsx (LOAD_MORE_SCROLL_THRESHOLD) —
@@ -97,6 +99,7 @@ export function ConversationList({
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [addFriendOpen, setAddFriendOpen] = React.useState(false);
   const [friendListOpen, setFriendListOpen] = React.useState(false);
+  const [friendRequestsOpen, setFriendRequestsOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -195,6 +198,17 @@ export function ConversationList({
                   <BsPersonPlusFill className="h-4 w-4 text-slate-400" />
                   Kết bạn
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setFriendRequestsOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
+                >
+                  <BsEnvelopeFill className="h-4 w-4 text-slate-400" />
+                  Lời mời kết bạn
+                </button>
               </div>
             )}
           </div>
@@ -210,6 +224,12 @@ export function ConversationList({
       <ZaloFriendListModal
         open={friendListOpen}
         onClose={() => setFriendListOpen(false)}
+        zaloPages={zaloPages}
+        onOpenConversation={onOpenConversation}
+      />
+      <ZaloFriendRequestsModal
+        open={friendRequestsOpen}
+        onClose={() => setFriendRequestsOpen(false)}
         zaloPages={zaloPages}
         onOpenConversation={onOpenConversation}
       />
