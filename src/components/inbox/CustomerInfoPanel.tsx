@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { BsBoxSeam, BsPencilFill, BsPinFill, BsPlusLg, BsTrashFill, BsX } from "react-icons/bs";
+import { BsPencilFill, BsPinFill, BsPlusLg, BsTrashFill, BsX } from "react-icons/bs";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
 import { formatClock } from "@/lib/message-format";
 import { toast } from "@/store/toast-store";
 import {
@@ -307,15 +306,22 @@ export function CustomerInfoPanel({
 
         <h3 className="mt-6 text-sm font-semibold text-slate-700">Đơn hàng</h3>
 
-        <div className="mt-3 flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-200 py-8">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-            <BsBoxSeam className="h-6 w-6" />
-          </span>
-          <p className="text-sm text-slate-400">Chưa có lịch sử đơn hàng</p>
-          <Button size="sm" onClick={() => setTab("order")}>
-            <BsPlusLg className="mr-1.5 h-4 w-4" />
+        <div className="mt-3 flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 py-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/empty-order.svg"
+            alt="Chưa có lịch sử đơn hàng"
+            className="h-24 w-auto object-contain"
+          />
+          <p className="text-xs text-slate-400 font-medium">Chưa có lịch sử đơn hàng</p>
+          <button
+            type="button"
+            onClick={() => setTab("order")}
+            className="mt-1 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
+          >
+            <BsPlusLg className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
             Tạo đơn
-          </Button>
+          </button>
         </div>
       </div>
     </div>
