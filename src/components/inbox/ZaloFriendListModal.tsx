@@ -36,37 +36,47 @@ export function ZaloFriendListModal({
   // disable đúng nút đó tránh bấm trùng, không khoá cả danh sách.
   const [openingUserId, setOpeningUserId] = React.useState<string | null>(null);
 
-  const loadFriends = React.useCallback(async (targetPageId: string) => {
-    if (!targetPageId) return;
-    setLoading(true);
-    const result = await listZaloFriends(targetPageId);
-    setLoading(false);
-    setFriends(result.items);
-    // Báo rõ lỗi thật ra thay vì im lặng hiện y hệt "0 bạn bè" — tránh nhầm
-    // "thật sự không có" với "gọi API thất bại" (VD mất phiên đăng nhập).
-    if (result.error) toast.error(result.error);
-  }, []);
-
-  // Mở modal (hoặc đổi Page đang chọn) thì tự tải lại — set trong lúc render
-  // (mirror MediaPickerModal.tsx) để tránh 1 vòng render thừa.
-  const [prevKey, setPrevKey] = React.useState("");
-  const key = `${open}:${zaloPages[0]?.id ?? ""}`;
-  if (key !== prevKey) {
-    setPrevKey(key);
+  // Reset form khi `open` chuyển false -> true: làm NGAY trong thân render
+  // (pattern "adjusting state when a prop changes" của React) thay vì trong
+  // effect, để tránh nhiều setState đồng bộ nối tiếp nhau trong 1 effect
+  // (React warning: "Calling setState synchronously within an effect can
+  // trigger cascading renders").
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
-      const initialPageId = zaloPages[0]?.id ?? "";
-      setPageId(initialPageId);
+      setPageId(zaloPages[0]?.id ?? "");
       setFriends(null);
       setSearch("");
-      void loadFriends(initialPageId);
     }
   }
+
+  // Phần còn lại là side-effect thật sự (gọi Server Action) nên vẫn cần
+  // effect: tải bạn bè khi modal mở hoặc khi đổi page. Hàm fetch phải khai
+  // báo NGAY TRONG effect (không phải qua useCallback ở ngoài) — nếu không,
+  // ESLint rule `react-hooks/set-state-in-effect` coi các setState bên
+  // trong hàm ngoài là bị gọi đồng bộ trong effect (dò theo closure) và báo
+  // lỗi, dù thực chất chúng chỉ chạy sau khi `await` xong.
+  React.useEffect(() => {
+    if (!open) return;
+    async function run() {
+      if (!pageId) return;
+      setLoading(true);
+      const result = await listZaloFriends(pageId);
+      setLoading(false);
+      setFriends(result.items);
+      // Báo rõ lỗi thật ra thay vì im lặng hiện y hệt "0 bạn bè" — tránh
+      // nhầm "thật sự không có" với "gọi API thất bại" (VD mất phiên đăng
+      // nhập).
+      if (result.error) toast.error(result.error);
+    }
+    void run();
+  }, [open, pageId]);
 
   function handlePageChange(newPageId: string) {
     setPageId(newPageId);
     setFriends(null);
     setSearch("");
-    void loadFriends(newPageId);
   }
 
   const filteredFriends = React.useMemo(() => {

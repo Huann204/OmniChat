@@ -86,7 +86,8 @@ export async function openZaloConversation(
   pageId: string,
   userId: string,
   name: string,
-  avatarUrl?: string
+  avatarUrl?: string,
+  isGroup?: boolean
 ): Promise<{ conversationId?: string; error?: string }> {
   try {
     const data = await apiFetch<{ success: boolean; conversationId: string }>(
@@ -94,7 +95,7 @@ export async function openZaloConversation(
       {
         method: "POST",
         headers: await authHeader(),
-        body: JSON.stringify({ userId, name, avatarUrl }),
+        body: JSON.stringify({ userId, name, avatarUrl, isGroup }),
       }
     );
     return { conversationId: data.conversationId };
@@ -220,5 +221,65 @@ export async function listZaloFriends(pageId: string): Promise<ZaloFriendListRes
     return data;
   } catch (err) {
     return emptyWithError(err, "Không tải được danh sách bạn bè");
+  }
+}
+
+export interface ZaloGroupItem {
+  groupId: string;
+  name: string;
+  avatarUrl?: string;
+  memberCount: number;
+}
+
+export interface ZaloGroupListResult {
+  items: ZaloGroupItem[];
+  error?: string;
+}
+
+const EMPTY_GROUP_LIST: ZaloGroupListResult = { items: [] };
+
+// Tải HẾT nhóm đang tham gia trong 1 lượt gọi — lọc theo ô tìm kiếm hoàn
+// toàn ở client (mirror listZaloFriends).
+export async function listZaloGroups(pageId: string): Promise<ZaloGroupListResult> {
+  const token = await getSessionToken();
+  if (!token) return EMPTY_GROUP_LIST;
+
+  try {
+    const shopId = await getCurrentShopId();
+    const data = await apiFetch<{ success: boolean } & ZaloGroupListResult>(
+      `/zalo/${pageId}/groups`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(shopId ? { "X-Shop-Id": shopId } : {}),
+        },
+      }
+    );
+    return data;
+  } catch (err) {
+    return {
+      items: [],
+      error: err instanceof ApiError ? err.message : "Không tải được danh sách nhóm",
+    };
+  }
+}
+
+// Tạo nhóm mới — thành công thì tự mở hội thoại của nhóm vừa tạo luôn (xem
+// InboxView.tsx#handleOpenZaloConversation), agent nhắn được ngay.
+export async function createZaloGroup(
+  pageId: string,
+  name: string,
+  memberIds: string[],
+  avatarUrl?: string
+): Promise<{ groupId?: string; error?: string }> {
+  try {
+    const data = await apiFetch<{ success: boolean; groupId: string }>(`/zalo/${pageId}/groups`, {
+      method: "POST",
+      headers: await authHeader(),
+      body: JSON.stringify({ name, memberIds, avatarUrl }),
+    });
+    return { groupId: data.groupId };
+  } catch (err) {
+    return { error: err instanceof ApiError ? err.message : "Tạo nhóm thất bại" };
   }
 }

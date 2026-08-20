@@ -9,6 +9,8 @@ import {
   BsPlusLg,
   BsPersonPlusFill,
   BsEnvelopeFill,
+  BsPeopleFill,
+  BsPlusCircleFill,
 } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,8 +18,10 @@ import { CHANNEL_META } from "@/lib/bot-channel";
 import type { Conversation } from "@/types/conversation";
 import { getLastMessagePreview } from "@/lib/message-format";
 import { ZaloAddFriendModal } from "./ZaloAddFriendModal";
+import { ZaloCreateGroupModal } from "./ZaloCreateGroupModal";
 import { ZaloFriendListModal } from "./ZaloFriendListModal";
 import { ZaloFriendRequestsModal } from "./ZaloFriendRequestsModal";
+import { ZaloGroupListModal } from "./ZaloGroupListModal";
 import type { ZaloPageOption } from "./ZaloPageSelect";
 
 // Mirror ngưỡng cuộn của MessageThread.tsx (LOAD_MORE_SCROLL_THRESHOLD) —
@@ -100,6 +104,8 @@ export function ConversationList({
   const [addFriendOpen, setAddFriendOpen] = React.useState(false);
   const [friendListOpen, setFriendListOpen] = React.useState(false);
   const [friendRequestsOpen, setFriendRequestsOpen] = React.useState(false);
+  const [groupListOpen, setGroupListOpen] = React.useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -191,6 +197,17 @@ export function ConversationList({
                   type="button"
                   onClick={() => {
                     setMenuOpen(false);
+                    setGroupListOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
+                >
+                  <BsPeopleFill className="h-4 w-4 text-slate-400" />
+                  Nhóm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
                     setAddFriendOpen(true);
                   }}
                   className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
@@ -208,6 +225,17 @@ export function ConversationList({
                 >
                   <BsEnvelopeFill className="h-4 w-4 text-slate-400" />
                   Lời mời kết bạn
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setCreateGroupOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
+                >
+                  <BsPlusCircleFill className="h-4 w-4 text-slate-400" />
+                  Tạo nhóm
                 </button>
               </div>
             )}
@@ -230,6 +258,18 @@ export function ConversationList({
       <ZaloFriendRequestsModal
         open={friendRequestsOpen}
         onClose={() => setFriendRequestsOpen(false)}
+        zaloPages={zaloPages}
+        onOpenConversation={onOpenConversation}
+      />
+      <ZaloGroupListModal
+        open={groupListOpen}
+        onClose={() => setGroupListOpen(false)}
+        zaloPages={zaloPages}
+        onOpenConversation={onOpenConversation}
+      />
+      <ZaloCreateGroupModal
+        open={createGroupOpen}
+        onClose={() => setCreateGroupOpen(false)}
         zaloPages={zaloPages}
         onOpenConversation={onOpenConversation}
       />
