@@ -41,47 +41,56 @@ export function ZaloFriendRequestsModal({
   // thời điểm, disable đúng dòng đó tránh bấm trùng.
   const [processingUserId, setProcessingUserId] = React.useState<string | null>(null);
 
-  // Tải CẢ 2 danh sách cùng lúc (không đợi bấm tab) — để hiện đúng số lượng
-  // ngay trên nhãn tab ("Đã nhận (N)"/"Đã gửi (N)"), giống Zalo web.
-  const loadAll = React.useCallback(async (targetPageId: string) => {
-    if (!targetPageId) return;
-    setLoading(true);
-    const [receivedResult, sentResult] = await Promise.all([
-      listZaloFriendRequests(targetPageId),
-      listZaloSentFriendRequests(targetPageId),
-    ]);
-    setLoading(false);
-    setReceived(receivedResult.items);
-    setSent(sentResult.items);
-    // Trước đây lỗi (mất phiên, lỗi mạng...) bị nuốt thành mảng rỗng, hiện y
-    // hệt "0 lời mời" — giờ báo rõ ra để biết đâu mà debug (VD trên deploy
-    // nhưng local không sao — rất có thể do lỗi ở đây chứ không phải do thật
-    // sự không có lời mời nào).
-    if (receivedResult.error) toast.error(`Đã nhận: ${receivedResult.error}`);
-    if (sentResult.error) toast.error(`Đã gửi: ${sentResult.error}`);
-  }, []);
-
-  // Mở modal (hoặc đổi Page đang chọn) thì tự tải lại — set trong lúc render
-  // (mirror MediaPickerModal.tsx) để tránh 1 vòng render thừa.
-  const [prevKey, setPrevKey] = React.useState("");
-  const key = `${open}:${zaloPages[0]?.id ?? ""}`;
-  if (key !== prevKey) {
-    setPrevKey(key);
+  // Reset form khi `open` chuyển false -> true: làm NGAY trong thân render
+  // (pattern "adjusting state when a prop changes" của React) thay vì trong
+  // effect, để tránh nhiều setState đồng bộ nối tiếp nhau trong 1 effect
+  // (React warning: "Calling setState synchronously within an effect can
+  // trigger cascading renders").
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
-      const initialPageId = zaloPages[0]?.id ?? "";
-      setPageId(initialPageId);
+      setPageId(zaloPages[0]?.id ?? "");
       setTab("received");
       setReceived(null);
       setSent(null);
-      void loadAll(initialPageId);
     }
   }
+
+  // Phần còn lại là side-effect thật sự (gọi Server Action) nên vẫn cần
+  // effect: tải CẢ 2 danh sách cùng lúc (không đợi bấm tab) — để hiện đúng
+  // số lượng ngay trên nhãn tab ("Đã nhận (N)"/"Đã gửi (N)"), giống Zalo
+  // web — khi modal mở hoặc khi đổi page. Hàm fetch phải khai báo NGAY
+  // TRONG effect (không phải qua useCallback ở ngoài) — nếu không, ESLint
+  // rule `react-hooks/set-state-in-effect` coi các setState bên trong hàm
+  // ngoài là bị gọi đồng bộ trong effect (dò theo closure) và báo lỗi, dù
+  // thực chất chúng chỉ chạy sau khi `await` xong.
+  React.useEffect(() => {
+    if (!open) return;
+    async function run() {
+      if (!pageId) return;
+      setLoading(true);
+      const [receivedResult, sentResult] = await Promise.all([
+        listZaloFriendRequests(pageId),
+        listZaloSentFriendRequests(pageId),
+      ]);
+      setLoading(false);
+      setReceived(receivedResult.items);
+      setSent(sentResult.items);
+      // Trước đây lỗi (mất phiên, lỗi mạng...) bị nuốt thành mảng rỗng, hiện
+      // y hệt "0 lời mời" — giờ báo rõ ra để biết đâu mà debug (VD trên
+      // deploy nhưng local không sao — rất có thể do lỗi ở đây chứ không
+      // phải do thật sự không có lời mời nào).
+      if (receivedResult.error) toast.error(`Đã nhận: ${receivedResult.error}`);
+      if (sentResult.error) toast.error(`Đã gửi: ${sentResult.error}`);
+    }
+    void run();
+  }, [open, pageId]);
 
   function handlePageChange(newPageId: string) {
     setPageId(newPageId);
     setReceived(null);
     setSent(null);
-    void loadAll(newPageId);
   }
 
   async function handleAccept(user: ZaloFriendItem) {
