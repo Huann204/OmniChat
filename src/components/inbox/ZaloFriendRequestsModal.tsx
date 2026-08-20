@@ -53,6 +53,12 @@ export function ZaloFriendRequestsModal({
     setLoading(false);
     setReceived(receivedResult.items);
     setSent(sentResult.items);
+    // Trước đây lỗi (mất phiên, lỗi mạng...) bị nuốt thành mảng rỗng, hiện y
+    // hệt "0 lời mời" — giờ báo rõ ra để biết đâu mà debug (VD trên deploy
+    // nhưng local không sao — rất có thể do lỗi ở đây chứ không phải do thật
+    // sự không có lời mời nào).
+    if (receivedResult.error) toast.error(`Đã nhận: ${receivedResult.error}`);
+    if (sentResult.error) toast.error(`Đã gửi: ${sentResult.error}`);
   }, []);
 
   // Mở modal (hoặc đổi Page đang chọn) thì tự tải lại — set trong lúc render
