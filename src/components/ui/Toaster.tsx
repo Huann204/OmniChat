@@ -60,7 +60,7 @@ function ToastCard({ toast }: { toast: ToastItem }) {
         remove(toast.id);
       }}
       className={cn(
-        "pointer-events-auto flex w-94 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl border bg-white/90 backdrop-blur-xl p-4 shadow-[0_20px_40px_-15px_rgba(8,102,255,0.15)]",
+        "pointer-events-auto flex w-96 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl border bg-white/95 backdrop-blur-xl p-4 shadow-[0_20px_40px_-15px_rgba(8,102,255,0.15)]",
         BORDER_STYLES[toast.variant],
         toast.onClick && "cursor-pointer hover:bg-white"
       )}
@@ -77,10 +77,10 @@ function ToastCard({ toast }: { toast: ToastItem }) {
       )}
       <div className="min-w-0 flex-1">
         {toast.title && (
-          <p className="truncate text-sm font-semibold text-slate-900">{toast.title}</p>
+          <p className="text-sm font-semibold text-slate-900 break-words whitespace-pre-line leading-snug">{toast.title}</p>
         )}
         {toast.description && (
-          <p className="mt-0.5 truncate text-sm text-slate-600">{toast.description}</p>
+          <p className="mt-0.5 text-sm text-slate-600 break-words whitespace-pre-line leading-normal">{toast.description}</p>
         )}
       </div>
       <button
