@@ -16,6 +16,7 @@ import { Loader2 } from "lucide-react";
 import { ATTACHMENT_LABELS } from "@/lib/message-format";
 import { cn } from "@/lib/utils";
 import type { ConversationMessage } from "@/types/conversation";
+import { LottieSticker } from "./LottieSticker";
 
 // Khớp CHANNEL_TYPE_ZALO_PERSONAL trong
 // server/src/models/connectedPage.model.ts — chỉ Zalo hỗ trợ "Trả lời"/"Thả
@@ -448,7 +449,12 @@ function MessageRow({
     );
   }
 
-  if (message.kind === "image" || message.kind === "sticker" || message.kind === "video") {
+  if (
+    message.kind === "image" ||
+    message.kind === "sticker" ||
+    message.kind === "lottie" ||
+    message.kind === "video"
+  ) {
     const urls = message.attachmentUrls ?? [];
     // Nhiều ảnh gộp chung 1 tin nhắn (message.attachments dạng mảng của
     // Facebook) — hiện thành lưới nhỏ trong cùng 1 bong bóng thay vì 1 ảnh
@@ -519,6 +525,10 @@ function MessageRow({
               className="max-h-[260px] max-w-[260px] rounded-2xl shadow-sm"
               onLoadedData={onImageLoad}
             />
+          ) : message.kind === "lottie" ? (
+            // Sticker Lottie (.tgs) — không phải ảnh/video render thẳng qua
+            // url được, xem LottieSticker.tsx.
+            <LottieSticker url={urls[0]} />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
