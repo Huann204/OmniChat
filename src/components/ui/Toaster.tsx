@@ -77,10 +77,10 @@ function ToastCard({ toast }: { toast: ToastItem }) {
       )}
       <div className="min-w-0 flex-1">
         {toast.title && (
-          <p className="text-sm font-semibold text-slate-900 break-words whitespace-pre-line leading-snug">{toast.title}</p>
+          <p className="text-sm font-semibold text-slate-900 break-words whitespace-pre-line leading-snug line-clamp-3">{toast.title}</p>
         )}
         {toast.description && (
-          <p className="mt-0.5 text-sm text-slate-600 break-words whitespace-pre-line leading-normal">{toast.description}</p>
+          <p className="mt-0.5 text-sm text-slate-600 break-words whitespace-pre-line leading-normal line-clamp-3">{toast.description}</p>
         )}
       </div>
       <button
