@@ -38,7 +38,9 @@ const CHANNEL_META_BY_TYPE = {
   2: CHANNEL_META.telegram,
 } as const;
 
-const AVATAR_COLORS = [
+// Export để MessageThread.tsx dùng chung — tránh 2 bảng màu avatar khác
+// nhau ở 2 nơi (list hội thoại vs bong bóng chat).
+export const AVATAR_COLORS = [
   "bg-blue-500",
   "bg-violet-500",
   "bg-amber-500",

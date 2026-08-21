@@ -9,7 +9,6 @@ import {
   BsFillEmojiSmileFill,
   BsReplyFill,
   BsThreeDots,
-  BsPersonFill,
   BsX,
 } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
@@ -17,7 +16,20 @@ import { ATTACHMENT_LABELS, formatClock, formatDateDivider, isDifferentDay } fro
 import { cn } from "@/lib/utils";
 import { toast } from "@/store/toast-store";
 import type { ConversationMessage } from "@/types/conversation";
+import { AVATAR_COLORS } from "./ConversationList";
 import { LottieSticker } from "./LottieSticker";
+
+// Cùng bảng màu với ConversationList (avatar chữ cái đầu khi không có ảnh
+// thật) — chọn màu theo HASH của tên thay vì theo thứ tự (không có khái niệm
+// "vị trí trong danh sách" ở đây), để cùng 1 người luôn ra cùng 1 màu mỗi lần
+// hiện, không đổi lung tung giữa các lần render.
+function avatarColorFor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
 
 // Khớp CHANNEL_TYPE_ZALO_PERSONAL trong
 // server/src/models/connectedPage.model.ts — chỉ Zalo hỗ trợ "Trả lời"/"Thả
@@ -450,8 +462,13 @@ function Avatar({
             onLoad={onImageLoad}
           />
         ) : (
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-400">
-            <BsPersonFill className="h-5 w-5" />
+          <span
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white",
+              avatarColorFor(name)
+            )}
+          >
+            {name.charAt(0).toUpperCase()}
           </span>
         ))}
     </div>
@@ -508,7 +525,16 @@ function MessageRow({
   // nhân viên thật, server resolve từ Message.sentBy) — rơi về "Bạn"/
   // customerName nếu chưa có (tin cũ, hoặc Facebook echo không qua app này).
   const senderName = message.senderName ?? (isPage ? "Bạn" : customerName);
-  const senderAvatarUrl = isPage ? undefined : message.senderAvatarUrl ?? customerAvatarUrl;
+  // customerAvatarUrl chỉ đúng nghĩa "avatar của NGƯỜI này" ở chat 1-1 — ở
+  // chat NHÓM nó là avatar CẢ NHÓM, không phải của riêng thành viên đang gửi.
+  // message.senderName chỉ có giá trị ở tin nhóm (quy ước có sẵn, xem
+  // server/src/models/message.model.ts#senderName) — dùng lại tín hiệu đó để
+  // biết KHÔNG được fallback về customerAvatarUrl trong trường hợp này, để
+  // thiếu avatar riêng thì rơi về icon người mặc định của Avatar (bên dưới)
+  // thay vì hiện nhầm avatar nhóm.
+  const senderAvatarUrl = isPage
+    ? undefined
+    : (message.senderAvatarUrl ?? (message.senderName ? undefined : customerAvatarUrl));
   const displayTime = message.createdAt ? formatClock(message.createdAt) : message.time;
 
   // Trả lời trích dẫn: cả Facebook lẫn Zalo đều hỗ trợ thật (Facebook qua
