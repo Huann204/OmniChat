@@ -412,6 +412,7 @@ export function InboxView({
           description: messagePreviewText(payload.message.text, payload.message.attachments),
           avatarUrl: payload.message.senderAvatarUrl || payload.conversation.customerAvatarUrl,
           onClick: () => handleSelect(conversationId),
+          isMessage: true,
         });
       }
     });
