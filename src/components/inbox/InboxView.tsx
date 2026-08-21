@@ -871,10 +871,10 @@ export function InboxView({
             />
           </div>
         ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center bg-[#f3f0eb] p-4 text-slate-400">
+          <div className="hidden md:flex flex-1 items-center justify-center bg-[#e5ded8] p-4 text-slate-400">
             <div className="flex items-center gap-3">
               <BsChatSquareTextFill className="h-7 w-7 text-slate-400/80 shrink-0" />
-              <span className="text-base font-medium text-slate-500/80">
+              <span className="text-xl font-normal text-slate-500/80">
                 Xin chọn 1 hội thoại từ danh sách bên trái
               </span>
             </div>
