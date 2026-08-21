@@ -21,7 +21,7 @@ import type { ConversationMessage } from "@/types/conversation";
 // server/src/models/connectedPage.model.ts — chỉ Zalo hỗ trợ "Trả lời"/"Thả
 // icon" (Facebook không có API cho 2 việc này, xem
 // server/src/services/channels/types.ts).
-const ZALO_CHANNEL_TYPE = 1; 
+const ZALO_CHANNEL_TYPE = 1;
 
 // Bộ icon cho AGENT chọn khi thả — khớp ZALO_REACTIONS trong
 // server/src/services/channels/zalo.channel.ts, gửi lên server bằng KEY (vd
@@ -477,8 +477,10 @@ function MessageRow({
           {message.replyPreviewText && (
             <div
               className={cn(
-                "max-w-[260px] truncate rounded-t-lg border-l-2 border-slate-300 bg-black/5 px-2.5 py-1 text-xs text-slate-500",
-                isPage && "text-right"
+                "mb-0.5 max-w-[260px] truncate rounded-t-lg rounded-b-xs border-l-2 px-2.5 py-1 text-xs font-medium transition-colors",
+                isPage
+                  ? "border-emerald-600 bg-black/5 text-slate-700"
+                  : "border-slate-400 bg-black/5 text-slate-600"
               )}
             >
               {message.replyPreviewText}
@@ -622,8 +624,10 @@ function MessageRow({
         {message.replyPreviewText && (
           <div
             className={cn(
-              "mb-0.5 truncate rounded-t-lg border-l-2 border-slate-300 bg-black/5 px-2.5 py-1 text-xs text-slate-500",
-              isPage && "text-right"
+              "mb-0.5 truncate rounded-t-lg rounded-b-xs border-l-2 px-2.5 py-1 text-xs font-medium transition-colors",
+              isPage
+                ? "border-emerald-600 bg-black/5 text-slate-700"
+                : "border-slate-400 bg-black/5 text-slate-600"
             )}
           >
             {message.replyPreviewText}
