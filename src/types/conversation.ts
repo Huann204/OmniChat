@@ -6,6 +6,9 @@ export type MessageKind =
   | "text"
   | "image"
   | "sticker"
+  // Sticker Lottie của Telegram (.tgs) — JSON animation nén gzip, khác hẳn
+  // "sticker" (ảnh tĩnh), cần render riêng bằng LottieSticker.tsx.
+  | "lottie"
   | "video"
   | "file"
   | "call_request"

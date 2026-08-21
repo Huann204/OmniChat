@@ -11,6 +11,7 @@ export interface RawAttachment {
 
 export const ATTACHMENT_LABELS: Record<string, string> = {
   sticker: "[Nhãn dán]",
+  lottie: "[Nhãn dán]",
   image: "[Hình ảnh]",
   video: "[Video]",
   audio: "[Tin nhắn thoại]",
@@ -19,6 +20,10 @@ export const ATTACHMENT_LABELS: Record<string, string> = {
 
 const ATTACHMENT_KIND: Record<string, MessageKind> = {
   sticker: "sticker",
+  // Sticker Lottie của Telegram (.tgs — JSON nén gzip, không phải ảnh/video
+  // thường) — render riêng bằng LottieSticker.tsx (giải nén + lottie-web),
+  // xem MessageThread.tsx.
+  lottie: "lottie",
   image: "image",
   video: "video",
 };
@@ -80,7 +85,7 @@ export function messageKindAndContent(
       // trông giống video) vẫn ưu tiên hiện đúng tên file gốc (nếu có, chỉ
       // có khi MÌNH gửi đi) thay vì nhãn chung chung.
       text:
-        kind === "image" || kind === "sticker" || kind === "video"
+        kind === "image" || kind === "sticker" || kind === "video" || kind === "lottie"
           ? text || undefined
           : first.name ||
             (looksVideoFile ? ATTACHMENT_LABELS.video : ATTACHMENT_LABELS[first.type]) ||
