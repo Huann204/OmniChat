@@ -35,14 +35,11 @@ export default async function MultiPagesPage() {
   // Livechat tốn thêm 1 vòng round-trip thừa, đo được rõ trên production).
   // Không dùng query string vì lộ pageId trên URL nhìn rối mắt — xem
   // BotCard.tsx/BotDashboard.tsx/MergePagesModal.tsx/SettingsShell.tsx.
-  const [connectedPages, quickReplies, conversationTags, aiAssistantSettings, requestedIds] =
-    await Promise.all([
-      getConnectedPages(),
-      getQuickReplies(),
-      getConversationTags(),
-      getAiAssistantSettings(),
-      getMergePagesCookie(),
-    ]);
+  // Lấy connectedPages và cookie gộp trang trước để xác định danh sách Page
+  const [connectedPages, requestedIds] = await Promise.all([
+    getConnectedPages(),
+    getMergePagesCookie(),
+  ]);
 
   // Page Zalo cá nhân đang kết nối VÀ còn phiên đăng nhập sống (status
   // "active") — cho nút "+" (Danh sách bạn bè/Kết bạn) trong ConversationList.
@@ -58,34 +55,33 @@ export default async function MultiPagesPage() {
   const requestedIdSet = new Set(requestedIds);
   let selectedPages = connectedPages.filter((p) => requestedIdSet.has(p.id));
 
-  // Không truyền pageId (mặc định bấm tab "Hội thoại"), hoặc pageId trỏ tới
-  // Page không còn thuộc Shop đang active (vd vừa đổi Shop) — mặc định lấy
-  // TOÀN BỘ Page hiện có thay vì chặn cứng bằng 404.
   if (selectedPages.length === 0) {
     selectedPages = connectedPages;
   }
 
-  // Chưa kết nối Page nào — vẫn hiện đủ khung livechat (rail, danh sách hội
-  // thoại, khung chat), chỉ danh sách hội thoại rỗng, không phải 404.
+  // Khởi tạo các Promise tải dữ liệu SONG SONG — không await ở đây để không chặn render HTML
+  const quickRepliesPromise = getQuickReplies();
+  const conversationTagsPromise = getConversationTags();
+  const aiAssistantSettingsPromise = getAiAssistantSettings();
+
+  // Chưa kết nối Page nào — vẫn hiện đủ khung livechat
   if (selectedPages.length === 0) {
     return (
       <InboxView
         bot={EMPTY_BOT}
-        initialConversations={[]}
-        initialHasMoreConversations={false}
+        conversationsPromise={Promise.resolve({ conversations: [], hasMore: false })}
         socketPageIds={[]}
         pagesById={{}}
         zaloPages={zaloPages}
-        quickReplies={quickReplies}
-        conversationTags={conversationTags}
-        aiAssistantSettings={aiAssistantSettings}
+        quickRepliesPromise={quickRepliesPromise}
+        conversationTagsPromise={conversationTagsPromise}
+        aiAssistantSettingsPromise={aiAssistantSettingsPromise}
       />
     );
   }
 
-  const { conversations, hasMore: hasMoreConversations } = await getConversationsForPages(
-    selectedPages.map((p) => p.id)
-  );
+  const selectedPageIds = selectedPages.map((p) => p.id);
+  const conversationsPromise = getConversationsForPages(selectedPageIds);
 
   // Tra theo pageId thật (Facebook) — trùng với Conversation.pageId trả về
   // từ backend — để ConversationList hiện đúng avatar + tên Page nguồn.
@@ -96,7 +92,7 @@ export default async function MultiPagesPage() {
   // Bot "ảo" chỉ để hiển thị header/avatar — không lưu ở đâu cả, chỉ tồn tại
   // trong lượt xem gộp tạm thời này.
   const virtualBot: Bot = {
-    id: selectedPages.map((p) => p.id).join(","),
+    id: selectedPageIds.join(","),
     pageId:
       selectedPages.length > 1
         ? `${selectedPages.length} trang đã gộp`
@@ -113,14 +109,13 @@ export default async function MultiPagesPage() {
   return (
     <InboxView
       bot={virtualBot}
-      initialConversations={conversations}
-      initialHasMoreConversations={hasMoreConversations}
-      socketPageIds={selectedPages.map((p) => p.id)}
+      conversationsPromise={conversationsPromise}
+      socketPageIds={selectedPageIds}
       pagesById={pagesById}
       zaloPages={zaloPages}
-      quickReplies={quickReplies}
-      conversationTags={conversationTags}
-      aiAssistantSettings={aiAssistantSettings}
+      quickRepliesPromise={quickRepliesPromise}
+      conversationTagsPromise={conversationTagsPromise}
+      aiAssistantSettingsPromise={aiAssistantSettingsPromise}
     />
   );
 }
