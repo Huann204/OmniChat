@@ -15,6 +15,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { ATTACHMENT_LABELS } from "@/lib/message-format";
 import { cn } from "@/lib/utils";
+import { toast } from "@/store/toast-store";
 import type { ConversationMessage } from "@/types/conversation";
 import { LottieSticker } from "./LottieSticker";
 
@@ -195,6 +196,31 @@ export function MessageThread({
     if (isNearBottomRef.current) scrollToBottom();
   }
 
+  // Bấm khung trích dẫn "Trả lời" trên 1 tin — cuộn tới đúng tin GỐC bị trả
+  // lời + chớp sáng ngắn cho dễ nhận ra. Tin gốc phải đang có sẵn TRONG danh
+  // sách `messages` hiện tải (data-message-id) — nếu là tin quá cũ chưa tải
+  // (cuộn lên chưa tới), báo lỗi rõ ràng thay vì im lặng không làm gì.
+  const [highlightedId, setHighlightedId] = React.useState<string | null>(null);
+  const highlightTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+    };
+  }, []);
+
+  function handleJumpToMessage(id: string) {
+    const el = containerRef.current?.querySelector<HTMLElement>(`[data-message-id="${id}"]`);
+    if (!el) {
+      toast.error("Không tìm thấy tin gốc — có thể chưa tải tới, thử cuộn lên xem tin cũ hơn.");
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+    setHighlightedId(id);
+    highlightTimeoutRef.current = setTimeout(() => setHighlightedId(null), 1500);
+  }
+
   return (
     <div
       ref={containerRef}
@@ -228,6 +254,8 @@ export function MessageThread({
             canReplyReact={channelType === ZALO_CHANNEL_TYPE}
             onReply={onReply}
             onReact={onReact}
+            onJumpToMessage={handleJumpToMessage}
+            isHighlighted={message.id === highlightedId}
           />
         );
       })}
@@ -390,6 +418,12 @@ interface MessageRowProps {
   canReplyReact?: boolean;
   onReply?: (target: ReplyTarget) => void;
   onReact?: (messageId: string, icon: string) => void;
+  // Bấm vào khung trích dẫn "Trả lời" của TIN NÀY (nếu có replyToMessageId)
+  // — cuộn tới đúng tin gốc, xem MessageThread#handleJumpToMessage.
+  onJumpToMessage?: (id: string) => void;
+  // true trong ~1.5s ngay sau khi tin NÀY vừa được cuộn tới (đích của 1 lượt
+  // "nhảy tới tin gốc") — chớp sáng ngắn cho dễ nhận ra giữa nhiều tin khác.
+  isHighlighted?: boolean;
 }
 
 function MessageRow({
@@ -402,6 +436,8 @@ function MessageRow({
   canReplyReact,
   onReply,
   onReact,
+  onJumpToMessage,
+  isHighlighted,
 }: MessageRowProps) {
   if (message.sender === "system") {
     return (
@@ -439,7 +475,7 @@ function MessageRow({
 
   if (message.kind === "call_request") {
     return (
-      <div className="group flex items-end justify-end gap-2 py-1">
+      <div data-message-id={message.id} className="group flex items-end justify-end gap-2 py-1">
         <MessageMeta name={senderName} time={message.time} />
         <div className="max-w-sm rounded-2xl bg-[#d9fdd3] px-4 py-3 text-sm">
           <p className="font-semibold text-slate-800">{message.text}</p>
@@ -464,9 +500,11 @@ function MessageRow({
 
     return (
       <div
+        data-message-id={message.id}
         className={cn(
-          "group flex items-end gap-1.5 py-1",
-          isPage ? "justify-end" : "justify-start"
+          "group flex items-end gap-1.5 py-1 transition-colors",
+          isPage ? "justify-end" : "justify-start",
+          isHighlighted && "bg-primary/10"
         )}
       >
         {!isPage && (
@@ -482,8 +520,14 @@ function MessageRow({
         <div className={cn("relative flex flex-col gap-1", isPage ? "items-end" : "items-start")}>
           {message.replyPreviewText && (
             <div
+              onClick={
+                message.replyToMessageId
+                  ? () => onJumpToMessage?.(message.replyToMessageId!)
+                  : undefined
+              }
               className={cn(
                 "mb-0.5 max-w-[260px] truncate rounded-t-lg rounded-b-xs border-l-2 px-2.5 py-1 text-xs font-medium transition-colors",
+                message.replyToMessageId && "cursor-pointer hover:brightness-95",
                 isPage
                   ? "border-emerald-600 bg-black/5 text-slate-700"
                   : "border-slate-400 bg-black/5 text-slate-600"
@@ -591,7 +635,7 @@ function MessageRow({
   if (message.kind === "call_outgoing" || message.kind === "call_missed") {
     const isMissed = message.kind === "call_missed";
     return (
-      <div className="group flex items-end justify-end gap-2 py-1">
+      <div data-message-id={message.id} className="group flex items-end justify-end gap-2 py-1">
         <MessageMeta name={senderName} time={message.time} />
         <div className="flex max-w-sm items-center gap-3 rounded-2xl bg-[#d9fdd3] px-4 py-2.5 text-sm">
           <span
@@ -615,9 +659,11 @@ function MessageRow({
 
   return (
     <div
+      data-message-id={message.id}
       className={cn(
-        "group flex items-end gap-1.5 py-1",
-        isPage ? "justify-end" : "justify-start"
+        "group flex items-end gap-1.5 py-1 transition-colors",
+        isPage ? "justify-end" : "justify-start",
+        isHighlighted && "bg-primary/10"
       )}
     >
       {!isPage && (
@@ -633,8 +679,14 @@ function MessageRow({
       <div className="relative max-w-sm min-w-0">
         {message.replyPreviewText && (
           <div
+            onClick={
+              message.replyToMessageId
+                ? () => onJumpToMessage?.(message.replyToMessageId!)
+                : undefined
+            }
             className={cn(
               "mb-0.5 truncate rounded-t-lg rounded-b-xs border-l-2 px-2.5 py-1 text-xs font-medium transition-colors",
+              message.replyToMessageId && "cursor-pointer hover:brightness-95",
               isPage
                 ? "border-emerald-600 bg-black/5 text-slate-700"
                 : "border-slate-400 bg-black/5 text-slate-600"

@@ -44,6 +44,10 @@ export interface ConversationMessage {
   // = snippet tin gốc nếu tin NÀY là 1 lời trả lời trích dẫn. reactionIcon =
   // icon agent đã thả vào tin NÀY (chỉ tin của khách mới thả được).
   replyPreviewText?: string;
+  // id (không phải clientId) của ĐÚNG Message gốc bị trả lời — chỉ có khi tin
+  // gốc đó vẫn còn trong hệ thống (đã từng ingest). Dùng để bấm vào khung
+  // trích dẫn thì cuộn/nhảy tới đúng tin gốc, xem MessageThread.tsx.
+  replyToMessageId?: string;
   reactionIcon?: string;
   // Chỉ có ở tin Page vừa tự gửi (đang optimistic) — id tạm tự sinh lúc gửi,
   // KHÁC `id` (đổi sang id thật ngay khi có phản hồi từ server, xem

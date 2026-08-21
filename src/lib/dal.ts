@@ -195,6 +195,7 @@ interface RawMessage {
   senderName?: string;
   senderAvatarUrl?: string;
   replyPreviewText?: string;
+  replyToMessageId?: string;
   reactionIcon?: string;
   createdAt: string;
 }
@@ -241,6 +242,7 @@ export function mapRawConversations(raw: RawConversation[]): Conversation[] {
         senderName: m.senderName,
         senderAvatarUrl: m.senderAvatarUrl,
         replyPreviewText: m.replyPreviewText,
+        replyToMessageId: m.replyToMessageId,
         reactionIcon: m.reactionIcon,
         time: formatClock(m.createdAt),
         createdAt: m.createdAt,
