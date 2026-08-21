@@ -77,13 +77,14 @@ interface MessageReactionEvent {
   reactionIcon?: string;
 }
 
+import LivechatLoading from "@/app/(app)/livechat/loading";
+
 interface InboxViewProps {
   bot: Bot;
-  initialConversations: Conversation[];
-  // Còn hội thoại cũ hơn chưa tải hay không (trang đầu — xem
-  // getConversationsForPages) — dùng để quyết định có tải thêm khi cuộn
-  // xuống cuối danh sách hội thoại hay không.
-  initialHasMoreConversations: boolean;
+  // Promise tải danh sách hội thoại từ server (chạy song song qua React
+  // Suspense) — luôn truyền, kể cả lúc chưa có Page nào (Promise.resolve()
+  // rỗng, xem livechat/page.tsx) để InboxViewInner không cần biết case rỗng.
+  conversationsPromise: Promise<{ conversations: Conversation[]; hasMore: boolean }>;
   // Danh sách Page thật cần join room realtime — mặc định chỉ [bot.id].
   // Truyền nhiều id khi đang xem gộp tạm thời nhiều Page cùng lúc.
   socketPageIds?: string[];
@@ -96,29 +97,44 @@ interface InboxViewProps {
   // Mẫu trả lời nhanh của Shop — gõ ký tự tắt trong khung soạn tin để chèn
   // nhanh (xem MessageComposer). Snapshot lúc tải trang, không tự đồng bộ
   // real-time nếu sửa ở Cài đặt trong lúc đang mở sẵn Livechat ở tab khác.
-  quickReplies?: QuickReply[];
+  quickRepliesPromise: Promise<QuickReply[]>;
   // Danh mục thẻ hội thoại của Shop (xem /settings/tags) — QuickTagBar hiện
   // hết danh mục này, đánh dấu thẻ nào đang gắn cho hội thoại đang mở.
-  conversationTags?: ConversationTag[];
+  conversationTagsPromise: Promise<ConversationTag[]>;
   // Cấu hình "Gợi ý trả lời tin nhắn từ AI" (xem /settings/ai-assistant) —
   // quyết định có tự gọi sinh gợi ý không, và khi nào (mở hội thoại, hay
   // mỗi tin mới), xem effect gọi generateAiSuggestions bên dưới.
-  aiAssistantSettings?: AiAssistantSettings;
+  aiAssistantSettingsPromise: Promise<AiAssistantSettings>;
 }
 
-export function InboxView({
+export function InboxView(props: InboxViewProps) {
+  return (
+    <React.Suspense fallback={<LivechatLoading />}>
+      <InboxViewInner {...props} />
+    </React.Suspense>
+  );
+}
+
+function InboxViewInner({
   bot,
-  initialConversations,
-  initialHasMoreConversations,
+  conversationsPromise,
   socketPageIds,
   pagesById,
   zaloPages,
-  quickReplies,
-  conversationTags,
-  aiAssistantSettings,
+  quickRepliesPromise,
+  conversationTagsPromise,
+  aiAssistantSettingsPromise,
 }: InboxViewProps) {
-  const [conversations, setConversations] = React.useState<Conversation[]>(initialConversations);
-  const [hasMoreConversations, setHasMoreConversations] = React.useState(initialHasMoreConversations);
+  // Giải mã Promise dữ liệu song song qua React 19 `use()` API — chỉ 1 nguồn
+  // duy nhất (Promise), không còn nhánh giá trị trực tiếp cũ (không có caller
+  // nào dùng tới nữa từ khi livechat/page.tsx chuyển hẳn sang Suspense).
+  const initialData = React.use(conversationsPromise);
+  const quickReplies = React.use(quickRepliesPromise);
+  const conversationTags = React.use(conversationTagsPromise);
+  const aiAssistantSettings = React.use(aiAssistantSettingsPromise);
+
+  const [conversations, setConversations] = React.useState<Conversation[]>(initialData.conversations);
+  const [hasMoreConversations, setHasMoreConversations] = React.useState(initialData.hasMore);
   const [isLoadingMoreConversations, setIsLoadingMoreConversations] = React.useState(false);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
@@ -767,7 +783,7 @@ export function InboxView({
   async function handleToggleTag(tagId: string) {
     if (!activeConversation) return;
     const conversationId = activeConversation.id;
-    const tagInCatalog = conversationTags?.find((t) => t.id === tagId);
+    const tagInCatalog = conversationTags.find((t) => t.id === tagId);
     if (!tagInCatalog) return;
 
     const previousTags = activeConversation.tags;
@@ -847,11 +863,11 @@ export function InboxView({
               onReact={handleReact}
             />
             <QuickTagBar
-              tags={conversationTags ?? []}
+              tags={conversationTags}
               activeTagIds={activeConversation.tags.map((t) => t.id)}
               onToggleTag={handleToggleTag}
             />
-            {aiAssistantSettings?.suggestReplyEnabled && (
+            {aiAssistantSettings.suggestReplyEnabled && (
               <AiSuggestionBar
                 suggestions={aiSuggestions}
                 loading={aiSuggestionsLoading}
@@ -863,7 +879,7 @@ export function InboxView({
             <MessageComposer
               ref={composerRef}
               onSend={handleSend}
-              quickReplies={quickReplies ?? []}
+              quickReplies={quickReplies}
               replyingTo={replyingTo}
               onCancelReply={() => setReplyingTo(null)}
               canSendSticker={activeConversation.type === ZALO_CHANNEL_TYPE}
