@@ -276,7 +276,7 @@ export function InboxView({
       // NotAllowedError nếu trình duyệt chặn autoplay do chưa có tương tác
       // nào của người dùng trong trang.
       if (payload.message.sender === "customer") {
-        notificationSoundRef.current?.play().catch(() => {});
+        notificationSoundRef.current?.play().catch(() => { });
       }
 
       const { kind, text, attachmentUrls } = messageKindAndContent(
@@ -426,11 +426,11 @@ export function InboxView({
         prev.map((c) =>
           c.id === payload.conversationId
             ? {
-                ...c,
-                messages: c.messages.map((m) =>
-                  m.id === payload.messageId ? { ...m, reactionIcon: payload.reactionIcon } : m
-                ),
-              }
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === payload.messageId ? { ...m, reactionIcon: payload.reactionIcon } : m
+              ),
+            }
             : c
         )
       );
@@ -621,11 +621,11 @@ export function InboxView({
         prev.map((c) =>
           c.id === conversationId
             ? {
-                ...c,
-                messages: c.messages.map((m) =>
-                  parts.some((p) => p.clientId === m.clientId) ? { ...m, status: "failed" } : m
-                ),
-              }
+              ...c,
+              messages: c.messages.map((m) =>
+                parts.some((p) => p.clientId === m.clientId) ? { ...m, status: "failed" } : m
+              ),
+            }
             : c
         )
       );
@@ -646,19 +646,19 @@ export function InboxView({
       prev.map((c) =>
         c.id === conversationId
           ? {
-              ...c,
-              messages: c.messages.map((m) => {
-                const r = m.clientId ? resultByClientId.get(m.clientId) : undefined;
-                if (!r) return m;
-                return {
-                  ...m,
-                  id: r.message?.id ?? m.id,
-                  status: r.error ? "failed" : "sent",
-                  replyPreviewText: r.message?.replyPreviewText ?? m.replyPreviewText,
-                  replyToMessageId: r.message?.replyToMessageId ?? m.replyToMessageId,
-                };
-              }),
-            }
+            ...c,
+            messages: c.messages.map((m) => {
+              const r = m.clientId ? resultByClientId.get(m.clientId) : undefined;
+              if (!r) return m;
+              return {
+                ...m,
+                id: r.message?.id ?? m.id,
+                status: r.error ? "failed" : "sent",
+                replyPreviewText: r.message?.replyPreviewText ?? m.replyPreviewText,
+                replyToMessageId: r.message?.replyToMessageId ?? m.replyToMessageId,
+              };
+            }),
+          }
           : c
       )
     );
@@ -681,11 +681,11 @@ export function InboxView({
       prev.map((c) =>
         c.id === conversationId
           ? {
-              ...c,
-              messages: c.messages.map((m) =>
-                m.id === messageId ? { ...m, reactionIcon: icon === "NONE" ? undefined : icon } : m
-              ),
-            }
+            ...c,
+            messages: c.messages.map((m) =>
+              m.id === messageId ? { ...m, reactionIcon: icon === "NONE" ? undefined : icon } : m
+            ),
+          }
           : c
       )
     );
@@ -697,11 +697,11 @@ export function InboxView({
         prev.map((c) =>
           c.id === conversationId
             ? {
-                ...c,
-                messages: c.messages.map((m) =>
-                  m.id === messageId ? { ...m, reactionIcon: previous } : m
-                ),
-              }
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === messageId ? { ...m, reactionIcon: previous } : m
+              ),
+            }
             : c
         )
       );
@@ -812,95 +812,99 @@ export function InboxView({
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <InboxIconRail className="!bg-none bg-transparent border-none" />
 
-        <div className="relative flex flex-1 min-w-0 bg-white rounded-tl-xl overflow-hidden">
-          <ConversationList
-            conversations={searchResults ?? conversations}
-            activeId={activeId}
-            search={search}
-            onSearchChange={handleSearchChange}
-            searching={isSearching}
-            onSelect={handleSelect}
-            pagesById={pagesById}
-            zaloPages={zaloPages}
-            onOpenConversation={handleOpenZaloConversation}
-            hasMore={searchResults ? false : hasMoreConversations}
-            onLoadMore={searchResults ? undefined : handleLoadMoreConversations}
-            loadingMore={searchResults ? false : isLoadingMoreConversations}
-          />
+      <div className="relative flex flex-1 min-w-0 bg-white rounded-tl-xl overflow-hidden">
+        <ConversationList
+          conversations={searchResults ?? conversations}
+          activeId={activeId}
+          search={search}
+          onSearchChange={handleSearchChange}
+          searching={isSearching}
+          onSelect={handleSelect}
+          pagesById={pagesById}
+          zaloPages={zaloPages}
+          onOpenConversation={handleOpenZaloConversation}
+          hasMore={searchResults ? false : hasMoreConversations}
+          onLoadMore={searchResults ? undefined : handleLoadMoreConversations}
+          loadingMore={searchResults ? false : isLoadingMoreConversations}
+        />
 
-          {activeConversation ? (
-            <div className={cn("flex min-w-0 flex-1 flex-col h-full", !activeId && "hidden md:flex")}>
-              <ChatHeader
-                conversation={activeConversation}
-                onBack={() => setActiveId(null)}
-                onToggleCustomerInfo={() => setShowCustomerInfo((v) => !v)}
-                showCustomerInfo={showCustomerInfo}
+        {activeConversation ? (
+          <div className={cn("flex min-w-0 flex-1 flex-col h-full", !activeId && "hidden md:flex")}>
+            <ChatHeader
+              conversation={activeConversation}
+              onBack={() => setActiveId(null)}
+              onToggleCustomerInfo={() => setShowCustomerInfo((v) => !v)}
+              showCustomerInfo={showCustomerInfo}
+            />
+            <MessageThread
+              messages={activeConversation.messages}
+              customerName={activeConversation.customerName}
+              customerAvatarUrl={activeConversation.customerAvatarUrl}
+              hasMoreMessages={activeConversation.hasMoreMessages}
+              onLoadMore={() => handleLoadMoreMessages(activeConversation.id)}
+              channelType={activeConversation.type}
+              onReply={setReplyingTo}
+              onReact={handleReact}
+            />
+            <QuickTagBar
+              tags={conversationTags ?? []}
+              activeTagIds={activeConversation.tags.map((t) => t.id)}
+              onToggleTag={handleToggleTag}
+            />
+            {aiAssistantSettings?.suggestReplyEnabled && (
+              <AiSuggestionBar
+                suggestions={aiSuggestions}
+                loading={aiSuggestionsLoading}
+                onSelect={(text) => composerRef.current?.setText(text)}
+                manual={aiAssistantSettings.suggestReplyTrigger === "manual"}
+                onRequest={() => fetchAiSuggestions(activeConversation.id)}
               />
-              <MessageThread
-                messages={activeConversation.messages}
-                customerName={activeConversation.customerName}
-                customerAvatarUrl={activeConversation.customerAvatarUrl}
-                hasMoreMessages={activeConversation.hasMoreMessages}
-                onLoadMore={() => handleLoadMoreMessages(activeConversation.id)}
-                channelType={activeConversation.type}
-                onReply={setReplyingTo}
-                onReact={handleReact}
-              />
-              <QuickTagBar
-                tags={conversationTags ?? []}
-                activeTagIds={activeConversation.tags.map((t) => t.id)}
-                onToggleTag={handleToggleTag}
-              />
-              {aiAssistantSettings?.suggestReplyEnabled && (
-                <AiSuggestionBar
-                  suggestions={aiSuggestions}
-                  loading={aiSuggestionsLoading}
-                  onSelect={(text) => composerRef.current?.setText(text)}
-                  manual={aiAssistantSettings.suggestReplyTrigger === "manual"}
-                  onRequest={() => fetchAiSuggestions(activeConversation.id)}
-                />
-              )}
-              <MessageComposer
-                ref={composerRef}
-                onSend={handleSend}
-                quickReplies={quickReplies ?? []}
-                replyingTo={replyingTo}
-                onCancelReply={() => setReplyingTo(null)}
-                canSendSticker={activeConversation.type === ZALO_CHANNEL_TYPE}
-                zaloPageId={zaloPages?.find((p) => p.externalPageId === activeConversation.pageId)?.id}
+            )}
+            <MessageComposer
+              ref={composerRef}
+              onSend={handleSend}
+              quickReplies={quickReplies ?? []}
+              replyingTo={replyingTo}
+              onCancelReply={() => setReplyingTo(null)}
+              canSendSticker={activeConversation.type === ZALO_CHANNEL_TYPE}
+              zaloPageId={zaloPages?.find((p) => p.externalPageId === activeConversation.pageId)?.id}
+            />
+          </div>
+        ) : (
+          <div className="hidden md:flex flex-1 items-center justify-center bg-[#f3f0eb] p-4 text-slate-400">
+            <div className="flex items-center gap-3">
+              <BsChatSquareTextFill className="h-7 w-7 text-slate-400/80 shrink-0" />
+              <span className="text-base font-medium text-slate-500/80">
+                Xin chọn 1 hội thoại từ danh sách bên trái
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Customer info panel on Desktop (md screen size and above) */}
+        <CustomerInfoPanel
+          hasActiveConversation={!!activeConversation}
+          conversationId={activeConversation?.id}
+          className="hidden md:flex"
+        />
+
+        {/* Customer info drawer overlay on Mobile ONLY (< md screen size) */}
+        {showCustomerInfo && (
+          <div className="fixed inset-0 z-50 flex justify-end md:hidden">
+            <div
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+              onClick={() => setShowCustomerInfo(false)}
+            />
+            <div className="relative z-10 w-full max-w-xs sm:max-w-sm h-full bg-white shadow-2xl animate-in slide-in-from-right duration-200">
+              <CustomerInfoPanel
+                hasActiveConversation={!!activeConversation}
+                conversationId={activeConversation?.id}
+                onClose={() => setShowCustomerInfo(false)}
               />
             </div>
-          ) : (
-            <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-2 text-slate-400">
-              <BsChatSquareTextFill className="h-10 w-10" />
-              <p className="text-sm">Xin chọn 1 hội thoại từ danh sách bên trái</p>
-            </div>
-          )}
-
-          {/* Customer info panel on Desktop (md screen size and above) */}
-          <CustomerInfoPanel
-            hasActiveConversation={!!activeConversation}
-            conversationId={activeConversation?.id}
-            className="hidden md:flex"
-          />
-
-          {/* Customer info drawer overlay on Mobile ONLY (< md screen size) */}
-          {showCustomerInfo && (
-            <div className="fixed inset-0 z-50 flex justify-end md:hidden">
-              <div
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
-                onClick={() => setShowCustomerInfo(false)}
-              />
-              <div className="relative z-10 w-full max-w-xs sm:max-w-sm h-full bg-white shadow-2xl animate-in slide-in-from-right duration-200">
-                <CustomerInfoPanel
-                  hasActiveConversation={!!activeConversation}
-                  conversationId={activeConversation?.id}
-                  onClose={() => setShowCustomerInfo(false)}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+    </div>
   );
 }
