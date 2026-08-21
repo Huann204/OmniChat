@@ -65,5 +65,18 @@ export function LottieSticker({ url, className }: { url: string; className?: str
     return <div className={cn("h-24 w-24 animate-pulse rounded-xl bg-slate-100", className)} />;
   }
 
-  return <Lottie src={animationData} loop autoplay className={cn("h-24 w-24", className)} />;
+  return (
+    <Lottie
+      src={animationData}
+      loop
+      autoplay
+      className={cn("h-24 w-24", className)}
+      // Sticker Telegram thường có kích thước gốc lớn (vd 512x512) — renderer
+      // SVG của lottie-web tự đặt width/height NGAY TRÊN thẻ <svg>, thắng cả
+      // class Tailwind (CSS thường) nếu chỉ dựa vào className. Ép cứng bằng
+      // style (inline, luôn thắng specificity) để chắc chắn co về đúng 96px
+      // dù animation gốc to cỡ nào.
+      style={{ width: 96, height: 96 }}
+    />
+  );
 }
