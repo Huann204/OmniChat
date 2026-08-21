@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getJwtExpiresInSeconds } from './lib/jwt';
 
 const ACCESS_COOKIE = 'token';
 const REFRESH_COOKIE = 'refreshToken';
@@ -9,7 +10,11 @@ const REFRESH_GUARD_COOKIE = '__refreshed';
 // tạm thời không phản hồi được (network lỗi, hoặc đang cold-start).
 const UNREACHABLE_COOKIE = '__authUnreachable';
 const UNREACHABLE_MAX_AGE = 30;
-const ACCESS_MAX_AGE = 60 * 15;
+// CHỈ dùng khi không đọc được exp từ chính JWT (không nên xảy ra thực tế) —
+// bình thường maxAge cookie lấy thẳng từ claim exp của accessToken (xem
+// getJwtExpiresInSeconds/setSessionCookies bên dưới), không hardcode nữa để
+// tránh lệch với JWT_ACCESS_EXPIRES_IN bên server.
+const ACCESS_MAX_AGE_FALLBACK = 60 * 15;
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const API_URL = process.env.API_URL || 'http://localhost:3000/api';
 
@@ -49,7 +54,7 @@ function setSessionCookies(
     secure,
     sameSite: 'lax',
     path: '/',
-    maxAge: ACCESS_MAX_AGE,
+    maxAge: getJwtExpiresInSeconds(accessToken) ?? ACCESS_MAX_AGE_FALLBACK,
   });
   response.cookies.set(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,

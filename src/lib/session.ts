@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { getJwtExpiresInSeconds } from "./jwt";
 
 export const ACCESS_COOKIE = "token";
 export const REFRESH_COOKIE = "refreshToken";
@@ -9,7 +10,13 @@ export const SHOP_COOKIE = "current_shop_id";
 // client để tránh vòng round-trip thừa lúc điều hướng sang /livechat), chỉ
 // đọc lại ở đây.
 const MERGE_PAGES_COOKIE = "merge_pages";
-const ACCESS_MAX_AGE = 60 * 15; // 15 phút, khớp JWT_ACCESS_EXPIRES_IN
+// CHỈ dùng khi không đọc được exp từ chính JWT (không nên xảy ra thực tế) —
+// bình thường maxAge cookie access token lấy thẳng từ claim exp của chính
+// accessToken (xem getJwtExpiresInSeconds bên dưới), không hardcode số riêng
+// nữa để tránh lệch với JWT_ACCESS_EXPIRES_IN bên server (từng gây bug: đổi
+// JWT_ACCESS_EXPIRES_IN sang 12h mà cookie vẫn tự xoá sau 15 phút vì hằng số
+// ở đây không được đổi theo).
+const ACCESS_MAX_AGE_FALLBACK = 60 * 15;
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30; // 30 ngày, khớp JWT_REFRESH_EXPIRES_IN
 
 export async function createSession(accessToken: string, refreshToken: string, shopId?: string) {
@@ -21,7 +28,7 @@ export async function createSession(accessToken: string, refreshToken: string, s
     secure,
     sameSite: "lax",
     path: "/",
-    maxAge: ACCESS_MAX_AGE,
+    maxAge: getJwtExpiresInSeconds(accessToken) ?? ACCESS_MAX_AGE_FALLBACK,
   });
   cookieStore.set(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
