@@ -217,7 +217,7 @@ function InboxViewInner({
   // để không phải tải lại file mỗi khi có tin đến.
   const notificationSoundRef = React.useRef<HTMLAudioElement | null>(null);
   React.useEffect(() => {
-    notificationSoundRef.current = new Audio("/nhacchuong.mp3");
+    notificationSoundRef.current = new Audio("/nhachchat.mp3");
   }, []);
 
   // Đánh số thứ tự request bật/tắt thẻ theo TỪNG hội thoại — bấm nhiều thẻ
