@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { InboxIconRail } from "./InboxIconRail";
 import { ConversationList } from "./ConversationList";
 import { ChatHeader } from "./ChatHeader";
-import { MessageThread, type ReplyTarget } from "./MessageThread";
+import { MessageThread, ZALO_CHANNEL_TYPE, type ReplyTarget } from "./MessageThread";
 import { QuickTagBar } from "./QuickTagBar";
 import { AiSuggestionBar } from "./AiSuggestionBar";
 import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
@@ -529,7 +529,8 @@ export function InboxView({
     text: string,
     imageUrls: string[],
     replyToMessageId?: string,
-    file?: { url: string; name: string; isVideo?: boolean }
+    file?: { url: string; name: string; isVideo?: boolean },
+    sticker?: { id: number; cateId: number; type: number; previewUrl: string }
   ) {
     if (!activeConversation) return;
     const conversationId = activeConversation.id;
@@ -543,6 +544,11 @@ export function InboxView({
       fileName?: string;
       isVideo?: boolean;
       replyToMessageId?: string;
+      sticker?: { id: number; cateId: number; type: number };
+      // Chỉ optimistic UI dùng (hiện ảnh preview NGAY, trước khi server xác
+      // nhận) — KHÔNG gửi lên server (server tự tra lại URL thật qua API
+      // Zalo, xem sendSticker ở zalo.channel.ts — không tin URL client khai).
+      stickerPreviewUrl?: string;
     }[] = [];
     if (text) parts.push({ clientId: `temp-${crypto.randomUUID()}`, text, replyToMessageId });
     if (imageUrls.length > 0) parts.push({ clientId: `temp-${crypto.randomUUID()}`, imageUrls });
@@ -552,6 +558,13 @@ export function InboxView({
         fileUrl: file.url,
         fileName: file.name,
         isVideo: file.isVideo,
+      });
+    }
+    if (sticker) {
+      parts.push({
+        clientId: `temp-${crypto.randomUUID()}`,
+        sticker: { id: sticker.id, cateId: sticker.cateId, type: sticker.type },
+        stickerPreviewUrl: sticker.previewUrl,
       });
     }
     if (parts.length === 0) return;
@@ -570,12 +583,22 @@ export function InboxView({
       // đối chiếu reaction khách thả vào đúng tin thật sau này.
       clientId: part.clientId,
       sender: "page",
-      kind: part.imageUrls ? "image" : part.fileUrl ? (part.isVideo ? "video" : "file") : "text",
+      kind: part.imageUrls
+        ? "image"
+        : part.fileUrl
+          ? part.isVideo
+            ? "video"
+            : "file"
+          : part.sticker
+            ? "sticker"
+            : "text",
       // Video "thật" nhúng trực tiếp trong khung chat — KHÔNG hiện tên file
       // đè bên dưới (giống ảnh/sticker), khác file thường vẫn cần tên để
       // hiện trên thẻ link "bấm mở tab mới" (xem messageKindAndContent).
       text: part.fileUrl ? (part.isVideo ? undefined : part.fileName) : part.text,
-      attachmentUrls: part.imageUrls ?? (part.fileUrl ? [part.fileUrl] : undefined),
+      attachmentUrls:
+        part.imageUrls ??
+        (part.fileUrl ? [part.fileUrl] : part.stickerPreviewUrl ? [part.stickerPreviewUrl] : undefined),
       time: formatClock(now),
       createdAt: now,
       status: "sending",
@@ -842,6 +865,8 @@ export function InboxView({
                 quickReplies={quickReplies ?? []}
                 replyingTo={replyingTo}
                 onCancelReply={() => setReplyingTo(null)}
+                canSendSticker={activeConversation.type === ZALO_CHANNEL_TYPE}
+                zaloPageId={zaloPages?.find((p) => p.externalPageId === activeConversation.pageId)?.id}
               />
             </div>
           ) : (

@@ -16,9 +16,11 @@ import {
 import { cn } from "@/lib/utils";
 import { FilePickerModal } from "@/components/media/FilePickerModal";
 import { MediaPickerModal } from "@/components/media/MediaPickerModal";
+import type { ZaloStickerItem } from "@/app/actions/zaloFriend";
 import type { MediaItem } from "@/types/media";
 import type { QuickReply } from "@/types/quickReply";
 import type { ReplyTarget } from "./MessageThread";
+import { ZaloStickerPickerModal } from "./ZaloStickerPickerModal";
 
 interface AttachedFile {
   url: string;
@@ -35,7 +37,8 @@ interface MessageComposerProps {
     text: string,
     imageUrls: string[],
     replyToMessageId?: string,
-    file?: AttachedFile
+    file?: AttachedFile,
+    sticker?: { id: number; cateId: number; type: number; previewUrl: string }
   ) => void | Promise<void>;
   // Mẫu trả lời nhanh của Shop — gõ "/" + ký tự tắt để gợi ý, hoặc bấm nút
   // ghi chú (StickyNote) để xem toàn bộ danh sách, xem
@@ -46,6 +49,12 @@ interface MessageComposerProps {
   // (MessageThread bấm chọn, InboxView xoá sau khi gửi) đều cần đọc/ghi.
   replyingTo?: ReplyTarget | null;
   onCancelReply?: () => void;
+  // Gửi nhãn dán CHỈ Zalo hỗ trợ (xem ZaloStickerPickerModal.tsx) — cần
+  // pageId (Mongo _id ConnectedPage, KHÔNG phải externalPageId) của ĐÚNG Page
+  // đang chat để gọi API tìm sticker. Thiếu 1 trong 2 thì ẩn hẳn nút, không
+  // hiện nút disable vô nghĩa.
+  canSendSticker?: boolean;
+  zaloPageId?: string;
 }
 
 // Ảnh của mẫu trả lời nhanh chỉ có URL (Server không lưu đủ metadata như
@@ -76,11 +85,15 @@ export interface MessageComposerHandle {
 }
 
 export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerProps>(
-  function MessageComposer({ onSend, quickReplies = [], replyingTo, onCancelReply }, ref) {
+  function MessageComposer(
+    { onSend, quickReplies = [], replyingTo, onCancelReply, canSendSticker, zaloPageId },
+    ref
+  ) {
     const [value, setValue] = React.useState("");
     const [isSending, setIsSending] = React.useState(false);
     const [pickerOpen, setPickerOpen] = React.useState(false);
     const [filePickerOpen, setFilePickerOpen] = React.useState(false);
+    const [stickerPickerOpen, setStickerPickerOpen] = React.useState(false);
     const [attachedImages, setAttachedImages] = React.useState<MediaItem[]>([]);
     // File đính kèm bất kỳ (không phải ảnh) — đúng 1 file/lượt gửi, khác
     // attachedImages (nhiều ảnh, chọn từ thư viện). Chọn từ FilePickerModal
@@ -139,6 +152,20 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
       setIsSending(true);
       try {
         await onSend(trimmedText, imageUrls, replyToMessageId, file);
+      } finally {
+        setIsSending(false);
+      }
+    }
+
+    // Gửi NGAY khi bấm chọn 1 sticker (không có bước "đính kèm rồi bấm Gửi"
+    // như ảnh/file khác) — đúng hành vi quen thuộc của app chat thật.
+    async function handleSendSticker(sticker: ZaloStickerItem) {
+      if (isSending) return;
+      const replyToMessageId = replyingTo?.id;
+      onCancelReply?.();
+      setIsSending(true);
+      try {
+        await onSend("", [], replyToMessageId, undefined, sticker);
       } finally {
         setIsSending(false);
       }
@@ -290,12 +317,16 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
             >
               <BsFillTelephoneFill className="h-4.5 w-4.5" />
             </button>
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-            >
-              <BsStickyFill className="h-4.5 w-4.5" />
-            </button>
+            {canSendSticker && zaloPageId && (
+              <button
+                type="button"
+                onClick={() => setStickerPickerOpen(true)}
+                aria-label="Gửi nhãn dán"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+              >
+                <BsStickyFill className="h-4.5 w-4.5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setFilePickerOpen(true)}
@@ -346,6 +377,14 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
           onClose={() => setFilePickerOpen(false)}
           onSelect={handlePickFile}
         />
+        {canSendSticker && zaloPageId && (
+          <ZaloStickerPickerModal
+            open={stickerPickerOpen}
+            onClose={() => setStickerPickerOpen(false)}
+            pageId={zaloPageId}
+            onSelect={handleSendSticker}
+          />
+        )}
       </div>
     );
   }

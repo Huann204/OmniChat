@@ -283,3 +283,30 @@ export async function createZaloGroup(
     return { error: err instanceof ApiError ? err.message : "Tạo nhóm thất bại" };
   }
 }
+
+// id/cateId/type khớp NGUYÊN VẸN SendStickerPayload của zca-js — giữ lại
+// đúng object này khi gửi (xem sendMessage trong app/actions/conversation.ts),
+// không tự tách/dựng lại field.
+export interface ZaloStickerItem {
+  id: number;
+  cateId: number;
+  type: number;
+  previewUrl: string;
+}
+
+export async function searchZaloStickers(
+  pageId: string,
+  keyword: string
+): Promise<{ items: ZaloStickerItem[]; error?: string }> {
+  if (!keyword.trim()) return { items: [] };
+
+  try {
+    const data = await apiFetch<{ success: boolean; items: ZaloStickerItem[] }>(
+      `/zalo/${pageId}/stickers/search?keyword=${encodeURIComponent(keyword.trim())}`,
+      { headers: await authHeader() }
+    );
+    return { items: data.items };
+  } catch (err) {
+    return { items: [], error: err instanceof ApiError ? err.message : "Tìm nhãn dán thất bại" };
+  }
+}

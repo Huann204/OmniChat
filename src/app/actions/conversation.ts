@@ -167,6 +167,9 @@ export interface SendMessagePart {
   // trích dẫn" (hiện chỉ Zalo hỗ trợ, xem MessageThread.tsx). Bỏ qua âm thầm
   // phía server nếu không đủ dữ liệu để trích dẫn.
   replyToMessageId?: string;
+  // Sticker Zalo muốn gửi (chỉ Zalo hỗ trợ, xem ZaloStickerPickerModal.tsx) —
+  // id/cateId/type khớp nguyên vẹn ZaloStickerItem từ app/actions/zaloFriend.ts.
+  sticker?: { id: number; cateId: number; type: number };
 }
 
 export interface SendMessagePartResult {
