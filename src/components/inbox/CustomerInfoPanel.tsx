@@ -3,7 +3,7 @@
 import * as React from "react";
 import { BsPencilFill, BsPinFill, BsPlusLg, BsTrashFill, BsX } from "react-icons/bs";
 import { cn } from "@/lib/utils";
-import { formatClock } from "@/lib/message-format";
+import { formatTimeLabel } from "@/lib/message-format";
 import { toast } from "@/store/toast-store";
 import {
   createConversationNote,
@@ -257,7 +257,7 @@ export function CustomerInfoPanel({
                         <BsPinFill className="h-3 w-3" />
                       </button>
                       <span className="shrink-0 text-[11px] text-slate-400">
-                        {formatClock(note.createdAt)}
+                        {formatTimeLabel(note.createdAt)}
                       </span>
                     </div>
 
