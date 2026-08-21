@@ -13,6 +13,7 @@ export interface ToastItem {
   // đúng hội thoại) thay vì chỉ đọc.
   avatarUrl?: string;
   onClick?: () => void;
+  isMessage?: boolean;
 }
 
 type ToastInput =
@@ -23,6 +24,7 @@ type ToastInput =
       duration?: number;
       avatarUrl?: string;
       onClick?: () => void;
+      isMessage?: boolean;
     };
 
 interface ToastStore {

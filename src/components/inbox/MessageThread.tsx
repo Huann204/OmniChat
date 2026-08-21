@@ -13,7 +13,7 @@ import {
   BsX,
 } from "react-icons/bs";
 import { Loader2 } from "lucide-react";
-import { ATTACHMENT_LABELS } from "@/lib/message-format";
+import { ATTACHMENT_LABELS, formatClock, formatDateDivider, isDifferentDay } from "@/lib/message-format";
 import { cn } from "@/lib/utils";
 import { toast } from "@/store/toast-store";
 import type { ConversationMessage } from "@/types/conversation";
@@ -234,7 +234,9 @@ export function MessageThread({
         </div>
       )}
       {messages.map((message, index) => {
+        const prev = messages[index - 1];
         const next = messages[index + 1];
+        const isFirstInDay = !prev || isDifferentDay(prev.createdAt, message.createdAt);
         // So thêm senderName (không chỉ sender role) — nhóm Zalo nhiều
         // người cùng mang sender:"customer", so mỗi role thôi sẽ gộp lộn
         // các thành viên khác nhau vào 1 cụm, chỉ hiện avatar/tên của
@@ -242,22 +244,33 @@ export function MessageThread({
         // không có senderName (luôn undefined ở cả 2 phía) nên so sánh này
         // không đổi hành vi cũ.
         const isLastInGroup =
-          !next || next.sender !== message.sender || next.senderName !== message.senderName;
+          !next ||
+          isDifferentDay(message.createdAt, next.createdAt) ||
+          next.sender !== message.sender ||
+          next.senderName !== message.senderName;
         return (
-          <MessageRow
-            key={message.id}
-            message={message}
-            customerName={customerName}
-            customerAvatarUrl={customerAvatarUrl}
-            showAvatar={isLastInGroup}
-            onImageLoad={handleImageLoad}
-            onImageClick={setLightboxUrl}
-            canReplyReact={channelType === ZALO_CHANNEL_TYPE}
-            onReply={onReply}
-            onReact={onReact}
-            onJumpToMessage={handleJumpToMessage}
-            isHighlighted={message.id === highlightedId}
-          />
+          <React.Fragment key={message.id}>
+            {isFirstInDay && message.createdAt && (
+              <div className="flex justify-center py-2 my-1">
+                <span className="rounded-[14px] bg-[#e6e2dc] px-4 py-1 text-[13px] text-[#3a4a5e]">
+                  {formatDateDivider(message.createdAt)}
+                </span>
+              </div>
+            )}
+            <MessageRow
+              message={message}
+              customerName={customerName}
+              customerAvatarUrl={customerAvatarUrl}
+              showAvatar={isLastInGroup}
+              onImageLoad={handleImageLoad}
+              onImageClick={setLightboxUrl}
+              canReplyReact={channelType === ZALO_CHANNEL_TYPE}
+              onReply={onReply}
+              onReact={onReact}
+              onJumpToMessage={handleJumpToMessage}
+              isHighlighted={message.id === highlightedId}
+            />
+          </React.Fragment>
         );
       })}
 
@@ -496,6 +509,7 @@ function MessageRow({
   // customerName nếu chưa có (tin cũ, hoặc Facebook echo không qua app này).
   const senderName = message.senderName ?? (isPage ? "Bạn" : customerName);
   const senderAvatarUrl = isPage ? undefined : message.senderAvatarUrl ?? customerAvatarUrl;
+  const displayTime = message.createdAt ? formatClock(message.createdAt) : message.time;
 
   // Trả lời trích dẫn: cả Facebook lẫn Zalo đều hỗ trợ thật (Facebook qua
   // field reply_to.mid, không có trong tài liệu chính thức nhưng đã kiểm
@@ -518,7 +532,7 @@ function MessageRow({
   if (message.kind === "call_request") {
     return (
       <div data-message-id={message.id} className="group flex items-end justify-end gap-2 py-1">
-        <MessageMeta name={senderName} time={message.time} />
+        <MessageMeta name={senderName} time={displayTime} />
         <div className="max-w-sm rounded-2xl bg-[#d9fdd3] px-4 py-3 text-sm">
           <p className="font-semibold text-slate-800">{message.text}</p>
           {message.meta && <p className="mt-1 text-xs text-slate-500">{message.meta}</p>}
@@ -557,7 +571,7 @@ function MessageRow({
             onImageLoad={onImageLoad}
           />
         )}
-        {isPage && <MessageMeta name={senderName} time={message.time} />}
+        {isPage && <MessageMeta name={senderName} time={displayTime} />}
 
         <div className={cn("relative flex flex-col gap-1", isPage ? "items-end" : "items-start")}>
           {message.replyPreviewText && (
@@ -665,7 +679,7 @@ function MessageRow({
         {!isPage && (
           <MessageMeta
             name={senderName}
-            time={message.time}
+            time={displayTime}
             onReply={replyHandler}
             onReact={reactHandler}
           />
@@ -678,7 +692,7 @@ function MessageRow({
     const isMissed = message.kind === "call_missed";
     return (
       <div data-message-id={message.id} className="group flex items-end justify-end gap-2 py-1">
-        <MessageMeta name={senderName} time={message.time} />
+        <MessageMeta name={senderName} time={displayTime} />
         <div className="flex max-w-sm items-center gap-3 rounded-2xl bg-[#d9fdd3] px-4 py-2.5 text-sm">
           <span
             className={cn(
@@ -716,7 +730,7 @@ function MessageRow({
           onImageLoad={onImageLoad}
         />
       )}
-      {isPage && <MessageMeta name={senderName} time={message.time} />}
+      {isPage && <MessageMeta name={senderName} time={displayTime} />}
 
       <div className="relative max-w-sm min-w-0">
         {message.replyPreviewText && (
@@ -796,7 +810,7 @@ function MessageRow({
       {!isPage && (
         <MessageMeta
           name={senderName}
-          time={message.time}
+          time={displayTime}
           onReply={replyHandler}
           onReact={reactHandler}
         />

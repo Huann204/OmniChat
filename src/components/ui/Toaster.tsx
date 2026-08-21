@@ -39,12 +39,17 @@ const BORDER_STYLES: Record<ToastVariant, string> = {
 function ToastCard({ toast }: { toast: ToastItem }) {
   const remove = useToastStore((state) => state.remove);
   const Icon = ICONS[toast.variant];
+  const isMessageToast = Boolean(toast.isMessage || toast.avatarUrl || toast.onClick);
 
   React.useEffect(() => {
     if (toast.duration <= 0) return;
     const timer = setTimeout(() => remove(toast.id), toast.duration);
     return () => clearTimeout(timer);
   }, [toast.id, toast.duration, remove]);
+
+  const descriptionText = isMessageToast
+    ? toast.description?.replace(/[\r\n]+/g, " ")
+    : toast.description;
 
   return (
     <motion.div
@@ -77,10 +82,24 @@ function ToastCard({ toast }: { toast: ToastItem }) {
       )}
       <div className="min-w-0 flex-1">
         {toast.title && (
-          <p className="text-sm font-semibold text-slate-900 break-words whitespace-pre-line leading-snug line-clamp-3">{toast.title}</p>
+          <p
+            className={cn(
+              "text-sm font-semibold text-slate-900 leading-snug",
+              isMessageToast ? "truncate" : "break-words whitespace-pre-line"
+            )}
+          >
+            {toast.title}
+          </p>
         )}
-        {toast.description && (
-          <p className="mt-0.5 text-sm text-slate-600 break-words whitespace-pre-line leading-normal line-clamp-3">{toast.description}</p>
+        {descriptionText && (
+          <p
+            className={cn(
+              "mt-0.5 text-sm text-slate-600 leading-normal",
+              isMessageToast ? "truncate" : "break-words whitespace-pre-line"
+            )}
+          >
+            {descriptionText}
+          </p>
         )}
       </div>
       <button

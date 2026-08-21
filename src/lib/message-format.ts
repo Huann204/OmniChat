@@ -98,21 +98,85 @@ export function messageKindAndContent(
 const APP_TIME_ZONE = "Asia/Ho_Chi_Minh";
 
 export function formatClock(iso: string): string {
-  return new Date(iso).toLocaleTimeString("vi-VN", {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return "";
+
+  const now = new Date();
+  const timeStr = date.toLocaleTimeString("vi-VN", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: APP_TIME_ZONE,
   });
+
+  if (dateKey(date) === dateKey(now)) {
+    return timeStr;
+  }
+
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  if (dateKey(date) === dateKey(yesterday)) {
+    return `Hôm qua ${timeStr}`;
+  }
+
+  const isSameYear = date.getFullYear() === now.getFullYear();
+  if (isSameYear) {
+    const dayMonth = date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: APP_TIME_ZONE,
+    });
+    return `${dayMonth} ${timeStr}`;
+  }
+
+  const fullDate = date.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: APP_TIME_ZONE,
+  });
+  return `${fullDate} ${timeStr}`;
 }
 
 function dateKey(date: Date): string {
   return date.toLocaleDateString("en-CA", { timeZone: APP_TIME_ZONE });
 }
 
+export function formatDateDivider(iso: string): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return "";
+
+  const now = new Date();
+  if (dateKey(date) === dateKey(now)) return "Hôm nay";
+
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  if (dateKey(date) === dateKey(yesterday)) return "Hôm qua";
+
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day} Thg ${month} ${year}`;
+}
+
+export function isDifferentDay(iso1?: string, iso2?: string): boolean {
+  if (!iso1 || !iso2) return false;
+  const d1 = new Date(iso1);
+  const d2 = new Date(iso2);
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return false;
+  return dateKey(d1) !== dateKey(d2);
+}
+
 export function formatTimeLabel(iso: string): string {
   const date = new Date(iso);
   const now = new Date();
-  if (dateKey(date) === dateKey(now)) return formatClock(iso);
+  if (dateKey(date) === dateKey(now)) {
+    return date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: APP_TIME_ZONE,
+    });
+  }
 
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   if (dateKey(date) === dateKey(yesterday)) return "Hôm qua";
