@@ -3,7 +3,6 @@
 import * as React from "react";
 import Image from "next/image";
 import {
-  BsFillTelephoneFill,
   BsStickyFill,
   BsPaperclip,
   BsFileEarmarkFill,
@@ -19,7 +18,8 @@ import { MediaPickerModal } from "@/components/media/MediaPickerModal";
 import type { ZaloStickerItem } from "@/app/actions/zaloFriend";
 import type { MediaItem } from "@/types/media";
 import type { QuickReply } from "@/types/quickReply";
-import type { ReplyTarget } from "./MessageThread";
+import { ReplyTarget } from "./MessageThread";
+import { ShortcutHelpModal } from "./ShortcutHelpModal";
 import { ZaloStickerPickerModal } from "./ZaloStickerPickerModal";
 
 interface AttachedFile {
@@ -77,6 +77,21 @@ function quickReplyImageToMediaItem(url: string): MediaItem {
 // 6 dòng, tránh khung soạn tin nuốt hết chỗ của khung chat nếu gõ quá dài.
 const COMPOSER_MAX_HEIGHT = 140;
 
+// Custom Tooltip bong bóng đen cho các nút icon soạn tin — khớp thiết kế chuẩn (Video và Tài liệu, Sticker, v.v.)
+function ComposerTooltip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="group relative flex items-center justify-center">
+      {children}
+      <div className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 scale-95 transition-all duration-150 group-hover:opacity-100 group-hover:scale-100 z-30">
+        <div className="relative rounded-lg bg-[#1c2433] px-3 py-1.5 text-xs font-medium text-white shadow-xl whitespace-nowrap">
+          {label}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1c2433]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Cho phép component cha (InboxView) tự điền text vào ô soạn tin từ bên
 // ngoài — dùng khi bấm 1 gợi ý trong AiSuggestionBar. value là state nội bộ
 // (không controlled từ prop) nên cần expose qua ref thay vì 1 prop `value`.
@@ -94,6 +109,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
     const [pickerOpen, setPickerOpen] = React.useState(false);
     const [filePickerOpen, setFilePickerOpen] = React.useState(false);
     const [stickerPickerOpen, setStickerPickerOpen] = React.useState(false);
+    const [shortcutHelpOpen, setShortcutHelpOpen] = React.useState(false);
     const [attachedImages, setAttachedImages] = React.useState<MediaItem[]>([]);
     // File đính kèm bất kỳ (không phải ảnh) — đúng 1 file/lượt gửi, khác
     // attachedImages (nhiều ảnh, chọn từ thư viện). Chọn từ FilePickerModal
@@ -307,67 +323,80 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
 
         <div className="mt-1 flex items-center justify-between">
           <div className="flex items-center gap-1 text-slate-400">
-            <BsQuestionCircleFill className="h-4.5 w-4.5" />
+            <ComposerTooltip label="Phím tắt & Hướng dẫn">
+              <button
+                type="button"
+                onClick={() => setShortcutHelpOpen(true)}
+                aria-label="Hướng dẫn & Phím tắt"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+              >
+                <BsQuestionCircleFill className="h-4.5 w-4.5" />
+              </button>
+            </ComposerTooltip>
           </div>
 
           <div className="flex items-center gap-1 text-slate-400">
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-            >
-              <BsFillTelephoneFill className="h-4.5 w-4.5" />
-            </button>
             {canSendSticker && zaloPageId && (
+              <ComposerTooltip label="Sticker">
+                <button
+                  type="button"
+                  onClick={() => setStickerPickerOpen(true)}
+                  aria-label="Gửi nhãn dán"
+                  className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+                >
+                  <BsStickyFill className="h-4.5 w-4.5" />
+                </button>
+              </ComposerTooltip>
+            )}
+            <ComposerTooltip label="Video và Tài liệu">
               <button
                 type="button"
-                onClick={() => setStickerPickerOpen(true)}
-                aria-label="Gửi nhãn dán"
+                onClick={() => setFilePickerOpen(true)}
+                aria-label="Đính kèm file"
                 className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
               >
-                <BsStickyFill className="h-4.5 w-4.5" />
+                <BsPaperclip className="h-4.5 w-4.5" />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setFilePickerOpen(true)}
-              aria-label="Đính kèm file"
-              className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-            >
-              <BsPaperclip className="h-4.5 w-4.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              aria-label="Chọn ảnh từ thư viện"
-              className="relative flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-            >
-              <BsFillImageFill className="h-4.5 w-4.5" />
-              {attachedImages.length > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold leading-none text-white">
-                  {attachedImages.length}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setManualListOpen((v) => !v)}
-              aria-label="Xem danh sách mẫu trả lời nhanh"
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full transition-colors cursor-pointer",
-                manualListOpen ? "bg-primary/10 text-primary" : "hover:bg-slate-100 hover:text-slate-700"
-              )}
-            >
-              <BsChatSquareTextFill className="h-4.5 w-4.5" />
-            </button>
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={isSending}
-              aria-label="Gửi tin nhắn"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <BsSendFill className="h-4.5 w-4.5" />
-            </button>
+            </ComposerTooltip>
+            <ComposerTooltip label="Hình ảnh">
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                aria-label="Chọn ảnh từ thư viện"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+              >
+                <BsFillImageFill className="h-4.5 w-4.5" />
+                {attachedImages.length > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold leading-none text-white">
+                    {attachedImages.length}
+                  </span>
+                )}
+              </button>
+            </ComposerTooltip>
+            <ComposerTooltip label="Mẫu trả lời nhanh">
+              <button
+                type="button"
+                onClick={() => setManualListOpen((v) => !v)}
+                aria-label="Xem danh sách mẫu trả lời nhanh"
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full transition-colors cursor-pointer",
+                  manualListOpen ? "bg-primary/10 text-primary" : "hover:bg-slate-100 hover:text-slate-700"
+                )}
+              >
+                <BsChatSquareTextFill className="h-4.5 w-4.5" />
+              </button>
+            </ComposerTooltip>
+            <ComposerTooltip label="Gửi tin nhắn">
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={isSending}
+                aria-label="Gửi tin nhắn"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <BsSendFill className="h-4.5 w-4.5" />
+              </button>
+            </ComposerTooltip>
           </div>
         </div>
 
@@ -385,6 +414,7 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
             onSelect={handleSendSticker}
           />
         )}
+        <ShortcutHelpModal open={shortcutHelpOpen} onClose={() => setShortcutHelpOpen(false)} />
       </div>
     );
   }
