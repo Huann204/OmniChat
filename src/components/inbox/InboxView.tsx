@@ -62,6 +62,7 @@ interface NewMessageEvent {
     // Snippet khung trích dẫn nếu tin này LÀ 1 lời trả lời — xem
     // message.model.ts#replyPreviewText.
     replyPreviewText?: string;
+    replyToMessageId?: string;
     createdAt: string;
     // id tạm phía mình tự sinh lúc gửi — server echo lại nguyên văn (xem
     // NewMessageEvent trong realtime/socket.ts) để đối chiếu, biết đây là
@@ -291,6 +292,7 @@ export function InboxView({
         senderName: payload.message.senderName,
         senderAvatarUrl: payload.message.senderAvatarUrl,
         replyPreviewText: payload.message.replyPreviewText,
+        replyToMessageId: payload.message.replyToMessageId,
         time: formatClock(payload.message.createdAt),
         createdAt: payload.message.createdAt,
       };
@@ -629,6 +631,7 @@ export function InboxView({
                   id: r.message?.id ?? m.id,
                   status: r.error ? "failed" : "sent",
                   replyPreviewText: r.message?.replyPreviewText ?? m.replyPreviewText,
+                  replyToMessageId: r.message?.replyToMessageId ?? m.replyToMessageId,
                 };
               }),
             }
