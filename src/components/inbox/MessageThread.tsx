@@ -287,6 +287,47 @@ export function MessageThread({
   );
 }
 
+// Tự động nhận diện đường dẫn web (https://..., http://..., www....) trong nội dung tin nhắn và chuyển thành thẻ link bấm mở tab mới.
+function FormattedMessageText({ text }: { text?: string }) {
+  if (!text) return null;
+
+  const URL_REGEX = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
+  const parts = text.split(URL_REGEX);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.match(/^https?:\/\/|^www\./i)) {
+          let url = part;
+          let trailing = "";
+          const match = part.match(/([.,!?;)]+)$/);
+          if (match) {
+            trailing = match[1];
+            url = part.slice(0, -trailing.length);
+          }
+          const href = url.startsWith("www.") ? `https://${url}` : url;
+
+          return (
+            <React.Fragment key={index}>
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-blue-600 underline underline-offset-2 hover:text-blue-700 break-all cursor-pointer font-medium"
+              >
+                {url}
+              </a>
+              {trailing}
+            </React.Fragment>
+          );
+        }
+        return part;
+      })}
+    </>
+  );
+}
+
 function MessageMeta({
   name,
   time,
@@ -599,7 +640,7 @@ function MessageRow({
                 isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
               )}
             >
-              {message.text}
+              <FormattedMessageText text={message.text} />
             </div>
           )}
         </div>
@@ -722,7 +763,7 @@ function MessageRow({
               isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
             )}
           >
-            {message.text}
+            <FormattedMessageText text={message.text} />
           </div>
         )}
         {message.reactionIcon && (
