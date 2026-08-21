@@ -16,9 +16,11 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useMediaLibraryData } from "@/hooks/useMediaLibraryData";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { useStorageUsage } from "@/hooks/useStorageUsage";
 import { cn } from "@/lib/utils";
 import type { MediaItem } from "@/types/media";
 import { MediaGrid } from "./MediaGrid";
+import { StorageUsageBar } from "./StorageUsageBar";
 
 interface MediaPickerModalProps {
   open: boolean;
@@ -50,6 +52,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
   const { items, page, pages, loading, loadingMore, deletingId, loadMore, addUploaded, removeItem } =
     useMediaLibraryData(search);
   const { pending, addFiles } = useMediaUpload(addUploaded);
+  const storageUsage = useStorageUsage(open, pending.length);
 
   // Reset lựa chọn mỗi lần mở lại modal — tránh giữ selection từ lần chọn trước.
   // Set trong lúc render (thay vì trong Effect) để không tốn thêm 1 vòng render.
@@ -107,6 +110,7 @@ export function MediaPickerModal({ open, onClose, multiple = true, onSelect }: M
             className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white"
           />
         </div>
+        <StorageUsageBar usage={storageUsage} />
         <button
           type="button"
           onClick={onClose}

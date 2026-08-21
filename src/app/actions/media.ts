@@ -45,6 +45,25 @@ export async function listMedia(params: {
   }
 }
 
+export interface StorageUsage {
+  usageBytes: number;
+  limitBytes: number;
+}
+
+export async function getStorageUsage(): Promise<StorageUsage | null> {
+  const token = await getSessionToken();
+  if (!token) return null;
+
+  try {
+    const data = await apiFetch<{ success: boolean } & StorageUsage>("/media/storage", {
+      headers: await authHeaders(token),
+    });
+    return { usageBytes: data.usageBytes, limitBytes: data.limitBytes };
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteMedia(id: string): Promise<{ error?: string }> {
   const token = await getSessionToken();
   if (!token) return { error: "Chưa đăng nhập" };
