@@ -49,6 +49,10 @@ export interface ConversationMessage {
   // trích dẫn thì cuộn/nhảy tới đúng tin gốc, xem MessageThread.tsx.
   replyToMessageId?: string;
   reactionIcon?: string;
+  // "@nhắc tên" thành viên nhóm có trong `text` (chỉ Zalo nhóm) — pos/len
+  // tính theo `text` ở trên, dùng để bôi đậm đúng đoạn "@Tên" lúc hiển thị,
+  // xem MessageThread.tsx#FormattedMessageText.
+  mentions?: { uid: string; pos: number; len: number }[];
   // Chỉ có ở tin Page vừa tự gửi (đang optimistic) — id tạm tự sinh lúc gửi,
   // KHÁC `id` (đổi sang id thật ngay khi có phản hồi từ server, xem
   // InboxView.tsx#handleSend). Giữ riêng field này để cơ chế chống trùng

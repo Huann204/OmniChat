@@ -313,44 +313,76 @@ export function MessageThread({
 }
 
 // Tự động nhận diện đường dẫn web (https://..., http://..., www....) trong nội dung tin nhắn và chuyển thành thẻ link bấm mở tab mới.
-function FormattedMessageText({ text }: { text?: string }) {
-  if (!text) return null;
-
+// Nhận diện + gắn link cho URL trong 1 đoạn text KHÔNG chứa mention (mention
+// tách riêng ở FormattedMessageText, không thể là URL) — tách riêng hàm này
+// để tái dùng cho từng đoạn văn bản thường xen giữa các đoạn "@Tên" bôi đậm.
+function linkifyPlainText(text: string, keyPrefix: string) {
   const URL_REGEX = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
   const parts = text.split(URL_REGEX);
 
-  return (
-    <>
-      {parts.map((part, index) => {
-        if (part.match(/^https?:\/\/|^www\./i)) {
-          let url = part;
-          let trailing = "";
-          const match = part.match(/([.,!?;)]+)$/);
-          if (match) {
-            trailing = match[1];
-            url = part.slice(0, -trailing.length);
-          }
-          const href = url.startsWith("www.") ? `https://${url}` : url;
+  return parts.map((part, index) => {
+    if (part.match(/^https?:\/\/|^www\./i)) {
+      let url = part;
+      let trailing = "";
+      const match = part.match(/([.,!?;)]+)$/);
+      if (match) {
+        trailing = match[1];
+        url = part.slice(0, -trailing.length);
+      }
+      const href = url.startsWith("www.") ? `https://${url}` : url;
 
-          return (
-            <React.Fragment key={index}>
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-blue-600 underline underline-offset-2 hover:text-blue-700 break-all cursor-pointer font-medium"
-              >
-                {url}
-              </a>
-              {trailing}
-            </React.Fragment>
-          );
-        }
-        return part;
-      })}
-    </>
-  );
+      return (
+        <React.Fragment key={`${keyPrefix}-${index}`}>
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-blue-600 underline underline-offset-2 hover:text-blue-700 break-all cursor-pointer font-medium"
+          >
+            {url}
+          </a>
+          {trailing}
+        </React.Fragment>
+      );
+    }
+    return <React.Fragment key={`${keyPrefix}-${index}`}>{part}</React.Fragment>;
+  });
+}
+
+function FormattedMessageText({
+  text,
+  mentions,
+}: {
+  text?: string;
+  // "@nhắc tên" trong tin — pos/len tính theo `text`, bôi đậm giống Zalo thật
+  // (xem message.model.ts#mentions). pos/len lệch khỏi độ dài text thật (dữ
+  // liệu cũ/hỏng) thì bỏ qua đoạn đó, vẫn hiện nguyên text bình thường thay
+  // vì crash hoặc cắt sai chỗ.
+  mentions?: { uid: string; pos: number; len: number }[];
+}) {
+  if (!text) return null;
+
+  if (!mentions || mentions.length === 0) {
+    return <>{linkifyPlainText(text, "t")}</>;
+  }
+
+  const sorted = [...mentions].sort((a, b) => a.pos - b.pos);
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+  for (const m of sorted) {
+    if (m.pos < cursor || m.len <= 0 || m.pos + m.len > text.length) continue;
+    if (m.pos > cursor) nodes.push(...linkifyPlainText(text.slice(cursor, m.pos), `t-${cursor}`));
+    nodes.push(
+      <strong key={`m-${m.pos}`} className="font-semibold">
+        {text.slice(m.pos, m.pos + m.len)}
+      </strong>
+    );
+    cursor = m.pos + m.len;
+  }
+  if (cursor < text.length) nodes.push(...linkifyPlainText(text.slice(cursor), `t-${cursor}`));
+
+  return <>{nodes}</>;
 }
 
 function MessageMeta({
@@ -680,7 +712,7 @@ function MessageRow({
                 isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
               )}
             >
-              <FormattedMessageText text={message.text} />
+              <FormattedMessageText text={message.text} mentions={message.mentions} />
             </div>
           )}
         </div>
@@ -803,7 +835,7 @@ function MessageRow({
               isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
             )}
           >
-            <FormattedMessageText text={message.text} />
+            <FormattedMessageText text={message.text} mentions={message.mentions} />
           </div>
         )}
         {message.reactionIcon && (
