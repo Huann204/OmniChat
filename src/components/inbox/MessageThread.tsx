@@ -690,7 +690,7 @@ function MessageRow({
               src={urls[0]}
               controls
               preload="metadata"
-              className="max-h-[300px] max-w-[300px] rounded-2xl shadow-sm"
+              className="max-h-[260px] max-w-[260px] rounded-2xl shadow-sm"
               onLoadedData={onImageLoad}
             />
           ) : message.kind === "lottie" ? (
