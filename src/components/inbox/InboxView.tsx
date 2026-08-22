@@ -63,6 +63,9 @@ interface NewMessageEvent {
     // message.model.ts#replyPreviewText.
     replyPreviewText?: string;
     replyToMessageId?: string;
+    // "@nhắc tên" thành viên nhóm (chỉ Zalo nhóm) — xem
+    // message.model.ts#mentions.
+    mentions?: { uid: string; pos: number; len: number }[];
     createdAt: string;
     // id tạm phía mình tự sinh lúc gửi — server echo lại nguyên văn (xem
     // NewMessageEvent trong realtime/socket.ts) để đối chiếu, biết đây là
@@ -309,6 +312,7 @@ function InboxViewInner({
         senderAvatarUrl: payload.message.senderAvatarUrl,
         replyPreviewText: payload.message.replyPreviewText,
         replyToMessageId: payload.message.replyToMessageId,
+        mentions: payload.message.mentions,
         time: formatClock(payload.message.createdAt),
         createdAt: payload.message.createdAt,
       };
