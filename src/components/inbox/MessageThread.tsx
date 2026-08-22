@@ -685,13 +685,12 @@ function MessageRow({
             </div>
           ) : message.kind === "video" ? (
             // Video nhúng trực tiếp (thẻ <video> có controls sẵn của trình
-            // duyệt) — trước đây rơi vào nhánh link "bấm mở tab mới" chung
-            // với file/audio, xem nhánh return còn lại bên dưới.
+            // duyệt)
             <video
               src={urls[0]}
               controls
               preload="metadata"
-              className="max-h-[260px] max-w-[260px] rounded-2xl shadow-sm"
+              className="max-h-[300px] max-w-[300px] rounded-2xl shadow-sm"
               onLoadedData={onImageLoad}
             />
           ) : message.kind === "lottie" ? (
