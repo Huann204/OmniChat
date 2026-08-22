@@ -5,8 +5,14 @@ export interface RawAttachment {
   url: string;
   // Tên file gốc — chỉ có ở file MÌNH gửi đi (xem
   // server/src/models/message.model.ts#IMessageAttachment), tin nhận từ
-  // khách hiện không có tên gốc.
+  // khách hiện không có tên gốc. Với type="link" thì đây là TIÊU ĐỀ trang
+  // đích, không phải tên file.
   name?: string;
+  // Chỉ type="link" — mô tả ngắn + ảnh thumb của trang đích (Zalo tự tạo
+  // preview card lúc dán URL), dùng render thẻ xem trước thay vì link tải
+  // file chung chung.
+  description?: string;
+  thumb?: string;
 }
 
 export const ATTACHMENT_LABELS: Record<string, string> = {
@@ -16,6 +22,7 @@ export const ATTACHMENT_LABELS: Record<string, string> = {
   video: "[Video]",
   audio: "[Tin nhắn thoại]",
   file: "[Tệp đính kèm]",
+  link: "[Đường dẫn]",
 };
 
 const ATTACHMENT_KIND: Record<string, MessageKind> = {
@@ -26,6 +33,9 @@ const ATTACHMENT_KIND: Record<string, MessageKind> = {
   lottie: "lottie",
   image: "image",
   video: "video",
+  // Link chia sẻ (dán URL, Zalo tự tạo preview card) — render thẻ riêng có
+  // ảnh thumb/tiêu đề/mô tả, khác hẳn "file" (chỉ có tên + link tải).
+  link: "link",
 };
 
 const VIDEO_EXTENSIONS = ["mp4", "mov", "webm", "mkv", "avi", "3gp", "m4v", "wmv"];
@@ -55,13 +65,36 @@ export function messagePreviewText(
 
 // Dùng để render TRONG khung chat — ảnh/nhãn dán giữ nguyên URL để hiển thị
 // thật thay vì collapse về text preview.
+export interface LinkPreview {
+  url: string;
+  name?: string;
+  description?: string;
+  thumb?: string;
+}
+
 export function messageKindAndContent(
   text: string | undefined,
   attachments: RawAttachment[] | undefined
-): { kind: MessageKind; text?: string; attachmentUrls?: string[] } {
+): { kind: MessageKind; text?: string; attachmentUrls?: string[]; linkPreview?: LinkPreview } {
   const first = attachments?.[0];
   if (first) {
     const kind = ATTACHMENT_KIND[first.type] ?? "file";
+    if (kind === "link") {
+      // Zalo thật hiện nguyên nội dung bài viết (`text`) làm bong bóng text
+      // bình thường, thẻ preview (tiêu đề ngắn + mô tả + tên miền) đi kèm
+      // NGAY DƯỚI — không thay thế text như file/ảnh (không phải chú thích
+      // của text, mà là 2 phần tách biệt cùng 1 tin), xem MessageThread.tsx.
+      return {
+        kind,
+        text: text || undefined,
+        linkPreview: {
+          url: first.url,
+          name: first.name,
+          description: first.description,
+          thumb: first.thumb,
+        },
+      };
+    }
     // File video (khách chọn từ máy, msgType chung "share.file" của Zalo) —
     // CỐ TÌNH giữ nguyên kind "file" (hiện thẻ link "bấm mở tab mới" như cũ,
     // KHÔNG nhúng <video> trực tiếp) — khác hẳn video "thật" (msgType riêng,
