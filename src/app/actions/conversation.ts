@@ -33,7 +33,7 @@ interface RawMessage {
   id: string;
   sender: "customer" | "page";
   text?: string;
-  attachments?: { type: string; url: string; name?: string }[];
+  attachments?: { type: string; url: string; name?: string; description?: string; thumb?: string }[];
   senderName?: string;
   senderAvatarUrl?: string;
   replyPreviewText?: string;
@@ -44,13 +44,14 @@ interface RawMessage {
 }
 
 function mapRawMessage(m: RawMessage): ConversationMessage {
-  const { kind, text, attachmentUrls } = messageKindAndContent(m.text, m.attachments);
+  const { kind, text, attachmentUrls, linkPreview } = messageKindAndContent(m.text, m.attachments);
   return {
     id: m.id,
     sender: m.sender,
     kind,
     text,
     attachmentUrls,
+    linkPreview,
     senderName: m.senderName,
     senderAvatarUrl: m.senderAvatarUrl,
     replyPreviewText: m.replyPreviewText,

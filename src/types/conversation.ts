@@ -11,6 +11,9 @@ export type MessageKind =
   | "lottie"
   | "video"
   | "file"
+  // Link chia sẻ (dán URL, Zalo tự tạo preview card kèm ảnh/tiêu đề/mô tả)
+  // — render thẻ riêng qua `linkPreview` bên dưới, khác "file".
+  | "link"
   | "call_request"
   | "call_outgoing"
   | "call_missed";
@@ -24,6 +27,9 @@ export interface ConversationMessage {
   // Có thể nhiều ảnh trong 1 tin nhắn (Facebook gộp qua message.attachments
   // dạng mảng) — sticker/video/file luôn chỉ có đúng 1 phần tử.
   attachmentUrls?: string[];
+  // Chỉ có khi kind="link" — thẻ xem trước link chia sẻ (ảnh thumb/tiêu đề/
+  // mô tả trang đích), xem lib/message-format.ts#LinkPreview.
+  linkPreview?: { url: string; name?: string; description?: string; thumb?: string };
   time: string;
   // ISO timestamp gốc — dùng làm cursor phân trang khi tải thêm tin nhắn cũ
   // hơn (before/beforeId), khác với `time` vốn chỉ để hiển thị (đã format).

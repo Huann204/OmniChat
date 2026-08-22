@@ -54,7 +54,7 @@ interface NewMessageEvent {
     id: string;
     sender: "customer" | "page";
     text?: string;
-    attachments?: { type: string; url: string }[];
+    attachments?: { type: string; url: string; name?: string; description?: string; thumb?: string }[];
     // Khách trong nhóm (sender="customer") hoặc tên nhân viên đã gửi
     // (sender="page", server resolve từ Message.sentBy) — xem MessageThread.tsx.
     senderName?: string;
@@ -298,7 +298,7 @@ function InboxViewInner({
         notificationSoundRef.current?.play().catch(() => { });
       }
 
-      const { kind, text, attachmentUrls } = messageKindAndContent(
+      const { kind, text, attachmentUrls, linkPreview } = messageKindAndContent(
         payload.message.text,
         payload.message.attachments
       );
@@ -308,6 +308,7 @@ function InboxViewInner({
         kind,
         text,
         attachmentUrls,
+        linkPreview,
         senderName: payload.message.senderName,
         senderAvatarUrl: payload.message.senderAvatarUrl,
         replyPreviewText: payload.message.replyPreviewText,

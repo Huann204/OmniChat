@@ -568,6 +568,17 @@ function MessageRow({
     ? undefined
     : (message.senderAvatarUrl ?? (message.senderName ? undefined : customerAvatarUrl));
   const displayTime = message.createdAt ? formatClock(message.createdAt) : message.time;
+  // Chỉ kind="link" — tên miền ngắn gọn hiện dưới thẻ preview thay cho URL
+  // đầy đủ (giống Zalo/Messenger thật). URL lỗi/không hợp lệ thì bỏ qua, vẫn
+  // hiện thẻ bình thường (không có dòng tên miền).
+  let linkHostname: string | undefined;
+  if (message.linkPreview?.url) {
+    try {
+      linkHostname = new URL(message.linkPreview.url).hostname;
+    } catch {
+      linkHostname = undefined;
+    }
+  }
 
   // Trả lời trích dẫn: cả Facebook lẫn Zalo đều hỗ trợ thật (Facebook qua
   // field reply_to.mid, không có trong tài liệu chính thức nhưng đã kiểm
@@ -809,7 +820,48 @@ function MessageRow({
             {message.replyPreviewText}
           </div>
         )}
-        {message.attachmentUrls?.[0] ? (
+        {message.kind === "link" && message.linkPreview ? (
+          // Link chia sẻ (dán URL, Zalo tự tạo preview) — Zalo thật hiện
+          // nguyên nội dung bài viết (message.text) như bong bóng text bình
+          // thường, THẺ preview gọn (tiêu đề ngắn/mô tả/tên miền) đi kèm
+          // ngay dưới, không thay thế text — khác hẳn "file" (chỉ có tên).
+          <div className="space-y-1">
+            {message.text && (
+              <div
+                className={cn(
+                  "whitespace-pre-wrap break-words [overflow-wrap:break-word] rounded-2xl px-4 py-2 text-sm shadow-sm",
+                  isPage ? "bg-[#d9fdd3] text-slate-800" : "bg-white text-slate-800"
+                )}
+              >
+                <FormattedMessageText text={message.text} mentions={message.mentions} />
+              </div>
+            )}
+            <a
+              href={message.linkPreview.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block overflow-hidden rounded-lg border border-slate-200 bg-white text-sm shadow-sm transition-colors hover:bg-slate-50"
+            >
+              {message.linkPreview.thumb && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={message.linkPreview.thumb}
+                  alt=""
+                  className="h-32 w-full object-cover"
+                />
+              )}
+              <div className="space-y-0.5 px-2.5 py-2">
+                {message.linkPreview.name && (
+                  <p className="line-clamp-1 font-semibold text-slate-800">{message.linkPreview.name}</p>
+                )}
+                {message.linkPreview.description && (
+                  <p className="line-clamp-2 text-xs text-slate-500">{message.linkPreview.description}</p>
+                )}
+                {linkHostname && <p className="truncate text-xs text-sky-600">{linkHostname}</p>}
+              </div>
+            </a>
+          </div>
+        ) : message.attachmentUrls?.[0] ? (
           // File/audio/video không hiện được trực tiếp như ảnh — hiện thành
           // 1 thẻ bấm mở/tải, khác hẳn bong bóng text thường (trước đây rơi
           // vào nhánh này thì chỉ hiện được đúng label "[Tệp đính kèm]",
