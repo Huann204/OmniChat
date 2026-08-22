@@ -39,6 +39,7 @@ interface RawMessage {
   replyPreviewText?: string;
   replyToMessageId?: string;
   reactionIcon?: string;
+  mentions?: { uid: string; pos: number; len: number }[];
   createdAt: string;
 }
 
@@ -55,6 +56,7 @@ function mapRawMessage(m: RawMessage): ConversationMessage {
     replyPreviewText: m.replyPreviewText,
     replyToMessageId: m.replyToMessageId,
     reactionIcon: m.reactionIcon,
+    mentions: m.mentions,
     time: formatClock(m.createdAt),
     createdAt: m.createdAt,
   };
@@ -170,6 +172,11 @@ export interface SendMessagePart {
   // Sticker Zalo muốn gửi (chỉ Zalo hỗ trợ, xem ZaloStickerPickerModal.tsx) —
   // id/cateId/type khớp nguyên vẹn ZaloStickerItem từ app/actions/zaloFriend.ts.
   sticker?: { id: number; cateId: number; type: number };
+  // "@nhắc tên" thành viên nhóm — chỉ có ý nghĩa khi có `text`, chỉ nhóm Zalo
+  // hỗ trợ. pos/len tính theo chuỗi `text` CUỐI CÙNG ở trên (xem
+  // MessageComposer.tsx#buildMentions) — bỏ qua âm thầm phía server nếu kênh
+  // không hỗ trợ, không chặn cả lượt gửi.
+  mentions?: { uid: string; pos: number; len: number }[];
 }
 
 export interface SendMessagePartResult {
@@ -212,6 +219,31 @@ export async function sendMessage(
     return {
       error: err instanceof ApiError ? err.message : "Không gửi được tin nhắn",
     };
+  }
+}
+
+export interface GroupMemberItem {
+  uid: string;
+  name: string;
+  avatarUrl?: string;
+}
+
+// Danh sách thành viên nhóm — chỉ có dữ liệu thật với hội thoại NHÓM của
+// Zalo (server tự trả rỗng cho kênh/loại hội thoại khác, xem
+// conversation.controller.ts#listConversationGroupMembers) — dùng cho picker
+// "@nhắc tên" trong ô soạn tin.
+export async function getGroupMembers(conversationId: string): Promise<GroupMemberItem[]> {
+  const token = await getSessionToken();
+  if (!token) return [];
+
+  try {
+    const data = await apiFetch<{ success: boolean; items: GroupMemberItem[] }>(
+      `/conversations/${conversationId}/group-members`,
+      { headers: await authHeaders(token) }
+    );
+    return data.items;
+  } catch {
+    return [];
   }
 }
 

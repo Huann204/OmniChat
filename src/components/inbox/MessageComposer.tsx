@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { FilePickerModal } from "@/components/media/FilePickerModal";
 import { MediaPickerModal } from "@/components/media/MediaPickerModal";
+import { getGroupMembers, type GroupMemberItem } from "@/app/actions/conversation";
 import type { ZaloStickerItem } from "@/app/actions/zaloFriend";
 import type { MediaItem } from "@/types/media";
 import type { QuickReply } from "@/types/quickReply";
@@ -38,7 +39,8 @@ interface MessageComposerProps {
     imageUrls: string[],
     replyToMessageId?: string,
     file?: AttachedFile,
-    sticker?: { id: number; cateId: number; type: number; previewUrl: string }
+    sticker?: { id: number; cateId: number; type: number; previewUrl: string },
+    mentions?: { uid: string; pos: number; len: number }[]
   ) => void | Promise<void>;
   // Mẫu trả lời nhanh của Shop — gõ "/" + ký tự tắt để gợi ý, hoặc bấm nút
   // ghi chú (StickyNote) để xem toàn bộ danh sách, xem
@@ -55,6 +57,12 @@ interface MessageComposerProps {
   // hiện nút disable vô nghĩa.
   canSendSticker?: boolean;
   zaloPageId?: string;
+  // "@nhắc tên" thành viên — chỉ nhóm Zalo hỗ trợ (xem
+  // server/src/services/channels/types.ts#ChannelMentionRef). Cần
+  // conversationId để tải danh sách thành viên nhóm đó — thiếu 1 trong 2 thì
+  // gõ "@" chỉ ra chữ thường, không hiện dropdown.
+  canMention?: boolean;
+  conversationId?: string;
 }
 
 // Ảnh của mẫu trả lời nhanh chỉ có URL (Server không lưu đủ metadata như
@@ -101,7 +109,16 @@ export interface MessageComposerHandle {
 
 export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerProps>(
   function MessageComposer(
-    { onSend, quickReplies = [], replyingTo, onCancelReply, canSendSticker, zaloPageId },
+    {
+      onSend,
+      quickReplies = [],
+      replyingTo,
+      onCancelReply,
+      canSendSticker,
+      zaloPageId,
+      canMention,
+      conversationId,
+    },
     ref
   ) {
     const [value, setValue] = React.useState("");
@@ -120,10 +137,42 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
     // khác slashQuery (tự mở khi đang gõ, lọc theo ký tự tắt).
     const [manualListOpen, setManualListOpen] = React.useState(false);
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    // Vị trí con trỏ hiện tại trong textarea — cần để biết đang gõ "@..." ở
+    // ĐÚNG NGAY TRƯỚC con trỏ hay không (khác "/" chỉ cần kiểm tra đầu chuỗi,
+    // "@" có thể gõ ở giữa câu bất kỳ lúc nào).
+    const [cursorPos, setCursorPos] = React.useState(0);
+    const [groupMembers, setGroupMembers] = React.useState<GroupMemberItem[]>([]);
+    // Chỉ những người ĐÃ CHỌN qua dropdown mới được tính là mention thật khi
+    // gửi (xem buildMentions) — gõ tay "@Tên" không qua dropdown thì vẫn chỉ
+    // là chữ thường, không nhắc được ai.
+    const [mentionedMembers, setMentionedMembers] = React.useState<GroupMemberItem[]>([]);
 
     React.useImperativeHandle(ref, () => ({
       setText: (text: string) => setValue(text),
     }));
+
+    // Đổi hội thoại thì reset — setState thường trong thân render (an toàn,
+    // mirror MediaPickerModal.tsx/CustomerInfoPanel.tsx), KHÔNG đặt trong
+    // effect.
+    const [prevConversationId, setPrevConversationId] = React.useState(conversationId);
+    if (conversationId !== prevConversationId) {
+      setPrevConversationId(conversationId);
+      setMentionedMembers([]);
+      setGroupMembers([]);
+    }
+
+    // Tải danh sách thành viên nhóm khi đổi hội thoại — hàm fetch khai báo
+    // NGAY TRONG effect (không qua useCallback ở ngoài) để ESLint rule
+    // react-hooks/set-state-in-effect không coi nhầm là setState đồng bộ, xem
+    // CustomerInfoPanel.tsx.
+    React.useEffect(() => {
+      if (!canMention || !conversationId) return;
+      async function run() {
+        const items = await getGroupMembers(conversationId!);
+        setGroupMembers(items);
+      }
+      void run();
+    }, [canMention, conversationId]);
 
     // Tự phình cao theo nội dung — input/textarea mặc định không tự cao lên,
     // phải tự đo lại scrollHeight mỗi khi value đổi (kể cả lúc reset về ""
@@ -154,6 +203,60 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
       setManualListOpen(false);
     }
 
+    // Đang gõ "@..." NGAY TRƯỚC con trỏ (chưa gặp khoảng trắng/xuống dòng nào
+    // kể từ dấu "@" gần nhất) — khác "/" chỉ cần kiểm tra đầu chuỗi, "@" có
+    // thể xuất hiện ở BẤT KỲ đâu giữa câu, nên phải tính theo vị trí con trỏ
+    // thật, không phải theo đầu chuỗi.
+    const atQuery = React.useMemo(() => {
+      if (!canMention) return null;
+      const uptoCursor = value.slice(0, cursorPos);
+      const atIndex = uptoCursor.lastIndexOf("@");
+      if (atIndex === -1) return null;
+      const between = uptoCursor.slice(atIndex + 1);
+      if (/[\s]/.test(between)) return null;
+      return between;
+    }, [canMention, value, cursorPos]);
+
+    const mentionDropdownItems =
+      atQuery !== null
+        ? groupMembers.filter((m) => m.name.toLowerCase().includes(atQuery.toLowerCase())).slice(0, 6)
+        : [];
+
+    // Chèn "@Tên " vào đúng vị trí con trỏ, thay cho phần "@..." đang gõ dở —
+    // nhớ lại người này để lúc gửi tính ra đúng pos/len (xem buildMentions).
+    function applyMention(member: GroupMemberItem) {
+      const uptoCursor = value.slice(0, cursorPos);
+      const atIndex = uptoCursor.lastIndexOf("@");
+      if (atIndex === -1) return;
+      const before = value.slice(0, atIndex);
+      const after = value.slice(cursorPos);
+      const inserted = `@${member.name} `;
+      const newValue = before + inserted + after;
+      const newCursorPos = before.length + inserted.length;
+      setValue(newValue);
+      setCursorPos(newCursorPos);
+      setMentionedMembers((prev) => [...prev, member]);
+      requestAnimationFrame(() => {
+        textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
+        textareaRef.current?.focus();
+      });
+    }
+
+    // Tính pos/len của từng mention ĐÃ CHỌN trong chuỗi text CUỐI CÙNG sẽ gửi
+    // — tìm đúng chuỗi "@Tên" trong text đó, không tự theo dõi vị trí realtime
+    // lúc gõ (đơn giản hơn nhiều, đủ dùng cho trường hợp thường gặp — chọn từ
+    // dropdown, không tự gõ tay/sửa giữa tên). Không tìm thấy nữa (vd đã xoá)
+    // thì bỏ qua âm thầm, không chặn gửi.
+    function buildMentions(text: string): { uid: string; pos: number; len: number }[] {
+      const mentions: { uid: string; pos: number; len: number }[] = [];
+      for (const member of mentionedMembers) {
+        const marker = `@${member.name}`;
+        const pos = text.indexOf(marker);
+        if (pos !== -1) mentions.push({ uid: member.uid, pos, len: marker.length });
+      }
+      return mentions;
+    }
+
     async function handleSend() {
       const trimmedText = value.trim();
       if ((!trimmedText && attachedImages.length === 0 && !attachedFile) || isSending) return;
@@ -161,13 +264,15 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
       const imageUrls = attachedImages.map((item) => item.url);
       const replyToMessageId = replyingTo?.id;
       const file = attachedFile ?? undefined;
+      const mentions = trimmedText ? buildMentions(trimmedText) : undefined;
       setValue("");
       setAttachedImages([]);
       setAttachedFile(null);
+      setMentionedMembers([]);
       onCancelReply?.();
       setIsSending(true);
       try {
-        await onSend(trimmedText, imageUrls, replyToMessageId, file);
+        await onSend(trimmedText, imageUrls, replyToMessageId, file, undefined, mentions);
       } finally {
         setIsSending(false);
       }
@@ -298,15 +403,54 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
             </div>
           )}
 
+          {quickReplyDropdownItems.length === 0 && mentionDropdownItems.length > 0 && (
+            <div className="absolute bottom-full left-0 z-20 mb-1.5 max-h-72 w-full max-w-sm overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+              {mentionDropdownItems.map((member) => (
+                <button
+                  key={member.uid}
+                  type="button"
+                  onClick={() => applyMention(member)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-slate-50 cursor-pointer"
+                >
+                  {member.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={member.avatarUrl}
+                      alt={member.name}
+                      className="h-7 w-7 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-300 text-xs font-bold text-white">
+                      {member.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">
+                    {member.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <textarea
             ref={textareaRef}
             rows={1}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setCursorPos(e.target.selectionStart);
+            }}
+            onClick={(e) => setCursorPos(e.currentTarget.selectionStart)}
+            onKeyUp={(e) => setCursorPos(e.currentTarget.selectionStart)}
             onKeyDown={(e) => {
               if (quickReplyDropdownItems.length > 0 && (e.key === "Enter" || e.key === "Tab")) {
                 e.preventDefault();
                 applyQuickReply(quickReplyDropdownItems[0]);
+                return;
+              }
+              if (mentionDropdownItems.length > 0 && (e.key === "Enter" || e.key === "Tab")) {
+                e.preventDefault();
+                applyMention(mentionDropdownItems[0]);
                 return;
               }
               // Enter thường -> gửi. Shift+Enter -> để mặc định trình duyệt tự
@@ -316,7 +460,11 @@ export const MessageComposer = React.forwardRef<MessageComposerHandle, MessageCo
                 handleSend();
               }
             }}
-            placeholder="Nhập tin nhắn... (gõ / để chèn mẫu trả lời nhanh, Shift+Enter để xuống dòng)"
+            placeholder={
+              canMention
+                ? "Nhập tin nhắn... (gõ / để chèn mẫu, @ để nhắc tên, Shift+Enter để xuống dòng)"
+                : "Nhập tin nhắn... (gõ / để chèn mẫu trả lời nhanh, Shift+Enter để xuống dòng)"
+            }
             className="block w-full resize-none overflow-y-auto border-none bg-transparent py-1.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
           />
         </div>

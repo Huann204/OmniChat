@@ -547,7 +547,8 @@ function InboxViewInner({
     imageUrls: string[],
     replyToMessageId?: string,
     file?: { url: string; name: string; isVideo?: boolean },
-    sticker?: { id: number; cateId: number; type: number; previewUrl: string }
+    sticker?: { id: number; cateId: number; type: number; previewUrl: string },
+    mentions?: { uid: string; pos: number; len: number }[]
   ) {
     if (!activeConversation) return;
     const conversationId = activeConversation.id;
@@ -562,12 +563,13 @@ function InboxViewInner({
       isVideo?: boolean;
       replyToMessageId?: string;
       sticker?: { id: number; cateId: number; type: number };
+      mentions?: { uid: string; pos: number; len: number }[];
       // Chỉ optimistic UI dùng (hiện ảnh preview NGAY, trước khi server xác
       // nhận) — KHÔNG gửi lên server (server tự tra lại URL thật qua API
       // Zalo, xem sendSticker ở zalo.channel.ts — không tin URL client khai).
       stickerPreviewUrl?: string;
     }[] = [];
-    if (text) parts.push({ clientId: `temp-${crypto.randomUUID()}`, text, replyToMessageId });
+    if (text) parts.push({ clientId: `temp-${crypto.randomUUID()}`, text, replyToMessageId, mentions });
     if (imageUrls.length > 0) parts.push({ clientId: `temp-${crypto.randomUUID()}`, imageUrls });
     if (file) {
       parts.push({
@@ -613,6 +615,7 @@ function InboxViewInner({
       // đè bên dưới (giống ảnh/sticker), khác file thường vẫn cần tên để
       // hiện trên thẻ link "bấm mở tab mới" (xem messageKindAndContent).
       text: part.fileUrl ? (part.isVideo ? undefined : part.fileName) : part.text,
+      mentions: part.mentions,
       attachmentUrls:
         part.imageUrls ??
         (part.fileUrl ? [part.fileUrl] : part.stickerPreviewUrl ? [part.stickerPreviewUrl] : undefined),
@@ -672,6 +675,7 @@ function InboxViewInner({
                 status: r.error ? "failed" : "sent",
                 replyPreviewText: r.message?.replyPreviewText ?? m.replyPreviewText,
                 replyToMessageId: r.message?.replyToMessageId ?? m.replyToMessageId,
+                mentions: r.message?.mentions ?? m.mentions,
               };
             }),
           }
@@ -884,6 +888,8 @@ function InboxViewInner({
               onCancelReply={() => setReplyingTo(null)}
               canSendSticker={activeConversation.type === ZALO_CHANNEL_TYPE}
               zaloPageId={zaloPages?.find((p) => p.externalPageId === activeConversation.pageId)?.id}
+              canMention={activeConversation.type === ZALO_CHANNEL_TYPE && activeConversation.isGroup}
+              conversationId={activeConversation.id}
             />
           </div>
         ) : (
