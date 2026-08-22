@@ -33,9 +33,13 @@ const SHORTCUTS: ShortcutItem[] = [
     description: "mở danh sách mẫu trả lời nhanh (gõ kèm ký tự tắt)",
   },
   {
+    keys: ["@"],
+    description: "mở danh sách gợi ý nhắc tên thành viên trong nhóm Zalo",
+  },
+  {
     keys: ["Tab"],
     note: "hoặc",
-    description: "để chọn nhanh mẫu trả lời",
+    description: "để chọn nhanh mẫu trả lời hoặc thành viên",
   },
   {
     keys: ["Esc"],
