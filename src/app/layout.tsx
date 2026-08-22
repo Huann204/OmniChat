@@ -30,9 +30,14 @@ export const metadata: Metadata = {
   },
   description: "Quản lý tất cả tin nhắn khách hàng trong một nơi. Tự động hóa bán hàng với AI Chatbot thông minh trên Facebook, Zalo, Instagram, WhatsApp, và Website.",
   icons: {
-    icon: "/favi.png",
-    shortcut: "/favi.png",
-    apple: "/favi.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+      { url: "/favi.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "Hchat | Nền tảng quản lý tin nhắn và AI Chatbot",
