@@ -4,9 +4,15 @@ import { AiAssistantSettingsClient } from "@/components/settings/AiAssistantSett
 export const metadata: Metadata = {
   title: "Cấu hình AI Assistant",
 };
-import { getAiAssistantSettings, getChatbotConfigs } from "@/lib/dal";
+import { getAiAssistantSettings, getChatbotConfigs, getConnectedPages } from "@/lib/dal";
 
 export default async function AiAssistantSettingsPage() {
-  const [settings, chatbots] = await Promise.all([getAiAssistantSettings(), getChatbotConfigs()]);
-  return <AiAssistantSettingsClient initialSettings={settings} initialChatbots={chatbots} />;
+  const [settings, chatbots, pages] = await Promise.all([
+    getAiAssistantSettings(),
+    getChatbotConfigs(),
+    getConnectedPages(),
+  ]);
+  return (
+    <AiAssistantSettingsClient initialSettings={settings} initialChatbots={chatbots} pages={pages} />
+  );
 }
