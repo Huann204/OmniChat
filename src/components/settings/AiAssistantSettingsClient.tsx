@@ -11,10 +11,13 @@ import {
   BsX,
 } from "react-icons/bs";
 import { Switch } from "@/components/ui/Switch";
+import { AiChatbotBuilder } from "@/components/settings/AiChatbotBuilder";
 import { CustomizeAiRepliesModal } from "@/components/settings/CustomizeAiRepliesModal";
 import { updateAiAssistantSettings } from "@/app/actions/aiAssistant";
 import { toast } from "@/store/toast-store";
+import { cn } from "@/lib/utils";
 import type { AiAssistantSettings, AiReplyPreset, SuggestReplyTrigger } from "@/types/aiAssistant";
+import type { ChatbotConfig } from "@/types/chatbotConfig";
 
 // "Mô hình AI", "Thanh toán", "Phát hiện cảm xúc" vẫn CHỈ là UI tĩnh (chưa
 // nối backend thật) — chỉ riêng "Gợi ý trả lời tin nhắn từ AI" (điều khiển
@@ -113,9 +116,21 @@ function SubRow({
 
 interface AiAssistantSettingsClientProps {
   initialSettings: AiAssistantSettings;
+  initialChatbots: ChatbotConfig[];
 }
 
-export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettingsClientProps) {
+const TABS = [
+  { key: "suggest", label: "Gợi ý trả lời" },
+  { key: "chatbot", label: "Chatbot tự động" },
+] as const;
+type TabKey = (typeof TABS)[number]["key"];
+
+export function AiAssistantSettingsClient({
+  initialSettings,
+  initialChatbots,
+}: AiAssistantSettingsClientProps) {
+  const [activeTab, setActiveTab] = React.useState<TabKey>("suggest");
+
   const [aiModel, setAiModel] = React.useState("Thông minh nhất");
   const [aiModelEnabled, setAiModelEnabled] = React.useState(true);
 
@@ -161,6 +176,27 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
     <div>
       <h1 className="mb-4 text-xl font-semibold text-slate-900">Trợ lý AI</h1>
 
+      <div className="mb-4 flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 w-fit">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+              activeTab === tab.key
+                ? "bg-primary text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "chatbot" && <AiChatbotBuilder initialChatbots={initialChatbots} />}
+
+      {activeTab === "suggest" && (
       <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[8px]">
         <SettingRow
           icon={
@@ -309,6 +345,7 @@ export function AiAssistantSettingsClient({ initialSettings }: AiAssistantSettin
           )}
         </SettingRow>
       </div>
+      )}
 
       <CustomizeAiRepliesModal
         open={customizeModalOpen}

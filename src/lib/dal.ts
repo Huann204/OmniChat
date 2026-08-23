@@ -6,6 +6,7 @@ import { formatClock, formatTimeLabel, messageKindAndContent } from "./message-f
 import { getCurrentShopId, getSessionToken } from "./session";
 import type { AiAssistantSettings } from "@/types/aiAssistant";
 import type { Bot } from "@/types/bot";
+import type { ChatbotConfig } from "@/types/chatbotConfig";
 import type { Conversation } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
 import type { PostItem, PostStatus } from "@/app/actions/post";
@@ -286,6 +287,23 @@ export const getQuickReplies = cache(async (): Promise<QuickReply[]> => {
 
   try {
     const data = await apiFetch<{ success: boolean; items: QuickReply[] }>("/quick-replies", {
+      headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) },
+    });
+    return data.items;
+  } catch {
+    return [];
+  }
+});
+
+// Danh sách chatbot tự động của Shop (mỗi bot: tên/hướng dẫn/model riêng) —
+// xem AiChatbotBuilder.tsx. Rỗng = Shop chưa tạo bot nào, FE tự tạo 1 bot
+// mặc định khi vào trang.
+export const getChatbotConfigs = cache(async (): Promise<ChatbotConfig[]> => {
+  const token = await getSessionToken();
+  if (!token) return [];
+
+  try {
+    const data = await apiFetch<{ success: boolean; items: ChatbotConfig[] }>("/chatbot-configs", {
       headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) },
     });
     return data.items;
