@@ -34,7 +34,7 @@ const SHORTCUTS: ShortcutItem[] = [
   },
   {
     keys: ["@"],
-    description: "mở danh sách gợi ý nhắc tên thành viên trong nhóm Zalo",
+    description: "mở danh sách gợi ý nhắc tên thành viên trong nhóm (chỉ nhóm Zalo)",
   },
   {
     keys: ["Tab"],
