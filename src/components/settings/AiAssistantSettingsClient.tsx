@@ -17,6 +17,7 @@ import { updateAiAssistantSettings } from "@/app/actions/aiAssistant";
 import { toast } from "@/store/toast-store";
 import { cn } from "@/lib/utils";
 import type { AiAssistantSettings, AiReplyPreset, SuggestReplyTrigger } from "@/types/aiAssistant";
+import type { Bot } from "@/types/bot";
 import type { ChatbotConfig } from "@/types/chatbotConfig";
 
 // "Mô hình AI", "Thanh toán", "Phát hiện cảm xúc" vẫn CHỈ là UI tĩnh (chưa
@@ -117,6 +118,7 @@ function SubRow({
 interface AiAssistantSettingsClientProps {
   initialSettings: AiAssistantSettings;
   initialChatbots: ChatbotConfig[];
+  pages: Bot[];
 }
 
 const TABS = [
@@ -128,6 +130,7 @@ type TabKey = (typeof TABS)[number]["key"];
 export function AiAssistantSettingsClient({
   initialSettings,
   initialChatbots,
+  pages,
 }: AiAssistantSettingsClientProps) {
   const [activeTab, setActiveTab] = React.useState<TabKey>("suggest");
 
@@ -194,7 +197,7 @@ export function AiAssistantSettingsClient({
         ))}
       </div>
 
-      {activeTab === "chatbot" && <AiChatbotBuilder initialChatbots={initialChatbots} />}
+      {activeTab === "chatbot" && <AiChatbotBuilder initialChatbots={initialChatbots} pages={pages} />}
 
       {activeTab === "suggest" && (
       <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[8px]">

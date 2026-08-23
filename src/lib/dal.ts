@@ -126,6 +126,7 @@ interface ConnectedPageRaw {
   category?: string;
   picture?: string;
   status: Bot["status"];
+  chatbotId?: string;
 }
 
 // Khớp CHANNEL_TYPE_* trong server/src/models/connectedPage.model.ts — không
@@ -164,6 +165,7 @@ export const getConnectedPages = cache(async (): Promise<Bot[]> => {
       messageCount: 0,
       orderCount: 0,
       avatarUrl: p.picture,
+      chatbotId: p.chatbotId,
     }));
   } catch {
     return [];

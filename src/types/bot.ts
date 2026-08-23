@@ -13,4 +13,9 @@ export interface Bot {
   messageCount: number;
   orderCount: number;
   avatarUrl?: string;
+  // Chatbot tự động đang gán cho Page này (xem
+  // server/src/models/connectedPage.model.ts#chatbotId) — undefined = chưa
+  // gán bot nào. Dùng ở AssignChatbotPagesModal.tsx để biết Page nào đang
+  // thuộc bot khác trước khi cho gán lại.
+  chatbotId?: string;
 }
