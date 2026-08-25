@@ -200,7 +200,7 @@ export function AiAssistantSettingsClient({
       {activeTab === "chatbot" && <AiChatbotBuilder initialChatbots={initialChatbots} pages={pages} />}
 
       {activeTab === "suggest" && (
-        <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[8px]">
         <SettingRow
           icon={
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-500">

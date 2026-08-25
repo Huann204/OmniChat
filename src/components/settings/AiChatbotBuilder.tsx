@@ -508,182 +508,180 @@ export function AiChatbotBuilder({ initialChatbots, pages: initialPages }: AiCha
         </div>
       </div>
 
-      <div className="w-full overflow-x-auto rounded-2xl">
-        <div className="flex h-[calc(100vh-260px)] min-h-[520px] min-w-[640px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
-          {/* Hướng dẫn */}
-          <div className="flex w-[36%] min-w-[220px] lg:min-w-[250px] flex-col border-r border-slate-200">
-            <div className="flex items-center gap-4 border-b border-slate-200 px-4 py-3">
-              <span className="text-sm font-semibold text-slate-900">Hướng dẫn</span>
-              <div className="ml-auto flex items-center gap-3 text-xs">
-                <button type="button" className="text-slate-400 transition-colors hover:text-slate-600 cursor-pointer">
-                  Xem mẫu
-                </button>
-                <button type="button" className="text-slate-400 transition-colors hover:text-slate-600 cursor-pointer">
-                  AI rules
-                </button>
-                <button
-                  type="button"
-                  className="flex items-center gap-1 font-medium text-primary transition-colors hover:text-primary-hover cursor-pointer"
-                >
-                  <BsStars className="h-3.5 w-3.5" />
-                  Viết lại
-                </button>
-              </div>
-            </div>
-            <textarea
-              value={activeBot.instructions}
-              onChange={(e) => updateActiveBot({ instructions: e.target.value })}
-              spellCheck={false}
-              className="flex-1 resize-none border-none bg-transparent p-4 text-sm leading-relaxed text-slate-700 focus:outline-none"
-            />
-          </div>
-
-          {/* Model + Kiến thức */}
-          <div className="flex w-[32%] min-w-[200px] lg:min-w-[230px] flex-col border-r border-slate-200 bg-slate-50/50">
-            <CollapsibleRow title="Model" open={modelOpen} onToggle={() => setModelOpen((v) => !v)}>
-              <select
-                value={activeBot.model}
-                onChange={(e) => updateActiveBot({ model: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/40"
+      <div className="flex h-[calc(100vh-260px)] min-h-[520px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+        {/* Hướng dẫn */}
+        <div className="flex w-[36%] min-w-[260px] flex-col border-r border-slate-200">
+          <div className="flex items-center gap-4 border-b border-slate-200 px-4 py-3">
+            <span className="text-sm font-semibold text-slate-900">Hướng dẫn</span>
+            <div className="ml-auto flex items-center gap-3 text-xs">
+              <button type="button" className="text-slate-400 transition-colors hover:text-slate-600 cursor-pointer">
+                Xem mẫu
+              </button>
+              <button type="button" className="text-slate-400 transition-colors hover:text-slate-600 cursor-pointer">
+                AI rules
+              </button>
+              <button
+                type="button"
+                className="flex items-center gap-1 font-medium text-primary transition-colors hover:text-primary-hover cursor-pointer"
               >
-                {MODEL_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </CollapsibleRow>
+                <BsStars className="h-3.5 w-3.5" />
+                Viết lại
+              </button>
+            </div>
+          </div>
+          <textarea
+            value={activeBot.instructions}
+            onChange={(e) => updateActiveBot({ instructions: e.target.value })}
+            spellCheck={false}
+            className="flex-1 resize-none border-none bg-transparent p-4 text-sm leading-relaxed text-slate-700 focus:outline-none"
+          />
+        </div>
 
-            <CollapsibleRow
-              title="Kiến thức"
-              open={knowledgeOpen}
-              onToggle={() => setKnowledgeOpen((v) => !v)}
-              action={
-                <button
-                  type="button"
-                  onClick={openAddKnowledge}
-                  aria-label="Thêm kiến thức"
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 cursor-pointer"
-                >
-                  <BsPlusLg className="h-3.5 w-3.5" />
-                </button>
-              }
+        {/* Model + Kiến thức */}
+        <div className="flex w-[32%] min-w-[240px] flex-col border-r border-slate-200 bg-slate-50/50">
+          <CollapsibleRow title="Model" open={modelOpen} onToggle={() => setModelOpen((v) => !v)}>
+            <select
+              value={activeBot.model}
+              onChange={(e) => updateActiveBot({ model: e.target.value })}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
+              {MODEL_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </CollapsibleRow>
+
+          <CollapsibleRow
+            title="Kiến thức"
+            open={knowledgeOpen}
+            onToggle={() => setKnowledgeOpen((v) => !v)}
+            action={
+              <button
+                type="button"
+                onClick={openAddKnowledge}
+                aria-label="Thêm kiến thức"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 cursor-pointer"
+              >
+                <BsPlusLg className="h-3.5 w-3.5" />
+              </button>
+            }
+          >
+            <div className="space-y-2">
+              {addingKnowledge && (
+                <div className="rounded-lg border border-slate-200 bg-white p-2">
+                  <textarea
+                    autoFocus
+                    value={newKnowledgeContent}
+                    onChange={(e) => setNewKnowledgeContent(e.target.value)}
+                    rows={3}
+                    placeholder="Nhập nội dung kiến thức..."
+                    className="w-full resize-none border-none text-sm text-slate-700 focus:outline-none"
+                  />
+                  <div className="mt-1.5 flex justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setAddingKnowledge(false)}
+                      className="rounded-full px-2.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 cursor-pointer"
+                    >
+                      Huỷ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void confirmAddKnowledge()}
+                      disabled={!newKnowledgeContent.trim()}
+                      className="cursor-pointer rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Thêm
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {knowledgeEntries.length === 0 && !addingKnowledge ? (
+                <p className="text-sm text-slate-400">Chưa có mục kiến thức nào.</p>
+              ) : (
+                knowledgeEntries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="group flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-2"
+                  >
+                    <p className="line-clamp-3 min-w-0 flex-1 whitespace-pre-wrap text-sm text-slate-700">
+                      {entry.content}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteKnowledge(entry.id)}
+                      aria-label="Xoá mục kiến thức"
+                      className="shrink-0 cursor-pointer rounded-full p-1 text-slate-300 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
+                    >
+                      <BsTrashFill className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </CollapsibleRow>
+        </div>
+
+        {/* Chat preview */}
+        <div className="flex flex-1 flex-col bg-slate-50/30">
+          <div className="flex-1 overflow-y-auto p-4">
+            {previewMessages.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-1.5 text-center">
+                <span className="mb-1 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-sky-400 text-2xl text-white">
+                  <BsRobot />
+                </span>
+                <p className="text-sm font-semibold text-slate-800">{activeBot.name}</p>
+                <p className="text-xs text-slate-400">Tư vấn khách hàng</p>
+              </div>
+            ) : (
               <div className="space-y-2">
-                {addingKnowledge && (
-                  <div className="rounded-lg border border-slate-200 bg-white p-2">
-                    <textarea
-                      autoFocus
-                      value={newKnowledgeContent}
-                      onChange={(e) => setNewKnowledgeContent(e.target.value)}
-                      rows={3}
-                      placeholder="Nhập nội dung kiến thức..."
-                      className="w-full resize-none border-none text-sm text-slate-700 focus:outline-none"
-                    />
-                    <div className="mt-1.5 flex justify-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setAddingKnowledge(false)}
-                        className="rounded-full px-2.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 cursor-pointer"
-                      >
-                        Huỷ
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void confirmAddKnowledge()}
-                        disabled={!newKnowledgeContent.trim()}
-                        className="cursor-pointer rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Thêm
-                      </button>
+                {previewMessages.map((m, i) => (
+                  <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+                    <div
+                      className={cn(
+                        "max-w-[75%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm shadow-sm",
+                        m.role === "user"
+                          ? "bg-primary text-white"
+                          : "border border-slate-200 bg-white text-slate-700"
+                      )}
+                    >
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+                {previewLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-400 shadow-sm">
+                      Đang soạn câu trả lời...
                     </div>
                   </div>
                 )}
-
-                {knowledgeEntries.length === 0 && !addingKnowledge ? (
-                  <p className="text-sm text-slate-400">Chưa có mục kiến thức nào.</p>
-                ) : (
-                  knowledgeEntries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="group flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-2"
-                    >
-                      <p className="line-clamp-3 min-w-0 flex-1 whitespace-pre-wrap text-sm text-slate-700">
-                        {entry.content}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => void handleDeleteKnowledge(entry.id)}
-                        aria-label="Xoá mục kiến thức"
-                        className="shrink-0 cursor-pointer rounded-full p-1 text-slate-300 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
-                      >
-                        <BsTrashFill className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))
-                )}
               </div>
-            </CollapsibleRow>
+            )}
           </div>
-
-          {/* Chat preview */}
-          <div className="flex flex-1 min-w-[220px] flex-col bg-slate-50/30">
-            <div className="flex-1 overflow-y-auto p-4">
-              {previewMessages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center gap-1.5 text-center">
-                  <span className="mb-1 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-sky-400 text-2xl text-white">
-                    <BsRobot />
-                  </span>
-                  <p className="text-sm font-semibold text-slate-800">{activeBot.name}</p>
-                  <p className="text-xs text-slate-400">Tư vấn khách hàng</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {previewMessages.map((m, i) => (
-                    <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-                      <div
-                        className={cn(
-                          "max-w-[75%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm shadow-sm",
-                          m.role === "user"
-                            ? "bg-primary text-white"
-                            : "border border-slate-200 bg-white text-slate-700"
-                        )}
-                      >
-                        {m.text}
-                      </div>
-                    </div>
-                  ))}
-                  {previewLoading && (
-                    <div className="flex justify-start">
-                      <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-400 shadow-sm">
-                        Đang soạn câu trả lời...
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2 border-t border-slate-200 p-3">
-              <input
-                value={previewInput}
-                onChange={(e) => setPreviewInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void handlePreviewSend();
-                }}
-                disabled={previewLoading}
-                placeholder="Gửi tin nhắn"
-                className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-60"
-              />
-              <button
-                type="button"
-                onClick={() => void handlePreviewSend()}
-                disabled={previewLoading}
-                aria-label="Gửi"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <BsSendFill className="h-4 w-4" />
-              </button>
-            </div>
+          <div className="flex items-center gap-2 border-t border-slate-200 p-3">
+            <input
+              value={previewInput}
+              onChange={(e) => setPreviewInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void handlePreviewSend();
+              }}
+              disabled={previewLoading}
+              placeholder="Gửi tin nhắn"
+              className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-60"
+            />
+            <button
+              type="button"
+              onClick={() => void handlePreviewSend()}
+              disabled={previewLoading}
+              aria-label="Gửi"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <BsSendFill className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
