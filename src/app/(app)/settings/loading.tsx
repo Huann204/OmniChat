@@ -1,6 +1,6 @@
 export default function SettingsLoading() {
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm space-y-5 animate-pulse">
+    <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[8px] space-y-5 animate-pulse">
       <div className="space-y-2 border-b border-slate-100 pb-4">
         <div className="h-6 w-48 rounded bg-slate-200" />
         <div className="h-3.5 w-72 rounded bg-slate-100" />
