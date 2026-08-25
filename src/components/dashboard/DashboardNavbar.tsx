@@ -33,7 +33,7 @@ export function DashboardNavbar({
 
   return (
     <header className={cn("bg-[rgb(80,109,173)]", className)}>
-      <div className="mx-auto flex h-14 w-full px-3 sm:w-[calc(100%-2rem)] max-w-[1144px] items-center gap-2 sm:gap-4 md:gap-8 sm:w-[calc(100%-3rem)]">
+      <div className="mx-auto flex h-14 w-full px-3 sm:px-6 max-w-[1440px] items-center gap-2 sm:gap-4 md:gap-8">
         <Link href={tabs ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2 mr-1 sm:mr-4 md:mr-6">
           <img src="/hchat.png" alt="Hchat Logo" className="h-8 sm:h-10 w-auto object-contain" />
         </Link>
