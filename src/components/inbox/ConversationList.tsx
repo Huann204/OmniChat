@@ -325,6 +325,26 @@ export function ConversationList({
                 {!conversation.isRead && (
                   <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 ring-2 ring-white" />
                 )}
+
+                {/* Badge bot — góc TRÊN bên phải avatar (khác chấm đỏ chưa
+                    đọc ở góc dưới, không đè lên nhau). Xám khi đang tạm dừng
+                    (nhân viên vừa tự xử lý), xanh khi đang tự động thật. */}
+                {conversation.botActive && conversation.botPaused && (
+                  <span
+                    title="Bot tạm dừng"
+                    className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-400 text-[9px] ring-2 ring-white"
+                  >
+                    ⏸️
+                  </span>
+                )}
+                {conversation.botActive && !conversation.botPaused && (
+                  <span
+                    title="Bot đang tự động trả lời hội thoại này"
+                    className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[9px] ring-2 ring-white"
+                  >
+                    🤖
+                  </span>
+                )}
               </div>
 
               <div className="min-w-0 flex-1">

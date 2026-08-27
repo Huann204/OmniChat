@@ -69,7 +69,25 @@ export function ChatHeader({
           </span>
         )}
         <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold text-slate-900">{conversation.customerName}</h2>
+          <div className="flex items-center gap-1.5">
+            <h2 className="truncate text-sm font-semibold text-slate-900">{conversation.customerName}</h2>
+            {conversation.botActive && conversation.botPaused && (
+              <span
+                title="Tạm dừng 30 phút"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200"
+              >
+                ⏸️ AI tạm dừng
+              </span>
+            )}
+            {conversation.botActive && !conversation.botPaused && (
+              <span
+                title="Bot đang tự động trả lời hội thoại này (Cài đặt > Trợ lý AI > Chatbot tự động)"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200"
+              >
+                🤖 AI đang bật
+              </span>
+            )}
+          </div>
           <p className="truncate text-xs text-slate-400">
             {conversation.lastSeenLabel}
             {lastMessage?.time ? ` • ${lastMessage.time}` : ""}

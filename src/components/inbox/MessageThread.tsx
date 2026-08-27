@@ -556,7 +556,12 @@ function MessageRow({
   // (tên riêng người đã gửi, khác customerName của cả nhóm) và tin Page (tên
   // nhân viên thật, server resolve từ Message.sentBy) — rơi về "Bạn"/
   // customerName nếu chưa có (tin cũ, hoặc Facebook echo không qua app này).
-  const senderName = message.senderName ?? (isPage ? "Bạn" : customerName);
+  // sentByBot ưu tiên cao nhất — tin chatbot tự động gửi luôn hiện rõ
+  // "🤖 Trợ lý AI", không lẫn với "Bạn" (nhân viên thật), để agent biết ngay
+  // tin nào KHÔNG phải do đồng nghiệp gửi.
+  const senderName = message.sentByBot
+    ? "🤖 Trợ lý AI"
+    : (message.senderName ?? (isPage ? "Bạn" : customerName));
   // customerAvatarUrl chỉ đúng nghĩa "avatar của NGƯỜI này" ở chat 1-1 — ở
   // chat NHÓM nó là avatar CẢ NHÓM, không phải của riêng thành viên đang gửi.
   // message.senderName chỉ có giá trị ở tin nhóm (quy ước có sẵn, xem

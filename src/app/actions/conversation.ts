@@ -36,6 +36,7 @@ interface RawMessage {
   attachments?: { type: string; url: string; name?: string; description?: string; thumb?: string }[];
   senderName?: string;
   senderAvatarUrl?: string;
+  sentByBot?: boolean;
   replyPreviewText?: string;
   replyToMessageId?: string;
   reactionIcon?: string;
@@ -54,6 +55,7 @@ function mapRawMessage(m: RawMessage): ConversationMessage {
     linkPreview,
     senderName: m.senderName,
     senderAvatarUrl: m.senderAvatarUrl,
+    sentByBot: m.sentByBot,
     replyPreviewText: m.replyPreviewText,
     replyToMessageId: m.replyToMessageId,
     reactionIcon: m.reactionIcon,
