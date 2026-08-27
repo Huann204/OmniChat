@@ -197,6 +197,7 @@ interface RawMessage {
   attachments?: { type: string; url: string; name?: string; description?: string; thumb?: string }[];
   senderName?: string;
   senderAvatarUrl?: string;
+  sentByBot?: boolean;
   replyPreviewText?: string;
   replyToMessageId?: string;
   reactionIcon?: string;
@@ -216,6 +217,8 @@ export interface RawConversation {
   isGroup?: boolean;
   lastMessageAt: string;
   isRead: boolean;
+  botActive?: boolean;
+  botPaused?: boolean;
   tags: ConversationTag[];
   hasMoreMessages: boolean;
   messages: RawMessage[];
@@ -234,6 +237,8 @@ export function mapRawConversations(raw: RawConversation[]): Conversation[] {
     timeLabel: formatTimeLabel(c.lastMessageAt),
     lastMessageAt: c.lastMessageAt,
     isRead: c.isRead,
+    botActive: c.botActive,
+    botPaused: c.botPaused,
     hasMoreMessages: c.hasMoreMessages,
     messages: c.messages.map((m) => {
       const { kind, text, attachmentUrls, linkPreview } = messageKindAndContent(m.text, m.attachments);
@@ -246,6 +251,7 @@ export function mapRawConversations(raw: RawConversation[]): Conversation[] {
         linkPreview,
         senderName: m.senderName,
         senderAvatarUrl: m.senderAvatarUrl,
+        sentByBot: m.sentByBot,
         replyPreviewText: m.replyPreviewText,
         replyToMessageId: m.replyToMessageId,
         reactionIcon: m.reactionIcon,

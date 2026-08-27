@@ -45,6 +45,10 @@ export interface ConversationMessage {
   // nếu chưa resolve được, xem MessageThread.tsx.
   senderName?: string;
   senderAvatarUrl?: string;
+  // Tin do chatbot tự động gửi (xem server/src/services/chatbotAutoReply.service.ts)
+  // — MessageThread.tsx hiện "🤖 Trợ lý AI" thay vì "Bạn" cho tin này, để nhân
+  // viên phân biệt được tin bot gửi với tin đồng nghiệp thật gửi.
+  sentByBot?: boolean;
   // "Trả lời"/"Thả icon" — hiện chỉ Zalo hỗ trợ (Facebook không có API cho 2
   // việc này, xem server/src/services/channels/types.ts). replyPreviewText
   // = snippet tin gốc nếu tin NÀY là 1 lời trả lời trích dẫn. reactionIcon =
@@ -89,6 +93,19 @@ export interface Conversation {
   // hơn (before/beforeId), khác `timeLabel` vốn chỉ để hiển thị (đã format).
   lastMessageAt: string;
   isRead: boolean;
+  // true nếu Page của hội thoại này đã gán 1 chatbot đang "Xuất bản" (xem
+  // ChatbotConfig.autoReplyEnabled) — cho ConversationList.tsx/ChatHeader.tsx
+  // hiện badge "🤖 AI đang bật", để nhân viên biết ngay không cần vào riêng
+  // Cài đặt > Trợ lý AI để kiểm tra. Tính 1 lần lúc tải danh sách/trang, KHÔNG
+  // tự cập nhật qua socket nếu Shop đổi trạng thái xuất bản giữa lúc đang mở
+  // sẵn Livechat (hiếm khi xảy ra, chấp nhận lệch tạm thời tới lần tải lại
+  // sau).
+  botActive?: boolean;
+  // true = bot đang TẠM im lặng cho đúng hội thoại này vì nhân viên vừa tự
+  // tay gửi tin gần đây (30 phút, xem server/src/models/conversation.model.ts#botPausedUntil)
+  // — khác hẳn botActive=false (Page chưa hề bật bot). Chỉ có ý nghĩa khi
+  // botActive=true.
+  botPaused?: boolean;
   messages: ConversationMessage[];
   // Còn tin nhắn cũ hơn chưa tải hay không — dùng để quyết định có tải thêm
   // khi cuộn lên đầu khung chat hay không.

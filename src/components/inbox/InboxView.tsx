@@ -59,6 +59,8 @@ interface NewMessageEvent {
     // (sender="page", server resolve từ Message.sentBy) — xem MessageThread.tsx.
     senderName?: string;
     senderAvatarUrl?: string;
+    // Tin do chatbot tự động gửi — xem types/conversation.ts#ConversationMessage.sentByBot.
+    sentByBot?: boolean;
     // Snippet khung trích dẫn nếu tin này LÀ 1 lời trả lời — xem
     // message.model.ts#replyPreviewText.
     replyPreviewText?: string;
@@ -311,6 +313,7 @@ function InboxViewInner({
         linkPreview,
         senderName: payload.message.senderName,
         senderAvatarUrl: payload.message.senderAvatarUrl,
+        sentByBot: payload.message.sentByBot,
         replyPreviewText: payload.message.replyPreviewText,
         replyToMessageId: payload.message.replyToMessageId,
         mentions: payload.message.mentions,
