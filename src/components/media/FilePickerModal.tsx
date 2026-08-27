@@ -20,10 +20,22 @@ import { formatBytes } from "@/lib/media";
 import type { MediaItem } from "@/types/media";
 import { StorageUsageBar } from "./StorageUsageBar";
 
+const FORMAT_ACCEPT: Record<string, string> = {
+  pdf: ".pdf,application/pdf",
+  docx: ".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: ".txt,text/plain",
+};
+
 interface FilePickerModalProps {
   open: boolean;
   onClose: () => void;
   onSelect: (item: MediaItem) => void;
+  // Lọc chỉ hiện + chỉ cho tải lên vài đuôi file nhất định (vd
+  // ["pdf","docx","txt"]) — dùng khi mở modal này để "chọn tài liệu kiến
+  // thức" (xem AiChatbotBuilder.tsx) thay vì thư viện Tệp/video đầy đủ.
+  formats?: string[];
+  title?: string;
+  emptyHint?: string;
 }
 
 // Nhãn hiện dưới tên file — khớp cách Messenger hiện "Tệp video · 17.8 MB",
@@ -78,7 +90,7 @@ function FileThumbnail({
 }
 
 // Thư viện "Tệp và video" dùng chung cho khung chat — dạng danh sách (tên + loại + dung lượng).
-export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProps) {
+export function FilePickerModal({ open, onClose, onSelect, formats, title, emptyHint }: FilePickerModalProps) {
   const [search, setSearch] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null);
@@ -86,9 +98,12 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
   const [previewItem, setPreviewItem] = React.useState<MediaItem | null>(null);
 
   const { items, page, pages, loading, loadingMore, deletingId, loadMore, addUploaded, removeItem } =
-    useFileLibraryData(search);
+    useFileLibraryData(search, formats);
   const { pending, addFiles } = useFileUpload(addUploaded);
   const storageUsage = useStorageUsage(open, pending.length);
+  const acceptAttr = formats && formats.length > 0
+    ? formats.map((f) => FORMAT_ACCEPT[f] ?? `.${f}`).join(",")
+    : "video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.txt,.csv,.json";
 
   // Reset tìm kiếm và preview mỗi lần mở lại modal
   const [prevOpen, setPrevOpen] = React.useState(open);
@@ -120,7 +135,7 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
   return (
     <Modal open={open} onClose={onClose} className="relative flex h-[min(80vh,640px)] w-full max-w-lg flex-col overflow-hidden">
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
-        <h2 className="text-base font-semibold text-slate-900">Tệp và video âm thanh</h2>
+        <h2 className="text-base font-semibold text-slate-900">{title ?? "Tệp và video âm thanh"}</h2>
         <StorageUsageBar usage={storageUsage} />
         <button
           type="button"
@@ -162,7 +177,7 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
               <BsFileEarmarkFill className="h-8 w-8" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-600">Bạn chưa có file nào.</p>
+              <p className="text-sm font-medium text-slate-600">{emptyHint ?? "Bạn chưa có file nào."}</p>
               <p className="text-sm text-slate-400">Bấm &quot;Thêm mới&quot; để tải file lên</p>
             </div>
           </div>
@@ -235,7 +250,7 @@ export function FilePickerModal({ open, onClose, onSelect }: FilePickerModalProp
         ref={inputRef}
         type="file"
         multiple
-        accept="video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.txt,.csv,.json"
+        accept={acceptAttr}
         className="hidden"
         onChange={(e) => {
           addFiles(e.target.files);
