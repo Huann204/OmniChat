@@ -4,6 +4,9 @@ import * as React from "react";
 import {
   BsChevronDown,
   BsChevronRight,
+  BsFileEarmarkPdfFill,
+  BsFileEarmarkTextFill,
+  BsPaperclip,
   BsPencilFill,
   BsPlusLg,
   BsRobot,
@@ -11,6 +14,7 @@ import {
   BsStars,
   BsTrashFill,
 } from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   createChatbotConfig,
@@ -18,22 +22,32 @@ import {
   previewChatbotReply,
   updateChatbotConfig,
 } from "@/app/actions/chatbotConfig";
-import { createKnowledgeEntry, deleteKnowledgeEntry, getKnowledgeEntries } from "@/app/actions/knowledgeEntry";
+import {
+  createKnowledgeDocumentFromMedia,
+  deleteKnowledgeDocument,
+  getKnowledgeDocuments,
+} from "@/app/actions/knowledgeDocument";
 import { AssignChatbotPagesModal } from "@/components/settings/AssignChatbotPagesModal";
+import { FilePickerModal } from "@/components/media/FilePickerModal";
 import { toast } from "@/store/toast-store";
 import type { Bot } from "@/types/bot";
 import type { ChatbotConfig } from "@/types/chatbotConfig";
-import type { KnowledgeEntry } from "@/types/knowledgeEntry";
+import type { KnowledgeDocument } from "@/types/knowledgeDocument";
+import type { MediaItem } from "@/types/media";
+
+const KNOWLEDGE_DOCUMENT_FORMATS = ["pdf", "docx", "txt"];
 
 // Đã nối API thật (ChatbotConfig — server/src/models/chatbotConfig.model.ts):
 // tên/hướng dẫn/model tự lưu khi sửa (debounce 600ms, giống ô tìm kiếm ở
 // InboxView.tsx), tạo/xoá bot gọi thẳng, không cần nút "Lưu" riêng. Kho kiến
-// thức cũng đã nối thật, kèm embedding (Gemini) tự tính lúc thêm. Chat
-// preview bên phải giờ gọi PIPELINE THẬT (previewChatbotReply — tìm kiến
-// thức liên quan + ghép Hướng dẫn của bot làm system prompt, gọi Gemini sinh
-// câu trả lời tự nhiên, xem chatbotConfig.controller.ts) — không còn chỉ
-// hiện thô kết quả tìm kiếm. "Chọn Page" cũng đã nối thật (AssignChatbotPagesModal.tsx
-// + ConnectedPage.chatbotId).
+// thức CHỈ nhập qua upload tài liệu (không còn nhập tay) — chọn file PDF/
+// Word/txt ĐÃ CÓ SẴN trong thư viện "Tệp và video" (FilePickerModal lọc
+// formats), server tự trích text + cắt chunk + tính embedding (xem
+// knowledgeDocument.controller.ts). Chat preview bên phải gọi PIPELINE THẬT
+// (previewChatbotReply — tìm kiến thức liên quan + ghép Hướng dẫn của bot làm
+// system prompt, gọi Gemini sinh câu trả lời tự nhiên, xem
+// chatbotConfig.controller.ts) — không còn chỉ hiện thô kết quả tìm kiếm.
+// "Chọn Page" cũng đã nối thật (AssignChatbotPagesModal.tsx + ConnectedPage.chatbotId).
 //
 // Thiết kế NHIỀU bot (chọn qua dropdown ở header) — mỗi phần tử `bots` là 1
 // document ChatbotConfig riêng, cho phép "mỗi Page dùng 1 chatbot khác
@@ -113,9 +127,9 @@ export function AiChatbotBuilder({ initialChatbots, pages: initialPages }: AiCha
   const [publishing, setPublishing] = React.useState(false);
   const [modelOpen, setModelOpen] = React.useState(true);
   const [knowledgeOpen, setKnowledgeOpen] = React.useState(false);
-  const [knowledgeEntries, setKnowledgeEntries] = React.useState<KnowledgeEntry[]>([]);
-  const [addingKnowledge, setAddingKnowledge] = React.useState(false);
-  const [newKnowledgeContent, setNewKnowledgeContent] = React.useState("");
+  const [documents, setDocuments] = React.useState<KnowledgeDocument[]>([]);
+  const [addingDocument, setAddingDocument] = React.useState(false);
+  const [documentPickerOpen, setDocumentPickerOpen] = React.useState(false);
   const [previewInput, setPreviewInput] = React.useState("");
   const [previewMessages, setPreviewMessages] = React.useState<PreviewMessage[]>([]);
   const [previewLoading, setPreviewLoading] = React.useState(false);
@@ -171,15 +185,16 @@ export function AiChatbotBuilder({ initialChatbots, pages: initialPages }: AiCha
     );
   }
 
-  // Tải lại danh sách kiến thức mỗi khi đổi bot đang chọn — mirror cách
-  // MessageComposer.tsx tải danh sách thành viên nhóm lúc mở hội thoại (hàm
-  // fetch khai báo NGAY TRONG effect, không qua useCallback ngoài, để ESLint
-  // rule react-hooks/set-state-in-effect không coi nhầm là setState đồng bộ).
+  // Tải lại danh sách tài liệu kiến thức mỗi khi đổi bot đang chọn — mirror
+  // cách MessageComposer.tsx tải danh sách thành viên nhóm lúc mở hội thoại
+  // (hàm fetch khai báo NGAY TRONG effect, không qua useCallback ngoài, để
+  // ESLint rule react-hooks/set-state-in-effect không coi nhầm là setState
+  // đồng bộ).
   React.useEffect(() => {
     if (!activeBotId) return;
     async function run() {
-      const items = await getKnowledgeEntries(activeBotId!);
-      setKnowledgeEntries(items);
+      const docs = await getKnowledgeDocuments(activeBotId!);
+      setDocuments(docs);
     }
     void run();
   }, [activeBotId]);
@@ -265,36 +280,32 @@ export function AiChatbotBuilder({ initialChatbots, pages: initialPages }: AiCha
     setActiveBotId(id);
     setBotPickerOpen(false);
     setPreviewMessages([]);
-    setAddingKnowledge(false);
   }
 
-  function openAddKnowledge() {
-    setKnowledgeOpen(true);
-    setAddingKnowledge(true);
-    setNewKnowledgeContent("");
-  }
-
-  async function confirmAddKnowledge() {
-    if (!activeBot) return;
-    const content = newKnowledgeContent.trim();
-    if (!content) return;
-    const result = await createKnowledgeEntry(activeBot.id, content);
+  // File đã có sẵn trong thư viện "Tệp và video" (chọn qua FilePickerModal
+  // lọc chỉ PDF/Word/txt) — không upload trực tiếp ở đây nữa, thống nhất 1
+  // nơi upload duy nhất là thư viện chung, tránh 1 file vừa nằm trong thư
+  // viện chat vừa có bản sao riêng cho kiến thức chatbot.
+  async function handlePickDocument(item: MediaItem) {
+    if (!activeBot || addingDocument) return;
+    setAddingDocument(true);
+    const result = await createKnowledgeDocumentFromMedia(activeBot.id, item.id);
+    setAddingDocument(false);
     if ("error" in result) {
       toast.error(result.error);
       return;
     }
-    setKnowledgeEntries((prev) => [...prev, result.item]);
-    setAddingKnowledge(false);
-    setNewKnowledgeContent("");
+    setDocuments((prev) => [result.item, ...prev]);
+    toast.success(`Đã thêm tài liệu "${result.item.name}"`);
   }
 
-  async function handleDeleteKnowledge(id: string) {
-    const result = await deleteKnowledgeEntry(id);
+  async function handleDeleteDocument(id: string) {
+    const result = await deleteKnowledgeDocument(id);
     if (result.error) {
       toast.error(result.error);
       return;
     }
-    setKnowledgeEntries((prev) => prev.filter((k) => k.id !== id));
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
   }
 
   function startRename() {
@@ -560,60 +571,49 @@ export function AiChatbotBuilder({ initialChatbots, pages: initialPages }: AiCha
             action={
               <button
                 type="button"
-                onClick={openAddKnowledge}
-                aria-label="Thêm kiến thức"
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 cursor-pointer"
+                onClick={() => setDocumentPickerOpen(true)}
+                disabled={addingDocument}
+                aria-label="Chọn tài liệu từ thư viện"
+                title="Chọn tài liệu từ thư viện Tệp/video (PDF, Word, txt)"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <BsPlusLg className="h-3.5 w-3.5" />
+                {addingDocument ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <BsPaperclip className="h-3.5 w-3.5" />
+                )}
               </button>
             }
           >
             <div className="space-y-2">
-              {addingKnowledge && (
-                <div className="rounded-lg border border-slate-200 bg-white p-2">
-                  <textarea
-                    autoFocus
-                    value={newKnowledgeContent}
-                    onChange={(e) => setNewKnowledgeContent(e.target.value)}
-                    rows={3}
-                    placeholder="Nhập nội dung kiến thức..."
-                    className="w-full resize-none border-none text-sm text-slate-700 focus:outline-none"
-                  />
-                  <div className="mt-1.5 flex justify-end gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setAddingKnowledge(false)}
-                      className="rounded-full px-2.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 cursor-pointer"
-                    >
-                      Huỷ
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void confirmAddKnowledge()}
-                      disabled={!newKnowledgeContent.trim()}
-                      className="cursor-pointer rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      Thêm
-                    </button>
-                  </div>
+              {addingDocument && (
+                <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white p-2 text-xs text-slate-400">
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                  Đang xử lý tài liệu...
                 </div>
               )}
 
-              {knowledgeEntries.length === 0 && !addingKnowledge ? (
-                <p className="text-sm text-slate-400">Chưa có mục kiến thức nào.</p>
+              {documents.length === 0 ? (
+                <p className="text-sm text-slate-400">Chưa có tài liệu nào.</p>
               ) : (
-                knowledgeEntries.map((entry) => (
+                documents.map((doc) => (
                   <div
-                    key={entry.id}
-                    className="group flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-2"
+                    key={doc.id}
+                    className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2"
                   >
-                    <p className="line-clamp-3 min-w-0 flex-1 whitespace-pre-wrap text-sm text-slate-700">
-                      {entry.content}
-                    </p>
+                    {doc.name.toLowerCase().endsWith(".pdf") ? (
+                      <BsFileEarmarkPdfFill className="h-5 w-5 shrink-0 text-red-500" />
+                    ) : (
+                      <BsFileEarmarkTextFill className="h-5 w-5 shrink-0 text-slate-400" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-700">{doc.name}</p>
+                      <p className="text-xs text-slate-400">{doc.chunkCount} đoạn kiến thức</p>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => void handleDeleteKnowledge(entry.id)}
-                      aria-label="Xoá mục kiến thức"
+                      onClick={() => void handleDeleteDocument(doc.id)}
+                      aria-label={`Xoá tài liệu ${doc.name}`}
                       className="shrink-0 cursor-pointer rounded-full p-1 text-slate-300 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
                     >
                       <BsTrashFill className="h-3 w-3" />
@@ -694,6 +694,15 @@ export function AiChatbotBuilder({ initialChatbots, pages: initialPages }: AiCha
         pages={pages}
         chatbotNameById={chatbotNameById}
         onAssigned={handlePagesAssigned}
+      />
+
+      <FilePickerModal
+        open={documentPickerOpen}
+        onClose={() => setDocumentPickerOpen(false)}
+        onSelect={(item) => void handlePickDocument(item)}
+        formats={KNOWLEDGE_DOCUMENT_FORMATS}
+        title="Chọn tài liệu kiến thức"
+        emptyHint="Chưa có tài liệu PDF/Word/txt nào trong thư viện."
       />
     </div>
   );

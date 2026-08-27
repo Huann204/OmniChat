@@ -25,6 +25,10 @@ export async function listMedia(params: {
   // "image" (mặc định, thư viện ảnh — MediaPickerModal) hoặc "file" (video +
   // file khác — FilePickerModal), khớp resourceTypeFilter ở media.controller.ts.
   type?: "image" | "file";
+  // Lọc chỉ còn 1 số đuôi file nhất định (vd ["pdf","docx","txt"]) — dùng khi
+  // FilePickerModal mở ở chế độ "chọn tài liệu kiến thức" (xem
+  // AiChatbotBuilder.tsx), không liên quan gì tới `type`.
+  formats?: string[];
 }): Promise<ListMediaResult> {
   const token = await getSessionToken();
   if (!token) return { items: [], total: 0, page: 1, pages: 1 };
@@ -33,6 +37,7 @@ export async function listMedia(params: {
   query.set("page", String(params.page ?? 1));
   if (params.search) query.set("search", params.search);
   if (params.type) query.set("type", params.type);
+  if (params.formats && params.formats.length > 0) query.set("format", params.formats.join(","));
 
   try {
     const data = await apiFetch<{ success: boolean } & ListMediaResult>(
