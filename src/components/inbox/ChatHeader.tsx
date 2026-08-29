@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   BsArrowLeft,
   BsLink45Deg,
@@ -8,6 +9,7 @@ import {
   BsFillPeopleFill,
   BsFillFolderFill,
   BsFillEnvelopeFill,
+  BsEnvelopeOpenFill,
   BsThreeDots,
   BsLayoutSidebarReverse,
 } from "react-icons/bs";
@@ -19,6 +21,10 @@ interface ChatHeaderProps {
   onBack?: () => void;
   onToggleCustomerInfo?: () => void;
   showCustomerInfo?: boolean;
+  // Đánh dấu chưa/đã đọc — cùng hành động với menu chuột phải trong
+  // ConversationList.tsx, thêm ở đây để làm được ngay TRONG lúc đang mở xem,
+  // không cần quay lại danh sách bên trái.
+  onToggleRead?: (id: string, isRead: boolean) => void;
 }
 
 const HEADER_AVATAR_COLORS: Record<string, string> = {};
@@ -36,8 +42,22 @@ export function ChatHeader({
   onBack,
   onToggleCustomerInfo,
   showCustomerInfo,
+  onToggleRead,
 }: ChatHeaderProps) {
   const lastMessage = conversation.messages[conversation.messages.length - 1];
+  const [moreMenuOpen, setMoreMenuOpen] = React.useState(false);
+  const moreMenuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!moreMenuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setMoreMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [moreMenuOpen]);
 
   return (
     <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2.5 sm:px-4">
@@ -125,12 +145,36 @@ export function ChatHeader({
           </button>
         )}
         <span className="mx-0.5 sm:mx-1 h-5 w-px bg-slate-200" />
-        <button
-          type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-        >
-          <BsThreeDots className="h-4 w-4" />
-        </button>
+        <div ref={moreMenuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setMoreMenuOpen((v) => !v)}
+            aria-label="Thêm tuỳ chọn"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+          >
+            <BsThreeDots className="h-4 w-4" />
+          </button>
+
+          {moreMenuOpen && onToggleRead && (
+            <div className="absolute right-0 top-full z-20 mt-1.5 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl">
+              <button
+                type="button"
+                onClick={() => {
+                  onToggleRead(conversation.id, !conversation.isRead);
+                  setMoreMenuOpen(false);
+                }}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 cursor-pointer"
+              >
+                {conversation.isRead ? (
+                  <BsFillEnvelopeFill className="h-4 w-4 text-slate-400" />
+                ) : (
+                  <BsEnvelopeOpenFill className="h-4 w-4 text-slate-400" />
+                )}
+                {conversation.isRead ? "Đánh dấu chưa đọc" : "Đánh dấu đã đọc"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

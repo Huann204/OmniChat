@@ -14,18 +14,28 @@ async function authHeaders(token: string) {
   };
 }
 
-export async function markConversationRead(conversationId: string) {
+// isRead mặc định true (giữ đúng hành vi cũ — tự động gọi lúc mở hội thoại,
+// xem InboxView.tsx) — truyền false để đánh dấu lại thành CHƯA đọc (tính năng
+// "Đánh dấu chưa đọc" trong ConversationList.tsx, giống Messenger/Zalo thật).
+export async function markConversationRead(conversationId: string, isRead = true) {
   const token = await getSessionToken();
-  if (!token) return;
+  if (!token) return { error: "Chưa đăng nhập" };
 
   try {
     await apiFetch(`/conversations/${conversationId}/read`, {
       method: "PATCH",
       headers: await authHeaders(token),
+      body: JSON.stringify({ isRead }),
     });
-  } catch {
-    // Không chặn UI nếu lưu trạng thái đọc thất bại — không quan trọng bằng
-    // việc hiển thị tin nhắn.
+    return {};
+  } catch (err) {
+    // Đánh dấu ĐÃ đọc thất bại thì bỏ qua âm thầm (không chặn UI, không quan
+    // trọng bằng việc hiển thị tin nhắn) — nhưng đánh dấu CHƯA đọc là thao
+    // tác người dùng CHỦ ĐỘNG bấm, cần báo lỗi rõ để họ biết thử lại.
+    if (!isRead) {
+      return { error: err instanceof ApiError ? err.message : "Không đánh dấu được" };
+    }
+    return {};
   }
 }
 
