@@ -502,6 +502,29 @@ function InboxViewInner({
     }
   }
 
+  // Đánh dấu lại 1 hội thoại thành ĐÃ/CHƯA đọc — tự bấm từ menu chuột phải
+  // trong ConversationList.tsx (khác handleSelect ở trên, vốn LUÔN đánh dấu
+  // đã đọc vì đang thật sự mở xem). Cập nhật lạc quan trước (UI phản hồi tức
+  // thì), rollback nếu server báo lỗi.
+  function handleToggleRead(id: string, isRead: boolean) {
+    let previous: boolean | undefined;
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id !== id) return c;
+        previous = c.isRead;
+        return { ...c, isRead };
+      })
+    );
+    void markConversationRead(id, isRead).then((result) => {
+      if (result?.error) {
+        toast.error(result.error);
+        if (previous !== undefined) {
+          setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, isRead: previous! } : c)));
+        }
+      }
+    });
+  }
+
   // Bấm "Nhắn tin" cạnh 1 người trong danh sách bạn bè Zalo (xem
   // ZaloFriendListModal) — conversationId có thể là hội thoại ĐÃ CÓ (backend
   // tìm-hoặc-tạo, xem zaloFriend.controller.ts#openZaloConversation) nên
@@ -863,6 +886,7 @@ function InboxViewInner({
               onBack={() => setActiveId(null)}
               onToggleCustomerInfo={() => setShowCustomerInfo((v) => !v)}
               showCustomerInfo={showCustomerInfo}
+              onToggleRead={handleToggleRead}
             />
             <MessageThread
               messages={activeConversation.messages}
