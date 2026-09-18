@@ -128,7 +128,7 @@ interface ConnectedPageRaw {
   status: Bot["status"];
   chatbotId?: string;
   // Chỉ có ý nghĩa với kênh Website — xem types/bot.ts#Bot.widgetConfig.
-  widgetConfig?: { primaryColor?: string; greeting?: string; position?: "left" | "right" };
+  widgetConfig?: Bot["widgetConfig"];
   domain?: string;
 }
 

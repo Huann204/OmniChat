@@ -3,18 +3,20 @@
 import { headers } from "next/headers";
 import { ApiError, apiFetch } from "@/lib/api";
 import { getCurrentShopId, getSessionToken } from "@/lib/session";
+// "use server" chỉ được export async function — kiểu dữ liệu/hằng số của
+// form "trước khi chat" sống ở lib/preChatFields.ts. CHỈ import type để dùng
+// nội bộ file này, KHÔNG re-export lại (dù chỉ `export type { ... }`) — từng
+// thử và bị lỗi "WebsiteWidgetConfig is not defined" lúc chạy, vì transform
+// "use server" của Next không nhận diện đúng export type re-export kiểu này,
+// biến nó thành 1 export runtime thật trỏ tới cái tên đã bị erase. Nơi khác
+// cần type này thì import thẳng từ lib/preChatFields.ts.
+import type { WebsiteWidgetConfig } from "@/lib/preChatFields";
 
 export interface FacebookPageOption {
   pageId: string;
   pageName: string;
   category?: string;
   pictureUrl?: string;
-}
-
-export interface WebsiteWidgetConfig {
-  primaryColor?: string;
-  greeting?: string;
-  position?: "left" | "right";
 }
 
 export interface ConnectedFacebookPage {
