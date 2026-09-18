@@ -30,11 +30,17 @@ export async function GET(request: Request) {
 // Shadow DOM để cô lập hoàn toàn CSS 2 chiều: CSS của website Shop không làm
 // vỡ giao diện widget, và CSS widget cũng không rò ra ngoài làm hỏng trang
 // của Shop — đây là cách các widget chat thật (Intercom, Crisp...) đều làm.
-// MVP: chỉ text (chưa ảnh/file/sticker), polling mỗi 4s khi khung chat đang
-// mở (chưa dùng WebSocket — đơn giản hơn, đủ dùng cho bản đầu).
+// MVP: chỉ text (chưa ảnh/file/sticker). Nhận tin real-time qua Socket.IO
+// (namespace "/widget", xem server/src/realtime/socket.ts) thay vì polling —
+// tải thư viện socket.io-client qua CDN lúc cần (script nhúng ngoài, không
+// bundle được qua npm), chỉ 1 kết nối sống cho cả lúc mở lẫn đóng khung chat.
 function buildWidgetScript(apiUrl: string, appOrigin: string): string {
   return `(function () {
   var API_URL = ${JSON.stringify(apiUrl)};
+  // Origin server (bỏ hậu tố "/api") — dùng làm địa chỉ kết nối Socket.IO,
+  // suy trực tiếp từ API_URL thay vì thêm biến môi trường mới, xem
+  // NEXT_PUBLIC_SOCKET_URL ở InboxView.tsx (cùng trỏ về origin y hệt API_URL).
+  var SOCKET_URL = API_URL.replace("/api", "");
   // Icon mặc định của bong bóng chat khi Shop CHƯA tự upload logo riêng (xem
   // websiteChannel.controller.ts#createWebsiteChannel/updateWebsiteChannel)
   // — bị ghi đè ngay bằng data.picture nếu Shop đã có, xem cuối file.
@@ -142,18 +148,25 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
   var gateEl = panel.querySelector(".hc-gate-content");
 
   var isOpen = false;
-  var pollTimer = null;
-  var ambientPollTimer = null;
   var renderedIds = {};
   var unreadCount = 0;
   var pageTitle = document.title;
 
+  // Mốc thời gian tin nhắn (sender="page") GẦN NHẤT khách đã THẬT SỰ mở
+  // khung chat để xem — dùng để phân biệt "tin cũ đã xem rồi" (tải lại lúc
+  // trang mới load) với "tin mới tới trong lúc khung chat đang đóng" (mới
+  // cần tính vào badge). Lưu localStorage để sống được qua nhiều lần tải
+  // trang/đóng mở tab, không chỉ trong 1 phiên.
+  var lastSeenKey = "hchat_widget_lastseen_" + widgetKey;
+  var lastSeenAt = localStorage.getItem(lastSeenKey) || "";
+  var latestMessageAt = lastSeenAt;
+
   // Đã từng vào tới khung chat thật (qua hết "cổng" nếu có) trên máy này —
-  // dùng để quyết định có tự poll NGẦM (kể cả khi đã đóng khung chat) hay
-  // không, xem startAmbientPolling(). Không tự poll cho khách CHƯA từng bấm
-  // vào chat (tránh gọi getWidgetMessages tạo Conversation/lời chào cho
-  // khách chỉ lướt web chưa hề quan tâm tới chat, xem widget.controller.ts
-  // #getWidgetMessages).
+  // dùng để quyết định có tự kết nối Socket.IO NGAY LÚC TẢI TRANG hay không
+  // (để nhận tin ngầm dù khung chat đang đóng), xem connectRealtime(). Không
+  // tự kết nối cho khách CHƯA từng bấm vào chat (tránh gọi getWidgetMessages
+  // tạo Conversation/lời chào cho khách chỉ lướt web chưa hề quan tâm tới
+  // chat, xem widget.controller.ts#getWidgetMessages).
   var engagedKey = "hchat_widget_engaged_" + widgetKey;
   var hasEngaged = localStorage.getItem(engagedKey) === "1";
 
@@ -165,6 +178,16 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
       badgeEl.classList.remove("show");
       document.title = pageTitle;
     }
+  }
+
+  // Khách vừa THẬT SỰ mở khung chat lên xem — coi như đã đọc hết tới tin mới
+  // nhất đã biết, lưu lại mốc này để lần tải trang SAU không tính nhầm những
+  // tin CŨ (đã xem ở lượt trước) thành chưa đọc.
+  function markSeen() {
+    lastSeenAt = latestMessageAt;
+    localStorage.setItem(lastSeenKey, lastSeenAt);
+    unreadCount = 0;
+    updateBadge();
   }
 
   // Màn hình "cổng" trước khi vào khung chat thật — gộp CHUNG 1 màn hình cho
@@ -315,10 +338,11 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
       el.className = "msg " + (m.sender === "customer" ? "customer" : "page");
       el.textContent = m.text || "";
       messagesEl.appendChild(el);
-      // Không tính tin đầu tiên lúc panel vừa mở (khách đang nhìn thấy nó
-      // ngay trong lúc mở, không cần badge) — chỉ tính khi panel ĐANG ĐÓNG,
-      // tức là tin đến trong lúc khách đang lướt chỗ khác trên website.
-      if (m.sender === "page" && !isOpen) {
+      if (m.createdAt > latestMessageAt) latestMessageAt = m.createdAt;
+      // Chỉ tính "chưa đọc" khi: (1) đúng là tin từ Shop, (2) khung chat
+      // ĐANG ĐÓNG, và (3) mới hơn lần khách xem gần nhất (markSeen) — tránh
+      // đếm nhầm cả lịch sử cũ thành chưa đọc mỗi lần tải lại trang.
+      if (m.sender === "page" && !isOpen && m.createdAt > lastSeenAt) {
         unreadCount++;
         newFromPage = true;
       }
@@ -332,8 +356,8 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
     }
   }
 
-  function poll() {
-    fetch(API_URL + "/widget/" + widgetKey + "/messages?visitorId=" + encodeURIComponent(visitorId))
+  function fetchMessagesOnce() {
+    return fetch(API_URL + "/widget/" + widgetKey + "/messages?visitorId=" + encodeURIComponent(visitorId))
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data && data.success) renderMessages(data.messages || []);
@@ -341,31 +365,57 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
       .catch(function () {});
   }
 
-  function startPolling() {
-    poll();
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(poll, 4000);
+  // Tải thư viện socket.io-client qua CDN (script nhúng ngoài, không bundle
+  // qua npm được) — chỉ tải 1 lần, tái dùng lại window.io cho các lần gọi
+  // sau (vd 2 tab/2 widget cùng site sẽ không tải trùng).
+  function loadSocketLib() {
+    if (window.io) return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "https://cdn.socket.io/4.8.1/socket.io.min.js";
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error("socket.io-client load failed")); };
+      document.head.appendChild(s);
+    });
   }
 
-  function stopPolling() {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = null;
+  // Nối vào ĐÚNG room hội thoại của khách này trên namespace "/widget" (xem
+  // server/src/realtime/socket.ts) — mỗi khách chỉ nghe được tin của CHÍNH
+  // hội thoại mình, không nghe được khách khác cùng website. Tự join lại mỗi
+  // lần "connect" (kể cả sau khi tự reconnect do mất mạng), không chỉ lần
+  // đầu.
+  function joinConversation(socket) {
+    socket.on("connect", function () {
+      socket.emit("join_conversation", { widgetKey: widgetKey, visitorId: visitorId });
+    });
+    socket.on("new_message", function (payload) {
+      if (!payload || !payload.message) return;
+      renderMessages([{
+        id: payload.message.id,
+        sender: payload.message.sender,
+        text: payload.message.text,
+        createdAt: payload.message.createdAt,
+      }]);
+    });
   }
 
-  // Poll NGẦM, tần suất thưa hơn (15s) khi khung chat ĐANG ĐÓNG — để khách
-  // biết có tin mới (badge đỏ + rung bong bóng, xem renderMessages) dù đang
-  // lướt chỗ khác trên website, không cần mở khung chat lên mới thấy. Chỉ
-  // chạy khi hasEngaged=true (đã từng chat thật ở máy này), tránh gọi
-  // getWidgetMessages (và vô tình tạo Conversation/lời chào) cho khách chưa
-  // hề bấm vào chat lần nào.
-  function startAmbientPolling() {
-    if (ambientPollTimer) return;
-    ambientPollTimer = setInterval(poll, 15000);
-  }
-
-  function stopAmbientPolling() {
-    if (ambientPollTimer) clearInterval(ambientPollTimer);
-    ambientPollTimer = null;
+  // Kết nối realtime — gọi ĐÚNG 1 LẦN cho cả vòng đời trang (không phân biệt
+  // khung chat đang mở hay đóng, khác bản polling cũ phải tách 2 tần suất):
+  // tải lịch sử tin nhắn 1 lần (cũng là lúc tạo Conversation/lời chào nếu
+  // đây là lần đầu, xem widget.controller.ts#getWidgetMessages) rồi giữ 1
+  // kết nối Socket.IO sống để nhận tin mới ngay khi có, dù khách đang xem
+  // khung chat hay đang lướt chỗ khác trên website.
+  var realtimeConnected = false;
+  function connectRealtime() {
+    if (realtimeConnected) return;
+    realtimeConnected = true;
+    fetchMessagesOnce().then(function () {
+      loadSocketLib()
+        .then(function () {
+          joinConversation(window.io(SOCKET_URL + "/widget"));
+        })
+        .catch(function () {});
+    });
   }
 
   // Đánh dấu đã thật sự vào khung chat (qua hết "cổng" nếu có) — gọi ở CẢ 2
@@ -376,15 +426,13 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
       hasEngaged = true;
       localStorage.setItem(engagedKey, "1");
     }
-    stopAmbientPolling();
-    startPolling();
+    connectRealtime();
   }
 
   function openPanel() {
     isOpen = true;
     panel.classList.add("open");
-    unreadCount = 0;
-    updateBadge();
+    markSeen();
     bubble.classList.remove("hc-bounce");
     if ((pendingPrechatFields || pendingContactChannels) && !gateDone) {
       panel.classList.add("hc-gate");
@@ -396,14 +444,13 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
   function closePanel() {
     isOpen = false;
     panel.classList.remove("open");
-    stopPolling();
-    if (hasEngaged) startAmbientPolling();
   }
 
   // Khách quay lại website (đã từng chat trước đó, xem hasEngaged) mà chưa
   // kịp bấm mở khung chat lần này — vẫn cần biết có tin mới từ lúc đó tới
-  // giờ, nên bật poll ngầm NGAY LÚC TẢI TRANG, không đợi khách bấm bong bóng.
-  if (hasEngaged) startAmbientPolling();
+  // giờ, nên kết nối realtime NGAY LÚC TẢI TRANG, không đợi khách bấm bong
+  // bóng.
+  if (hasEngaged) connectRealtime();
 
   // Chờ configPromise (tải xong preChatFields) trước khi thật sự mở khung —
   // tránh trường hợp khách bấm bong bóng NGAY LÚC trang vừa tải, config chưa
@@ -418,6 +465,10 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
   });
   closeBtn.addEventListener("click", closePanel);
 
+  // Không cần tự fetch/render lại sau khi gửi — kết nối realtime đã join
+  // sẵn room hội thoại (chỉ gửi được tin khi đã ở trong khung chat thật, tức
+  // connectRealtime() đã chạy), tin vừa gửi sẽ tự về qua sự kiện
+  // "new_message" gần như ngay lập tức, xem joinConversation().
   function send() {
     var text = inputEl.value.trim();
     if (!text) return;
@@ -428,7 +479,6 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ visitorId: visitorId, text: text }),
     })
-      .then(function () { poll(); })
       .catch(function () {})
       .finally(function () { sendBtn.disabled = false; });
   }
