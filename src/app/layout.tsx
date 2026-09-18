@@ -63,7 +63,7 @@ export default function RootLayout({
         <AuthSessionProvider>{children}</AuthSessionProvider>
         <Toaster />
         {/* <script src="http://localhost:3000/widget.js" data-key="603229d13a3e45a35482cd585fe67374" async></script> */}
-        <script src="http://localhost:3000/widget.js" data-key="603229d13a3e45a35482cd585fe67374" async></script>
+        {/* <script src="http://localhost:3000/widget.js" data-key="603229d13a3e45a35482cd585fe67374" async></script> */}
       </body>
     </html>
   );
