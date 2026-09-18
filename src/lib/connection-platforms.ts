@@ -1,4 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
+import { BsGlobe2 } from "react-icons/bs";
 import {
   SiAirbnb,
   SiBookingdotcom,
@@ -45,6 +46,15 @@ export const CONNECTION_PLATFORMS: ConnectionPlatform[] = [
     badgeBg: "#0068FF",
     accent: "#0068FF",
     description: "Quét mã QR để kết nối tài khoản Zalo cá nhân, nhận và trả lời tin nhắn ngay trong hộp thư chung.",
+  },
+  {
+    key: "website",
+    label: "Website",
+    icon: BsGlobe2,
+    badgeBg: "#0f172a",
+    accent: "#0f172a",
+    description:
+      "Nhúng 1 đoạn script vào website của bạn để khách vào web chat trực tiếp, hội thoại hiện ngay trong hộp thư chung.",
   },
   {
     key: "telegram",

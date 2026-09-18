@@ -1,4 +1,4 @@
-export type BotChannel = "facebook" | "zalo" | "telegram" | "whatsapp";
+export type BotChannel = "facebook" | "zalo" | "telegram" | "whatsapp" | "website";
 
 // Mirror server/src/models/connectedPage.model.ts#ConnectedPageStatus.
 export type BotStatus = "active" | "inactive" | "deleted";
@@ -18,4 +18,9 @@ export interface Bot {
   // gán bot nào. Dùng ở AssignChatbotPagesModal.tsx để biết Page nào đang
   // thuộc bot khác trước khi cho gán lại.
   chatbotId?: string;
+  // Chỉ có ý nghĩa với channel="website" — màu/lời chào/vị trí widget đang
+  // cấu hình, dùng để prefill EditWebsiteWidgetModal.tsx.
+  widgetConfig?: { primaryColor?: string; greeting?: string; position?: "left" | "right" };
+  // Chỉ có ý nghĩa với channel="website" — tên miền đã khai lúc kết nối.
+  domain?: string;
 }
