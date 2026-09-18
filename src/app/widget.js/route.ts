@@ -7,8 +7,13 @@ const API_URL = process.env.API_URL || "http://localhost:3000/api";
 // (loại trừ mọi path có dấu "." — vốn dành cho file tĩnh/favicon), nếu không
 // middleware sẽ coi đây là route gốc /[pageId] cần đăng nhập và chặn mất,
 // trong khi khách vào website của Shop không hề có session đăng nhập nào.
-export async function GET() {
-  const script = buildWidgetScript(API_URL);
+export async function GET(request: Request) {
+  // Origin CỦA CHÍNH APP NÀY (next-base) — suy từ chính request hiện tại nên
+  // đúng cả dev lẫn prod, không cần thêm biến môi trường NEXT_PUBLIC_* mới.
+  // Cần để build URL TUYỆT ĐỐI cho logo mặc định (public/icon-192.png) — widget
+  // chạy trên domain của SHOP nên không thể dùng đường dẫn tương đối.
+  const appOrigin = new URL(request.url).origin;
+  const script = buildWidgetScript(API_URL, appOrigin);
   return new Response(script, {
     headers: {
       "Content-Type": "application/javascript; charset=utf-8",
@@ -27,9 +32,13 @@ export async function GET() {
 // của Shop — đây là cách các widget chat thật (Intercom, Crisp...) đều làm.
 // MVP: chỉ text (chưa ảnh/file/sticker), polling mỗi 4s khi khung chat đang
 // mở (chưa dùng WebSocket — đơn giản hơn, đủ dùng cho bản đầu).
-function buildWidgetScript(apiUrl: string): string {
+function buildWidgetScript(apiUrl: string, appOrigin: string): string {
   return `(function () {
   var API_URL = ${JSON.stringify(apiUrl)};
+  // Icon mặc định của bong bóng chat khi Shop CHƯA tự upload logo riêng (xem
+  // websiteChannel.controller.ts#createWebsiteChannel/updateWebsiteChannel)
+  // — bị ghi đè ngay bằng data.picture nếu Shop đã có, xem cuối file.
+  var DEFAULT_LOGO = ${JSON.stringify(appOrigin + "/icon-192.png")};
   var scriptEl = document.currentScript;
   var widgetKey = scriptEl && scriptEl.getAttribute("data-key");
   if (!widgetKey) {
@@ -57,8 +66,14 @@ function buildWidgetScript(apiUrl: string): string {
     ".bubble{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:9999px;background:var(--hc-color);box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2147483000;transition:transform .15s;}",
     ".bubble.left{right:auto;left:20px;}",
     ".bubble:hover{transform:scale(1.06);}",
-    ".bubble svg{width:26px;height:26px;fill:#fff;}",
-    ".bubble img{width:100%;height:100%;border-radius:9999px;object-fit:cover;}",
+    ".hc-bubble-icon{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}",
+    ".hc-bubble-icon img{width:100%;height:100%;border-radius:9999px;object-fit:cover;}",
+    ".hc-badge{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:9999px;background:linear-gradient(135deg,#ff6b6b,#e53935);display:none;box-shadow:0 1px 4px rgba(229,57,53,.6),0 0 0 2px #fff;z-index:1;}",
+    ".hc-badge.show{display:block;}",
+    ".hc-badge::after{content:'';position:absolute;inset:-3px;border-radius:9999px;background:rgba(239,68,68,.5);z-index:-1;animation:hcPulseRing 1.8s ease-out infinite;}",
+    "@keyframes hcPulseRing{0%{transform:scale(.7);opacity:.7;}70%{transform:scale(2);opacity:0;}100%{transform:scale(2);opacity:0;}}",
+    "@keyframes hcBounce{0%,100%{transform:scale(1);}30%{transform:scale(1.15);}55%{transform:scale(.95);}80%{transform:scale(1.05);}}",
+    ".bubble.hc-bounce{animation:hcBounce .6s ease;}",
     ".header-left{display:flex;align-items:center;gap:8px;min-width:0;}",
     ".header-avatar{width:24px;height:24px;border-radius:9999px;object-fit:cover;flex-shrink:0;display:none;}",
     ".hc-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
@@ -102,8 +117,12 @@ function buildWidgetScript(apiUrl: string): string {
 
   var bubble = document.createElement("div");
   bubble.className = "bubble";
-  bubble.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.03 2 11c0 2.61 1.28 4.95 3.32 6.61L4 22l4.5-1.5C9.6 20.83 10.78 21 12 21c5.52 0 10-4.03 10-9s-4.48-10-10-10z"/></svg>';
+  bubble.innerHTML =
+    '<span class="hc-bubble-icon"><img src="' + DEFAULT_LOGO + '" alt="" /></span>' +
+    '<span class="hc-badge"></span>';
   root.appendChild(bubble);
+  var bubbleIconEl = bubble.querySelector(".hc-bubble-icon");
+  var badgeEl = bubble.querySelector(".hc-badge");
 
   var panel = document.createElement("div");
   panel.className = "panel";
@@ -124,7 +143,29 @@ function buildWidgetScript(apiUrl: string): string {
 
   var isOpen = false;
   var pollTimer = null;
+  var ambientPollTimer = null;
   var renderedIds = {};
+  var unreadCount = 0;
+  var pageTitle = document.title;
+
+  // Đã từng vào tới khung chat thật (qua hết "cổng" nếu có) trên máy này —
+  // dùng để quyết định có tự poll NGẦM (kể cả khi đã đóng khung chat) hay
+  // không, xem startAmbientPolling(). Không tự poll cho khách CHƯA từng bấm
+  // vào chat (tránh gọi getWidgetMessages tạo Conversation/lời chào cho
+  // khách chỉ lướt web chưa hề quan tâm tới chat, xem widget.controller.ts
+  // #getWidgetMessages).
+  var engagedKey = "hchat_widget_engaged_" + widgetKey;
+  var hasEngaged = localStorage.getItem(engagedKey) === "1";
+
+  function updateBadge() {
+    if (unreadCount > 0) {
+      badgeEl.classList.add("show");
+      document.title = "(" + unreadCount + ") " + pageTitle;
+    } else {
+      badgeEl.classList.remove("show");
+      document.title = pageTitle;
+    }
+  }
 
   // Màn hình "cổng" trước khi vào khung chat thật — gộp CHUNG 1 màn hình cho
   // cả 2 tính năng độc lập của Shop: form "trước khi chat" (widgetConfig.
@@ -217,7 +258,7 @@ function buildWidgetScript(apiUrl: string): string {
       gateDone = true;
       localStorage.setItem(gateDoneKey, "1");
       panel.classList.remove("hc-gate");
-      startPolling();
+      enterChat();
     }
 
     var submitBtn = gateEl.querySelector(".hc-gate-submit");
@@ -266,6 +307,7 @@ function buildWidgetScript(apiUrl: string): string {
   }
 
   function renderMessages(messages) {
+    var newFromPage = false;
     messages.forEach(function (m) {
       if (renderedIds[m.id]) return;
       renderedIds[m.id] = true;
@@ -273,8 +315,21 @@ function buildWidgetScript(apiUrl: string): string {
       el.className = "msg " + (m.sender === "customer" ? "customer" : "page");
       el.textContent = m.text || "";
       messagesEl.appendChild(el);
+      // Không tính tin đầu tiên lúc panel vừa mở (khách đang nhìn thấy nó
+      // ngay trong lúc mở, không cần badge) — chỉ tính khi panel ĐANG ĐÓNG,
+      // tức là tin đến trong lúc khách đang lướt chỗ khác trên website.
+      if (m.sender === "page" && !isOpen) {
+        unreadCount++;
+        newFromPage = true;
+      }
     });
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (newFromPage) {
+      updateBadge();
+      bubble.classList.remove("hc-bounce");
+      void bubble.offsetWidth; // reflow để restart animation nếu tin dồn dập tới liên tiếp
+      bubble.classList.add("hc-bounce");
+    }
   }
 
   function poll() {
@@ -297,13 +352,44 @@ function buildWidgetScript(apiUrl: string): string {
     pollTimer = null;
   }
 
+  // Poll NGẦM, tần suất thưa hơn (15s) khi khung chat ĐANG ĐÓNG — để khách
+  // biết có tin mới (badge đỏ + rung bong bóng, xem renderMessages) dù đang
+  // lướt chỗ khác trên website, không cần mở khung chat lên mới thấy. Chỉ
+  // chạy khi hasEngaged=true (đã từng chat thật ở máy này), tránh gọi
+  // getWidgetMessages (và vô tình tạo Conversation/lời chào) cho khách chưa
+  // hề bấm vào chat lần nào.
+  function startAmbientPolling() {
+    if (ambientPollTimer) return;
+    ambientPollTimer = setInterval(poll, 15000);
+  }
+
+  function stopAmbientPolling() {
+    if (ambientPollTimer) clearInterval(ambientPollTimer);
+    ambientPollTimer = null;
+  }
+
+  // Đánh dấu đã thật sự vào khung chat (qua hết "cổng" nếu có) — gọi ở CẢ 2
+  // nơi khách có thể vào chat: mở panel thẳng (không có cổng, hoặc cổng đã
+  // xong từ trước) và bấm xong "Bắt đầu trò chuyện" ở cổng (finishGate).
+  function enterChat() {
+    if (!hasEngaged) {
+      hasEngaged = true;
+      localStorage.setItem(engagedKey, "1");
+    }
+    stopAmbientPolling();
+    startPolling();
+  }
+
   function openPanel() {
     isOpen = true;
     panel.classList.add("open");
+    unreadCount = 0;
+    updateBadge();
+    bubble.classList.remove("hc-bounce");
     if ((pendingPrechatFields || pendingContactChannels) && !gateDone) {
       panel.classList.add("hc-gate");
     } else {
-      startPolling();
+      enterChat();
     }
   }
 
@@ -311,7 +397,13 @@ function buildWidgetScript(apiUrl: string): string {
     isOpen = false;
     panel.classList.remove("open");
     stopPolling();
+    if (hasEngaged) startAmbientPolling();
   }
+
+  // Khách quay lại website (đã từng chat trước đó, xem hasEngaged) mà chưa
+  // kịp bấm mở khung chat lần này — vẫn cần biết có tin mới từ lúc đó tới
+  // giờ, nên bật poll ngầm NGAY LÚC TẢI TRANG, không đợi khách bấm bong bóng.
+  if (hasEngaged) startAmbientPolling();
 
   // Chờ configPromise (tải xong preChatFields) trước khi thật sự mở khung —
   // tránh trường hợp khách bấm bong bóng NGAY LÚC trang vừa tải, config chưa
@@ -359,7 +451,7 @@ function buildWidgetScript(apiUrl: string): string {
       // header — chỉ có ý nghĩa khi Shop đã upload, không thì giữ icon mặc
       // định như cũ.
       if (data.picture) {
-        bubble.innerHTML = '<img src="' + data.picture + '" alt="" />';
+        bubbleIconEl.innerHTML = '<img src="' + data.picture + '" alt="" />';
         headerAvatarEl.src = data.picture;
         headerAvatarEl.style.display = "block";
       }
