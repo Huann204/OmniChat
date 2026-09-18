@@ -40,7 +40,12 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
   // Origin server (bỏ hậu tố "/api") — dùng làm địa chỉ kết nối Socket.IO,
   // suy trực tiếp từ API_URL thay vì thêm biến môi trường mới, xem
   // NEXT_PUBLIC_SOCKET_URL ở InboxView.tsx (cùng trỏ về origin y hệt API_URL).
-  var SOCKET_URL = API_URL.replace("/api", "");
+  // CHỈ cắt "/api" khi nó nằm ở CUỐI chuỗi (.slice(-4) so sánh trực tiếp,
+  // không dùng .replace("/api","")) — domain thật vd "api.hchat.site" có
+  // "/api" xuất hiện SỚM HƠN ngay trong "https://api...." (do dấu "//" đứng
+  // trước "api"), .replace() sẽ cắt nhầm ngay chỗ đó, phá vỡ hẳn URL (từng bị
+  // đúng lỗi này, gây kết nối Socket.IO sai hẳn sang domain rác).
+  var SOCKET_URL = API_URL.slice(-4) === "/api" ? API_URL.slice(0, -4) : API_URL;
   // Icon mặc định của bong bóng chat khi Shop CHƯA tự upload logo riêng (xem
   // websiteChannel.controller.ts#createWebsiteChannel/updateWebsiteChannel)
   // — bị ghi đè ngay bằng data.picture nếu Shop đã có, xem cuối file.
