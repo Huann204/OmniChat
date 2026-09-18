@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Roboto } from "next/font/google";
+// import Script from "next/script";
 import "./globals.css";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 import { Toaster } from "@/components/ui/Toaster";
@@ -61,6 +62,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <AuthSessionProvider>{children}</AuthSessionProvider>
         <Toaster />
+        {/* <Script
+          src="http://localhost:3000/widget.js"
+          data-key="16bce4850a28b8b0ed6cd2dc8df4f2f0"
+          strategy="lazyOnload"
+        /> */}
       </body>
     </html>
   );

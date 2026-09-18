@@ -3,6 +3,7 @@ import type { ComponentType, SVGProps } from "react";
 import { BotChannel } from "@/types/bot";
 import { FaWhatsapp } from "react-icons/fa";
 import { SiTelegram } from "react-icons/si";
+import { BsGlobe2 } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 
 export const CHANNEL_META: Record<
@@ -38,6 +39,13 @@ export const CHANNEL_META: Record<
     icon: ({ className }: { className?: string }) =>
       React.createElement(FaWhatsapp, { className: cn("text-[#25D366]", className) }),
     badgeBg: "bg-[#25D366]",
+    badgeText: "text-white",
+  },
+  website: {
+    label: "Website",
+    icon: ({ className }: { className?: string }) =>
+      React.createElement(BsGlobe2, { className: cn("text-white", className) }),
+    badgeBg: "bg-[#0f172a]",
     badgeText: "text-white",
   },
 };

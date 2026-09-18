@@ -15,6 +15,7 @@ import { CHANNEL_META } from "@/lib/bot-channel";
 import { setMergePagesCookie } from "@/lib/mergePagesCookie";
 import type { Bot } from "@/types/bot";
 import { DisconnectBotModal } from "@/components/dashboard/DisconnectBotModal";
+import { EditWebsiteWidgetModal } from "@/components/dashboard/EditWebsiteWidgetModal";
 
 const AVATAR_COLORS = [
   "bg-blue-500",
@@ -39,6 +40,7 @@ export function BotCard({ bot, index, onToggleActive, onDisconnect, onReconnect 
   const router = useRouter();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [confirmDisconnect, setConfirmDisconnect] = React.useState(false);
+  const [editWebsiteOpen, setEditWebsiteOpen] = React.useState(false);
   const [reconnecting, setReconnecting] = React.useState(false);
   const [isNavigating, startNavigate] = React.useTransition();
   // Chỉ Zalo/Telegram có khái niệm "phiên sống" bị rớt cần làm mới —
@@ -163,6 +165,11 @@ export function BotCard({ bot, index, onToggleActive, onDisconnect, onReconnect 
                   e.preventDefault();
                   e.stopPropagation();
                   setMenuOpen(false);
+                  // Hiện chỉ có gì để "sửa" thật sự ở kênh Website (màu/lời
+                  // chào/vị trí widget) — Facebook/Zalo/Telegram chưa có
+                  // field nào tương tự, nút này tạm đóng vai trò chỗ neo cho
+                  // sau này.
+                  if (bot.channel === "website") setEditWebsiteOpen(true);
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
@@ -201,6 +208,14 @@ export function BotCard({ bot, index, onToggleActive, onDisconnect, onReconnect 
         bot={bot}
         index={index}
       />
+
+      {bot.channel === "website" && (
+        <EditWebsiteWidgetModal
+          open={editWebsiteOpen}
+          onClose={() => setEditWebsiteOpen(false)}
+          bot={bot}
+        />
+      )}
     </div>
   );
 }

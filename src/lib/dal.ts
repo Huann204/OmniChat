@@ -127,6 +127,9 @@ interface ConnectedPageRaw {
   picture?: string;
   status: Bot["status"];
   chatbotId?: string;
+  // Chỉ có ý nghĩa với kênh Website — xem types/bot.ts#Bot.widgetConfig.
+  widgetConfig?: { primaryColor?: string; greeting?: string; position?: "left" | "right" };
+  domain?: string;
 }
 
 // Khớp CHANNEL_TYPE_* trong server/src/models/connectedPage.model.ts — không
@@ -134,24 +137,27 @@ interface ConnectedPageRaw {
 const CHANNEL_TYPE_FACEBOOK = 0;
 const CHANNEL_TYPE_ZALO_PERSONAL = 1;
 const CHANNEL_TYPE_TELEGRAM = 2;
+const CHANNEL_TYPE_WEBSITE = 3;
 
 function channelFromType(type: number): Bot["channel"] {
   if (type === CHANNEL_TYPE_TELEGRAM) return "telegram";
   if (type === CHANNEL_TYPE_ZALO_PERSONAL) return "zalo";
+  if (type === CHANNEL_TYPE_WEBSITE) return "website";
   if (type === CHANNEL_TYPE_FACEBOOK) return "facebook";
   return "facebook";
 }
 
-// Endpoint tên "/facebook/..." nhưng thực chất trả về mọi Page đã kết nối
-// của Shop hiện tại bất kể kênh nào (xem facebook.controller.ts#listConnectedPages)
-// — map sang Bot để dùng chung 1 UI dashboard cho mọi kênh.
+// "/pages/connected" trả về mọi Page đã kết nối của Shop hiện tại bất kể kênh
+// nào (Facebook/Zalo/Telegram/Website, xem facebook.controller.ts#listConnectedPages
+// — tên file vẫn "facebook" vì lý do lịch sử, không phản ánh đúng route công
+// khai ra ngoài nữa) — map sang Bot để dùng chung 1 UI dashboard cho mọi kênh.
 export const getConnectedPages = cache(async (): Promise<Bot[]> => {
   const token = await getSessionToken();
   if (!token) return [];
 
   try {
     const data = await apiFetch<{ success: boolean; pages: ConnectedPageRaw[] }>(
-      "/facebook/pages/connected",
+      "/pages/connected",
       { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
     );
 
@@ -166,6 +172,8 @@ export const getConnectedPages = cache(async (): Promise<Bot[]> => {
       orderCount: 0,
       avatarUrl: p.picture,
       chatbotId: p.chatbotId,
+      widgetConfig: p.widgetConfig,
+      domain: p.domain,
     }));
   } catch {
     return [];

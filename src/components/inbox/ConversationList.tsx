@@ -36,6 +36,7 @@ const CHANNEL_META_BY_TYPE = {
   0: CHANNEL_META.facebook,
   1: CHANNEL_META.zalo,
   2: CHANNEL_META.telegram,
+  3: CHANNEL_META.website,
 } as const;
 
 // Export để MessageThread.tsx dùng chung — tránh 2 bảng màu avatar khác

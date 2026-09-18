@@ -66,6 +66,16 @@ export function Modal({ open, onClose, title, className, children }: ModalProps)
             role="dialog"
             aria-modal="true"
             aria-label={title}
+            // Chặn bubble lên ancestor NGOÀI backdrop — React portal bắn sự
+            // kiện theo CÂY REACT (không phải cây DOM thật), nên dù modal
+            // này render vào document.body qua createPortal, click bên
+            // trong (gõ input, bấm nút...) vẫn bubble lên đúng component cha
+            // đã render <Modal>. Thiếu dòng này từng gây bug thật: mở
+            // BotCard.tsx > modal "Sửa" (Modal lồng trong 1 div có
+            // onClick={openInbox}) — bấm bất kỳ đâu trong modal để sửa liền
+            // bị hiểu nhầm thành bấm vào card, tự nhảy sang /livechat trước
+            // khi kịp sửa gì.
+            onClick={(e) => e.stopPropagation()}
             className={cn(
               "relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl",
               className
