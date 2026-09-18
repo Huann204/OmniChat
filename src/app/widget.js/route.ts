@@ -77,7 +77,26 @@ function buildWidgetScript(apiUrl: string): string {
     ".composer textarea:focus{border-color:var(--hc-color);}",
     ".composer button{background:var(--hc-color);color:#fff;border:none;border-radius:10px;width:38px;height:38px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;}",
     ".composer button:disabled{opacity:.5;cursor:not-allowed;}",
-    ".composer button svg{width:16px;height:16px;fill:#fff;}"
+    ".composer button svg{width:16px;height:16px;fill:#fff;}",
+    ".panel.hc-gate .hc-messages,.panel.hc-gate .composer{display:none;}",
+    ".panel.hc-gate .hc-gate-content{display:flex;}",
+    ".hc-gate-content{flex:1;overflow-y:auto;padding:20px 16px;display:none;flex-direction:column;background:#fff;}",
+    ".hc-gate-content h4{margin:0 0 4px;font-size:14px;font-weight:600;color:#0f172a;}",
+    ".hc-gate-subtitle{margin:0 0 14px;font-size:12px;color:#94a3b8;}",
+    ".hc-field{margin-bottom:12px;}",
+    ".hc-field label{display:block;margin-bottom:4px;font-size:12px;font-weight:500;color:#475569;}",
+    ".hc-field input{box-sizing:border-box;width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;}",
+    ".hc-field input:focus{border-color:var(--hc-color);}",
+    ".hc-gate-error{display:none;margin:-6px 0 10px;font-size:11px;color:#ef4444;}",
+    ".hc-gate-error.show{display:block;}",
+    ".hc-gate-submit{margin-top:4px;width:100%;border:none;border-radius:9999px;background:var(--hc-color);padding:12px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;}",
+    ".hc-gate-submit:disabled{opacity:.6;cursor:not-allowed;}",
+    ".hc-contact-label{font-size:12px;color:#64748b;text-align:center;margin:16px 0 8px;}",
+    ".hc-contact-channels{display:flex;gap:16px;justify-content:center;}",
+    ".hc-contact-btn{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;font-size:11px;color:#475569;font-family:inherit;padding:0;}",
+    ".hc-contact-icon{width:44px;height:44px;border-radius:9999px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.15);}",
+    ".hc-contact-icon svg{width:22px;height:22px;fill:#fff;}",
+    ".hc-contact-icon.zalo{background:#fff;border:1px solid #e2e8f0;color:#0068FF;font-weight:700;font-size:10px;}"
   ].join("");
   root.appendChild(style);
 
@@ -90,6 +109,7 @@ function buildWidgetScript(apiUrl: string): string {
   panel.className = "panel";
   panel.innerHTML =
     '<div class="header"><span class="header-left"><img class="hc-header-avatar header-avatar" alt="" /><span class="hc-title">Chat với chúng tôi</span></span><button type="button" class="hc-close" aria-label="Đóng">\\u2715</button></div>' +
+    '<div class="hc-gate-content"></div>' +
     '<div class="messages hc-messages"></div>' +
     '<div class="composer"><textarea rows="1" placeholder="Nhập tin nhắn..." class="hc-input"></textarea><button type="button" class="hc-send" aria-label="Gửi"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button></div>';
   root.appendChild(panel);
@@ -100,10 +120,150 @@ function buildWidgetScript(apiUrl: string): string {
   var inputEl = panel.querySelector(".hc-input");
   var sendBtn = panel.querySelector(".hc-send");
   var closeBtn = panel.querySelector(".hc-close");
+  var gateEl = panel.querySelector(".hc-gate-content");
 
   var isOpen = false;
   var pollTimer = null;
   var renderedIds = {};
+
+  // Màn hình "cổng" trước khi vào khung chat thật — gộp CHUNG 1 màn hình cho
+  // cả 2 tính năng độc lập của Shop: form "trước khi chat" (widgetConfig.
+  // preChatFields, Tên bạn/Email/SĐT/Tỉnh) và "kênh liên hệ nhanh"
+  // (widgetConfig.contactChannels, Facebook/Zalo/gọi điện) — Shop có thể bật
+  // 1 trong 2, cả 2, hoặc không bật gì. Gộp chung (thay vì 2 màn hình nối
+  // tiếp như bản đầu) để khách không phải bấm thêm 1 bước mới thấy được form,
+  // đỡ gây cảm giác "trường bị mất" khi Shop bật thêm kênh liên hệ.
+  var PRECHAT_LABELS = { name: "Tên bạn", email: "Email", phone: "Số điện thoại", city: "Tỉnh/Thành" };
+  var PRECHAT_TYPES = { name: "text", email: "email", phone: "tel", city: "text" };
+  // Icon Facebook/gọi điện dùng SVG glyph đơn giản; Zalo không có path SVG
+  // đơn giản chuẩn nên hiện chữ "Zalo" cách điệu trên nền trắng cho gần
+  // giống logo thật.
+  var CONTACT_META = {
+    facebook: {
+      color: "#1877F2",
+      label: "Facebook",
+      icon: '<svg viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.13 8.44 9.88v-6.99H7.9v-2.89h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.89h-2.33v6.99C18.34 21.13 22 16.99 22 12z"/></svg>',
+    },
+    zalo: { color: "#fff", label: "Zalo", text: "Zalo" },
+    phone: {
+      color: "#FF7A00",
+      label: "Gọi điện",
+      icon: '<svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>',
+    },
+  };
+  var gateDoneKey = "hchat_widget_gate_done_" + widgetKey;
+  var gateDone = localStorage.getItem(gateDoneKey) === "1";
+  var pendingPrechatFields = null;
+  var pendingContactChannels = null;
+
+  function openContactChannel(key, value) {
+    if (key === "facebook") {
+      window.open(value, "_blank");
+    } else if (key === "zalo") {
+      window.open(value.indexOf("http") === 0 ? value : "https://zalo.me/" + value, "_blank");
+    } else if (key === "phone") {
+      window.location.href = "tel:" + value.replace(/[^0-9+]/g, "");
+    }
+  }
+
+  function buildGateScreen(fields, channels) {
+    var html = "";
+    if (fields && fields.length > 0) {
+      html += '<h4>Bắt đầu trò chuyện</h4><p class="hc-gate-subtitle">Vui lòng nhập thông tin bên dưới</p>';
+      fields.forEach(function (f) {
+        var label = PRECHAT_LABELS[f.key] || f.key;
+        var type = PRECHAT_TYPES[f.key] || "text";
+        html +=
+          '<div class="hc-field"><label>' +
+          label +
+          (f.required ? ' <span style="color:#ef4444">*</span>' : "") +
+          '</label><input type="' +
+          type +
+          '" data-variable="' +
+          f.variable +
+          '" data-required="' +
+          (f.required ? "1" : "0") +
+          '" /></div>';
+      });
+    }
+    html += '<div class="hc-gate-error"></div>';
+    html += '<button type="button" class="hc-gate-submit">Bắt đầu trò chuyện</button>';
+    if (channels) {
+      var keys = Object.keys(channels);
+      if (keys.length > 0) {
+        html += '<p class="hc-contact-label">Liên hệ qua kênh yêu thích của bạn</p><div class="hc-contact-channels">';
+        keys.forEach(function (key) {
+          var meta = CONTACT_META[key];
+          if (!meta) return;
+          html +=
+            '<button type="button" class="hc-contact-btn" data-key="' +
+            key +
+            '"><span class="hc-contact-icon ' +
+            (key === "zalo" ? "zalo" : "") +
+            '" style="' +
+            (key === "zalo" ? "" : "background:" + meta.color) +
+            '">' +
+            (meta.icon || meta.text) +
+            "</span>" +
+            meta.label +
+            "</button>";
+        });
+        html += "</div>";
+      }
+    }
+    gateEl.innerHTML = html;
+
+    function finishGate() {
+      gateDone = true;
+      localStorage.setItem(gateDoneKey, "1");
+      panel.classList.remove("hc-gate");
+      startPolling();
+    }
+
+    var submitBtn = gateEl.querySelector(".hc-gate-submit");
+    var errorEl = gateEl.querySelector(".hc-gate-error");
+    submitBtn.addEventListener("click", function () {
+      if (!fields || fields.length === 0) {
+        finishGate();
+        return;
+      }
+      var inputs = gateEl.querySelectorAll("input[data-variable]");
+      var values = {};
+      var missing = false;
+      inputs.forEach(function (inp) {
+        var v = inp.value.trim();
+        if (inp.getAttribute("data-required") === "1" && !v) missing = true;
+        if (v) values[inp.getAttribute("data-variable")] = v;
+      });
+      if (missing) {
+        errorEl.textContent = "Vui lòng điền đầy đủ thông tin bắt buộc";
+        errorEl.classList.add("show");
+        return;
+      }
+      errorEl.classList.remove("show");
+      submitBtn.disabled = true;
+      fetch(API_URL + "/widget/" + widgetKey + "/visitor-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorId: visitorId, values: values }),
+      })
+        .then(finishGate)
+        .catch(function () {
+          errorEl.textContent = "Có lỗi xảy ra, vui lòng thử lại";
+          errorEl.classList.add("show");
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+        });
+    });
+
+    gateEl.querySelectorAll(".hc-contact-btn").forEach(function (btn) {
+      var key = btn.getAttribute("data-key");
+      btn.addEventListener("click", function () {
+        openContactChannel(key, channels[key]);
+      });
+    });
+  }
 
   function renderMessages(messages) {
     messages.forEach(function (m) {
@@ -140,7 +300,11 @@ function buildWidgetScript(apiUrl: string): string {
   function openPanel() {
     isOpen = true;
     panel.classList.add("open");
-    startPolling();
+    if ((pendingPrechatFields || pendingContactChannels) && !gateDone) {
+      panel.classList.add("hc-gate");
+    } else {
+      startPolling();
+    }
   }
 
   function closePanel() {
@@ -149,9 +313,16 @@ function buildWidgetScript(apiUrl: string): string {
     stopPolling();
   }
 
+  // Chờ configPromise (tải xong preChatFields) trước khi thật sự mở khung —
+  // tránh trường hợp khách bấm bong bóng NGAY LÚC trang vừa tải, config chưa
+  // kịp về, sẽ bỏ lỡ mất màn hình form (mở thẳng vào chat dù Shop đã bật form
+  // bắt buộc).
   bubble.addEventListener("click", function () {
-    if (isOpen) closePanel();
-    else openPanel();
+    if (isOpen) {
+      closePanel();
+      return;
+    }
+    configPromise.then(openPanel);
   });
   closeBtn.addEventListener("click", closePanel);
 
@@ -178,7 +349,7 @@ function buildWidgetScript(apiUrl: string): string {
     }
   });
 
-  fetch(API_URL + "/widget/" + widgetKey)
+  var configPromise = fetch(API_URL + "/widget/" + widgetKey)
     .then(function (r) { return r.json(); })
     .then(function (data) {
       if (!data || !data.success) return;
@@ -196,6 +367,20 @@ function buildWidgetScript(apiUrl: string): string {
       if (data.position === "left") {
         bubble.classList.add("left");
         panel.classList.add("left");
+      }
+      if (gateDone) return;
+      if (data.preChatFields && data.preChatFields.length > 0) {
+        pendingPrechatFields = data.preChatFields;
+      }
+      if (data.contactChannels) {
+        var channels = {};
+        ["facebook", "zalo", "phone"].forEach(function (key) {
+          if (data.contactChannels[key]) channels[key] = data.contactChannels[key];
+        });
+        if (Object.keys(channels).length > 0) pendingContactChannels = channels;
+      }
+      if (pendingPrechatFields || pendingContactChannels) {
+        buildGateScreen(pendingPrechatFields, pendingContactChannels);
       }
     })
     .catch(function () {});
