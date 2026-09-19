@@ -9,6 +9,7 @@ import type { Bot } from "@/types/bot";
 import type { ChatbotConfig } from "@/types/chatbotConfig";
 import type { Conversation } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
+import type { Customer } from "@/types/customer";
 import type { PostItem, PostStatus } from "@/app/actions/post";
 import type { QuickReply } from "@/types/quickReply";
 import type { ShopMember } from "@/types/shopMember";
@@ -295,6 +296,28 @@ export const getConversationsForPages = cache(
   }
 );
 
+// Lấy ĐÚNG 1 hội thoại theo id, kể cả khi nó KHÔNG nằm trong trang đầu của
+// getConversationsForPages (hội thoại cũ, lâu không có tin mới) — dùng để mở
+// thẳng vào 1 hội thoại cụ thể (vd trang Khách hàng bấm "Mở trong Livechat",
+// xem app/(app)/livechat/page.tsx đọc searchParams.conversationId). undefined
+// = không tìm thấy/không có quyền xem (coi như không truyền conversationId).
+export const getConversationById = cache(
+  async (conversationId: string): Promise<Conversation | undefined> => {
+    const token = await getSessionToken();
+    if (!token) return undefined;
+
+    try {
+      const data = await apiFetch<{ success: boolean; conversation: RawConversation }>(
+        `/conversations/${conversationId}`,
+        { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
+      );
+      return mapRawConversations([data.conversation])[0];
+    } catch {
+      return undefined;
+    }
+  }
+);
+
 // Mẫu trả lời nhanh của Shop đang active — dùng cả ở trang Cài đặt (quản lý)
 // lẫn Livechat (gõ ký tự tắt trong khung soạn tin, xem MessageComposer).
 export const getQuickReplies = cache(async (): Promise<QuickReply[]> => {
@@ -344,6 +367,76 @@ export const getConversationTags = cache(async (): Promise<ConversationTag[]> =>
     return [];
   }
 });
+
+// Raw shape từ GET /customers (server/src/controllers/customer.controller.ts)
+// — export để actions/customer.ts tái dùng cho getMoreCustomers, mirror đúng
+// cách RawConversation/mapRawConversations đã làm cho Livechat.
+export interface RawCustomer {
+  id: string;
+  connectedPageId: string;
+  pageId: string;
+  pageName: string;
+  type: number;
+  customerName?: string;
+  customerAvatarUrl?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  customerAddress?: string;
+  lastMessage?: string;
+  lastMessageAt: string;
+  tags: ConversationTag[];
+  visitorInfo?: Record<string, string>;
+}
+
+export function mapRawCustomers(raw: RawCustomer[]): Customer[] {
+  return raw.map((c) => ({
+    id: c.id,
+    connectedPageId: c.connectedPageId,
+    pageId: c.pageId,
+    pageName: c.pageName,
+    type: c.type,
+    customerName: c.customerName || "Khách hàng",
+    customerAvatarUrl: c.customerAvatarUrl,
+    customerPhone: c.customerPhone,
+    customerEmail: c.customerEmail,
+    customerAddress: c.customerAddress,
+    lastMessage: c.lastMessage,
+    lastMessageAt: c.lastMessageAt,
+    tags: c.tags,
+    visitorInfo: c.visitorInfo,
+  }));
+}
+
+// Trang "Khách hàng" — liệt kê Conversation của MỌI Page nhân viên được phép
+// xem (không cần chọn/gộp Page như Livechat), phân trang theo cùng cơ chế
+// cursor lastMessageAt (xem getConversationsForPages). Chỉ tải TRANG ĐẦU —
+// cuộn thêm gọi getMoreCustomers (actions/customer.ts).
+export const getCustomers = cache(
+  async (params?: {
+    q?: string;
+    type?: number;
+  }): Promise<{ customers: Customer[]; hasMore: boolean }> => {
+    const token = await getSessionToken();
+    if (!token) return { customers: [], hasMore: false };
+
+    try {
+      const search = new URLSearchParams();
+      if (params?.q) search.set("q", params.q);
+      if (params?.type !== undefined) search.set("type", String(params.type));
+      const qs = search.toString();
+      const data = await apiFetch<{
+        success: boolean;
+        hasMore: boolean;
+        customers: RawCustomer[];
+      }>(`/customers${qs ? `?${qs}` : ""}`, {
+        headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) },
+      });
+      return { customers: mapRawCustomers(data.customers), hasMore: data.hasMore };
+    } catch {
+      return { customers: [], hasMore: false };
+    }
+  }
+);
 
 // Chỉ dùng khi chưa đăng nhập hoặc API lỗi (xem catch bên dưới) — nội dung
 // khớp DEFAULT_PRESET_CONTENT phía server (aiAssistant.controller.ts) để
