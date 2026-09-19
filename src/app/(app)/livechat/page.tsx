@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 import {
   getAiAssistantSettings,
   getConnectedPages,
+  getConversationById,
   getConversationsForPages,
   getConversationTags,
   getQuickReplies,
@@ -28,7 +29,18 @@ const EMPTY_BOT: Bot = {
   orderCount: 0,
 };
 
-export default async function MultiPagesPage() {
+// searchParams là Promise (quy ước riêng của bản Next.js này, xem
+// posts/compose/page.tsx) — conversationId dùng để mở thẳng vào 1 hội thoại
+// cụ thể (vd trang Khách hàng bấm "Mở trong Livechat"), xem
+// CustomerDetailModal.tsx#handleOpenInLivechat. Không dùng cho việc chọn Page
+// xem gộp (vẫn qua cookie merge_pages như cũ) — 2 việc độc lập nhau.
+export default async function MultiPagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ conversationId?: string }>;
+}) {
+  const { conversationId } = await searchParams;
+
   // Danh sách Page muốn xem gộp — đọc từ cookie "merge_pages", ghi thẳng ở
   // client bằng document.cookie (xem lib/mergePagesCookie.ts) thay vì qua
   // Server Action + redirect() như trước (cách cũ khiến MỌI lượt vào
@@ -63,6 +75,11 @@ export default async function MultiPagesPage() {
   const quickRepliesPromise = getQuickReplies();
   const conversationTagsPromise = getConversationTags();
   const aiAssistantSettingsPromise = getAiAssistantSettings();
+  // undefined = không có ?conversationId (đa số trường hợp) — InboxView bỏ
+  // qua hẳn bước mở thẳng hội thoại khi giá trị resolve ra undefined.
+  const initialConversationPromise = conversationId
+    ? getConversationById(conversationId)
+    : Promise.resolve(undefined);
 
   // Chưa kết nối Page nào — vẫn hiện đủ khung livechat
   if (selectedPages.length === 0) {
@@ -76,6 +93,7 @@ export default async function MultiPagesPage() {
         quickRepliesPromise={quickRepliesPromise}
         conversationTagsPromise={conversationTagsPromise}
         aiAssistantSettingsPromise={aiAssistantSettingsPromise}
+        initialConversationPromise={initialConversationPromise}
       />
     );
   }
@@ -116,6 +134,7 @@ export default async function MultiPagesPage() {
       quickRepliesPromise={quickRepliesPromise}
       conversationTagsPromise={conversationTagsPromise}
       aiAssistantSettingsPromise={aiAssistantSettingsPromise}
+      initialConversationPromise={initialConversationPromise}
     />
   );
 }

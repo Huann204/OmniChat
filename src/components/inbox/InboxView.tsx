@@ -110,6 +110,13 @@ interface InboxViewProps {
   // quyết định có tự gọi sinh gợi ý không, và khi nào (mở hội thoại, hay
   // mỗi tin mới), xem effect gọi generateAiSuggestions bên dưới.
   aiAssistantSettingsPromise: Promise<AiAssistantSettings>;
+  // Mở thẳng vào 1 hội thoại cụ thể ngay khi vào trang (vd trang Khách hàng
+  // bấm "Mở trong Livechat", xem livechat/page.tsx đọc searchParams.
+  // conversationId) — undefined = mở bình thường, không chọn sẵn hội thoại
+  // nào. Hội thoại này có thể KHÔNG nằm trong `conversationsPromise` (hội
+  // thoại cũ bị trang phân trang bỏ lại phía sau) nên tự ghép thêm vào đầu
+  // danh sách nếu chưa có, xem effect bên dưới.
+  initialConversationPromise?: Promise<Conversation | undefined>;
 }
 
 export function InboxView(props: InboxViewProps) {
@@ -129,6 +136,7 @@ function InboxViewInner({
   quickRepliesPromise,
   conversationTagsPromise,
   aiAssistantSettingsPromise,
+  initialConversationPromise,
 }: InboxViewProps) {
   // Giải mã Promise dữ liệu song song qua React 19 `use()` API — chỉ 1 nguồn
   // duy nhất (Promise), không còn nhánh giá trị trực tiếp cũ (không có caller
@@ -137,8 +145,17 @@ function InboxViewInner({
   const quickReplies = React.use(quickRepliesPromise);
   const conversationTags = React.use(conversationTagsPromise);
   const aiAssistantSettings = React.use(aiAssistantSettingsPromise);
+  const initialConversation = initialConversationPromise ? React.use(initialConversationPromise) : undefined;
 
-  const [conversations, setConversations] = React.useState<Conversation[]>(initialData.conversations);
+  // Ghép sẵn initialConversation (nếu có) vào đầu danh sách NGAY LÚC KHỞI TẠO
+  // state — tránh 1 lần render "chưa thấy" trước khi effect chạy. Việc CHỌN
+  // nó (activeId + đánh dấu đã đọc + gợi ý AI) vẫn để effect dưới đây làm qua
+  // handleSelect như bấm chọn bình thường, không lặp lại logic ở đây.
+  const [conversations, setConversations] = React.useState<Conversation[]>(() =>
+    initialConversation && !initialData.conversations.some((c) => c.id === initialConversation.id)
+      ? [initialConversation, ...initialData.conversations]
+      : initialData.conversations
+  );
   const [hasMoreConversations, setHasMoreConversations] = React.useState(initialData.hasMore);
   const [isLoadingMoreConversations, setIsLoadingMoreConversations] = React.useState(false);
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -501,6 +518,16 @@ function InboxViewInner({
       setAiSuggestionsLoading(false);
     }
   }
+
+  // Mở thẳng vào hội thoại truyền từ ngoài vào (nếu có, xem InboxViewProps
+  // #initialConversationPromise) — CHỈ 1 lần lúc mount, y hệt bấm chọn bình
+  // thường (đánh dấu đã đọc, gợi ý AI nếu có cấu hình) qua chính handleSelect,
+  // không viết lại logic riêng. Mảng conversations đã ghép sẵn hội thoại này
+  // từ lúc khởi tạo state (xem trên) nên handleSelect chỉ cần chọn + đánh dấu.
+  React.useEffect(() => {
+    if (initialConversation) handleSelect(initialConversation.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Đánh dấu lại 1 hội thoại thành ĐÃ/CHƯA đọc — tự bấm từ menu chuột phải
   // trong ConversationList.tsx (khác handleSelect ở trên, vốn LUÔN đánh dấu
