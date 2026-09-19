@@ -44,11 +44,17 @@ export function CustomerList({ initialCustomers, initialHasMore, allTags }: Cust
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [selected, setSelected] = React.useState<Customer | null>(null);
   const requestSeqRef = React.useRef(0);
+  const isFirstRunRef = React.useRef(true);
 
   // Đổi search/channelType/tagId -> tải lại TỪ ĐẦU (không phải tải thêm) —
   // debounce riêng cho search (gõ tự do), đổi bộ lọc dropdown thì tải lại
-  // ngay lập tức.
+  // ngay lập tức. Bỏ qua lần chạy đầu (mount) vì initialCustomers đã có sẵn
+  // từ server rồi — không cần fetch lại y hệt ngay khi vừa vào trang.
   React.useEffect(() => {
+    if (isFirstRunRef.current) {
+      isFirstRunRef.current = false;
+      return;
+    }
     const requestId = ++requestSeqRef.current;
     const delay = search ? 350 : 0;
     const timer = setTimeout(async () => {
