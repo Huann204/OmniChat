@@ -99,7 +99,10 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
     ".msg.customer{align-self:flex-end;background:var(--hc-color);color:#fff;border-bottom-right-radius:4px;}",
     ".msg.page{align-self:flex-start;background:#e2e8f0;color:#0f172a;border-bottom-left-radius:4px;}",
     ".composer{display:flex;gap:8px;padding:10px;border-top:1px solid #e2e8f0;background:#fff;}",
-    ".composer textarea{flex:1;resize:none;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;max-height:80px;outline:none;}",
+    // font-size PHẢI >=16px — dưới 16px thì Safari/Chrome trên iPhone tự
+    // zoom cả trang khi bấm vào gõ chữ (hành vi mặc định trình duyệt, web
+    // nhúng widget không kiểm soát được viewport để tắt kiểu khác).
+    ".composer textarea{flex:1;resize:none;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;font-size:16px;font-family:inherit;max-height:80px;outline:none;}",
     ".composer textarea:focus{border-color:var(--hc-color);}",
     ".composer button{background:var(--hc-color);color:#fff;border:none;border-radius:10px;width:38px;height:38px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;}",
     ".composer button:disabled{opacity:.5;cursor:not-allowed;}",
@@ -111,7 +114,7 @@ function buildWidgetScript(apiUrl: string, appOrigin: string): string {
     ".hc-gate-subtitle{margin:0 0 14px;font-size:12px;color:#94a3b8;}",
     ".hc-field{margin-bottom:12px;}",
     ".hc-field label{display:block;margin-bottom:4px;font-size:12px;font-weight:500;color:#475569;}",
-    ".hc-field input{box-sizing:border-box;width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;}",
+    ".hc-field input{box-sizing:border-box;width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:16px;font-family:inherit;outline:none;}",
     ".hc-field input:focus{border-color:var(--hc-color);}",
     ".hc-gate-error{display:none;margin:-6px 0 10px;font-size:11px;color:#ef4444;}",
     ".hc-gate-error.show{display:block;}",
