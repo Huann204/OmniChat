@@ -48,6 +48,8 @@ export function DashboardNavbar({
                   ? "/customers"
                   : tab === "Bài viết"
                   ? "/posts/compose"
+                  : tab === "Thống kê"
+                  ? "/stats"
                   : tab === "Cài đặt"
                   ? "/settings/reply-support"
                   : undefined;

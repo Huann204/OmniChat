@@ -23,6 +23,7 @@ function tabForPathname(pathname: string): string | undefined {
   if (pathname.startsWith("/livechat")) return NAV_TABS[0];
   if (pathname.startsWith("/customers")) return "Khách hàng";
   if (pathname.startsWith("/posts")) return "Bài viết";
+  if (pathname.startsWith("/stats")) return "Thống kê";
   if (pathname.startsWith("/settings")) return "Cài đặt";
   return undefined;
 }
@@ -42,14 +43,14 @@ export function AppShell({ userName, userEmail, myRole, children }: AppShellProp
   }
 
   return (
-    <div className="flex h-screen h-[100dvh] flex-col overflow-hidden bg-[rgb(80,109,173)] font-roboto">
+    <div className="flex h-screen h-[100dvh] flex-col overflow-hidden bg-[rgb(80,109,173)] font-roboto print:block print:h-auto print:overflow-visible print:bg-white">
       <DashboardNavbar
         userName={userName}
         userEmail={userEmail}
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        className="!bg-none bg-transparent border-none shrink-0"
+        className="!bg-none bg-transparent border-none shrink-0 print:hidden"
       />
       {children}
     </div>
