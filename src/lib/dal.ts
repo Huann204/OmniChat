@@ -13,6 +13,7 @@ import type { Customer } from "@/types/customer";
 import type { PostItem, PostStatus } from "@/app/actions/post";
 import type { QuickReply } from "@/types/quickReply";
 import type { ShopMember } from "@/types/shopMember";
+import type { Stats, StatsParams } from "@/types/stats";
 
 export interface SessionUser {
   id: string;
@@ -437,6 +438,33 @@ export const getCustomers = cache(
     }
   }
 );
+
+// Trang "Thống kê" — tải lượt đầu (mặc định 7 ngày) ở server; đổi bộ lọc sau đó
+// gọi lại qua fetchStats (actions/stats.ts). Khác getCustomers: có 1 shape
+// duy nhất nên export build query dùng chung, không cần map thêm.
+export function buildStatsQuery(params?: StatsParams): string {
+  const search = new URLSearchParams();
+  if (params?.days !== undefined) search.set("days", String(params.days));
+  if (params?.pageId) search.set("pageId", params.pageId);
+  if (params?.type !== undefined) search.set("type", String(params.type));
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export const getStats = cache(async (params?: StatsParams): Promise<Stats | null> => {
+  const token = await getSessionToken();
+  if (!token) return null;
+
+  try {
+    const data = await apiFetch<{ success: boolean } & Stats>(
+      `/stats${buildStatsQuery(params)}`,
+      { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } }
+    );
+    return data;
+  } catch {
+    return null;
+  }
+});
 
 // Chỉ dùng khi chưa đăng nhập hoặc API lỗi (xem catch bên dưới) — nội dung
 // khớp DEFAULT_PRESET_CONTENT phía server (aiAssistant.controller.ts) để
