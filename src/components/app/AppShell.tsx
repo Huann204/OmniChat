@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { NAV_TABS } from "@/lib/nav-tabs";
 import { toast } from "@/store/toast-store";
-import type { ShopRole } from "@/types/shopMember";
+import type { ShopRole } from "@/types/shopMember"; 
 
 interface AppShellProps {
   userName: string;
