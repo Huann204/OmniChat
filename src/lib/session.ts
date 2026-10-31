@@ -58,6 +58,14 @@ export async function setCurrentShopId(shopId: string) {
   });
 }
 
+// Bỏ hẳn Shop đang chọn — dùng khi người dùng vừa rời Shop cuối cùng của mình
+// (không còn Shop nào để trỏ tới). Để cookie cũ lại thì mọi request sau đó đều
+// gửi X-Shop-Id của Shop đã mất quyền và bị 403.
+export async function clearCurrentShopId() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SHOP_COOKIE);
+}
+
 export async function getCurrentShopId(): Promise<string | undefined> {
   const cookieStore = await cookies();
   return cookieStore.get(SHOP_COOKIE)?.value;

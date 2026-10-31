@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function SettingsIndexPage() {
-  redirect("/settings/reply-support");
+  redirect("/settings/general");
 }

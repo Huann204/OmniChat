@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { SETTINGS_NAV } from "@/lib/settings-nav";
+import { VISIBLE_SETTINGS_NAV } from "@/lib/settings-nav";
 
 export function SettingsSidebar() {
   const pathname = usePathname();
 
   return (
     <nav className="flex md:flex-col overflow-x-auto md:overflow-y-auto w-full md:w-64 shrink-0 gap-1 md:space-y-1 rounded-2xl border border-slate-200/70 bg-white p-2 sm:p-3 shadow-[8px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] h-auto md:h-[calc(100vh-104px)]">
-      {SETTINGS_NAV.map((item) => {
+      {VISIBLE_SETTINGS_NAV.map((item) => {
         const isActive = pathname === item.href;
         const Icon = item.icon;
         return (
