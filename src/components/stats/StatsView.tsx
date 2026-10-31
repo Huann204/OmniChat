@@ -17,7 +17,9 @@ import {
 } from "recharts";
 import { fetchStats } from "@/app/actions/stats";
 import { cn } from "@/lib/utils";
+import type { ShopMember } from "@/types/shopMember";
 import type { Stats, StatsComparison, StatsParams } from "@/types/stats";
+import { AssignmentStatsCard } from "./AssignmentStatsCard";
 
 const RANGE_OPTIONS = [
   { label: "Hôm nay", days: 1 },
@@ -132,9 +134,14 @@ const tooltipStyle = {
 interface StatsViewProps {
   initialStats: Stats | null;
   pages: { id: string; name: string }[];
+  // Cho bảng "Phân công hội thoại" — danh sách nhân viên để hiện tên/avatar, id
+  // của người đang xem, và quyền xem số liệu cả đội (xem AssignmentStatsCard).
+  members: ShopMember[];
+  myUserId: string;
+  canSeeTeam: boolean;
 }
 
-export function StatsView({ initialStats, pages }: StatsViewProps) {
+export function StatsView({ initialStats, pages, members, myUserId, canSeeTeam }: StatsViewProps) {
   const [stats, setStats] = React.useState(initialStats);
   const [days, setDays] = React.useState(7);
   const [channelType, setChannelType] = React.useState<number | undefined>(undefined);
@@ -404,6 +411,13 @@ export function StatsView({ initialStats, pages }: StatsViewProps) {
                 )}
               </ChartCard>
             </div>
+
+            <AssignmentStatsCard
+              assignment={stats.assignment}
+              members={members}
+              myUserId={myUserId}
+              canSeeTeam={canSeeTeam}
+            />
           </div>
         )}
       </div>
