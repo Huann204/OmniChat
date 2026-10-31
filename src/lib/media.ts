@@ -9,3 +9,4 @@ export function formatBytes(bytes: number): string {
   }
   return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unitIndex]}`;
 }
+ 
