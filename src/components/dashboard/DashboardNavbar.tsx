@@ -51,7 +51,7 @@ export function DashboardNavbar({
                   : tab === "Thống kê"
                   ? "/stats"
                   : tab === "Cài đặt"
-                  ? "/settings/reply-support"
+                  ? "/settings/general"
                   : undefined;
 
               const isCurrentActive = tab === activeTab;

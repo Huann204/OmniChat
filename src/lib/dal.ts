@@ -103,6 +103,29 @@ export const getCurrentShopRole = cache(async (): Promise<ShopSummary["role"] | 
   }
 });
 
+// Thông tin Shop đang active kèm vai trò của người đang xem — trang
+// /settings/general. Dùng /shops/current thay vì tìm trong getMyShops: nhân
+// viên hỗ trợ nền tảng đang vào Shop khách thì Shop đó KHÔNG nằm trong danh
+// sách Shop của chính họ, nhưng /shops/current vẫn trả đúng.
+export const getCurrentShop = cache(
+  async (): Promise<{ shop: Pick<ShopSummary, "id" | "name">; role: ShopSummary["role"] } | null> => {
+    const token = await getSessionToken();
+    const shopId = await getCurrentShopId();
+    if (!token || !shopId) return null;
+
+    try {
+      const data = await apiFetch<{
+        success: boolean;
+        shop: Pick<ShopSummary, "id" | "name">;
+        role: ShopSummary["role"];
+      }>("/shops/current", { headers: { Authorization: `Bearer ${token}`, ...(await shopHeader()) } });
+      return { shop: data.shop, role: data.role };
+    } catch {
+      return null;
+    }
+  }
+);
+
 // Danh sách nhân viên (thành viên) của Shop đang active — trang /settings/permissions.
 export const getShopMembers = cache(async (): Promise<ShopMember[]> => {
   const token = await getSessionToken();

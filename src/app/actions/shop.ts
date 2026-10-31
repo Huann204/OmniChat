@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ApiError, apiFetch } from "@/lib/api";
-import { getSessionToken, setCurrentShopId } from "@/lib/session";
+import { clearCurrentShopId, getSessionToken, setCurrentShopId } from "@/lib/session";
 
 export interface ShopFormState {
   error?: string;
@@ -67,6 +67,57 @@ export async function switchShop(shopId: string) {
   }
 
   await setCurrentShopId(shopId);
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
+}
+
+// Đổi tên Shop (chủ Shop, quản trị viên). revalidatePath layout gốc để tên mới
+// hiện ngay ở menu chuyển Shop (lấy từ store trong AuthSessionProvider, không
+// phải từ trang đang mở).
+export async function updateShopInfo(
+  shopId: string,
+  input: { name: string }
+): Promise<{ shop: { id: string; name: string } } | { error: string }> {
+  const token = await getSessionToken();
+  if (!token) return { error: "Chưa đăng nhập" };
+
+  try {
+    const data = await apiFetch<{
+      success: boolean;
+      shop: { id: string; name: string };
+    }>(`/shops/${shopId}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(input),
+    });
+    revalidatePath("/", "layout");
+    return { shop: data.shop };
+  } catch (err) {
+    return { error: err instanceof ApiError ? err.message : "Không lưu được thông tin Shop" };
+  }
+}
+
+// Tự rời Shop. Thành công thì chuyển luôn sang Shop còn lại (BE trả nextShopId),
+// không còn Shop nào thì bỏ hẳn cookie Shop — tránh mọi request sau đó mang
+// X-Shop-Id của Shop đã mất quyền và bị 403. redirect() ném NEXT_REDIRECT nên
+// chỉ có nhánh lỗi mới thật sự return.
+export async function leaveShop(shopId: string): Promise<{ error: string }> {
+  const token = await getSessionToken();
+  if (!token) return { error: "Chưa đăng nhập" };
+
+  let nextShopId: string | null;
+  try {
+    const data = await apiFetch<{ success: boolean; nextShopId: string | null }>(
+      `/shops/${shopId}/leave`,
+      { method: "POST", headers: { Authorization: `Bearer ${token}` } }
+    );
+    nextShopId = data.nextShopId;
+  } catch (err) {
+    return { error: err instanceof ApiError ? err.message : "Không rời được Shop" };
+  }
+
+  if (nextShopId) await setCurrentShopId(nextShopId);
+  else await clearCurrentShopId();
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
