@@ -15,6 +15,8 @@ import {
 } from "react-icons/bs";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types/conversation";
+import type { ShopMember } from "@/types/shopMember";
+import { AssigneePicker } from "./AssigneePicker";
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -25,6 +27,11 @@ interface ChatHeaderProps {
   // ConversationList.tsx, thêm ở đây để làm được ngay TRONG lúc đang mở xem,
   // không cần quay lại danh sách bên trái.
   onToggleRead?: (id: string, isRead: boolean) => void;
+  // Phân công người phụ trách — cả 3 cùng có thì mới hiện nút "Phụ trách"
+  // (xem AssigneePicker.tsx, InboxView.tsx#handleAssign).
+  members?: ShopMember[];
+  myUserId?: string;
+  onAssign?: (conversationId: string, userId: string | null) => void;
 }
 
 const HEADER_AVATAR_COLORS: Record<string, string> = {};
@@ -43,6 +50,9 @@ export function ChatHeader({
   onToggleCustomerInfo,
   showCustomerInfo,
   onToggleRead,
+  members,
+  myUserId,
+  onAssign,
 }: ChatHeaderProps) {
   const lastMessage = conversation.messages[conversation.messages.length - 1];
   const [moreMenuOpen, setMoreMenuOpen] = React.useState(false);
@@ -121,6 +131,14 @@ export function ChatHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-1 text-slate-400">
+        {members && myUserId && onAssign && (
+          <AssigneePicker
+            members={members}
+            assigneeId={conversation.assigneeId}
+            myUserId={myUserId}
+            onAssign={(userId) => onAssign(conversation.id, userId)}
+          />
+        )}
         {[BsFillPeopleFill, BsFillFolderFill, BsFillEnvelopeFill].map((Icon, i) => (
           <button
             key={i}

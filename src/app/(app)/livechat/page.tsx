@@ -11,6 +11,8 @@ import {
   getConversationsForPages,
   getConversationTags,
   getQuickReplies,
+  getShopMembers,
+  verifySession,
 } from "@/lib/dal";
 import { getMergePagesCookie } from "@/lib/session";
 import type { Bot } from "@/types/bot";
@@ -48,9 +50,10 @@ export default async function MultiPagesPage({
   // Không dùng query string vì lộ pageId trên URL nhìn rối mắt — xem
   // BotCard.tsx/BotDashboard.tsx/MergePagesModal.tsx/SettingsShell.tsx.
   // Lấy connectedPages và cookie gộp trang trước để xác định danh sách Page
-  const [connectedPages, requestedIds] = await Promise.all([
+  const [connectedPages, requestedIds, user] = await Promise.all([
     getConnectedPages(),
     getMergePagesCookie(),
+    verifySession(),
   ]);
 
   // Page Zalo cá nhân đang kết nối VÀ còn phiên đăng nhập sống (status
@@ -75,6 +78,9 @@ export default async function MultiPagesPage({
   const quickRepliesPromise = getQuickReplies();
   const conversationTagsPromise = getConversationTags();
   const aiAssistantSettingsPromise = getAiAssistantSettings();
+  // Danh sách nhân viên — để chọn người phụ trách hội thoại và tra tên/avatar
+  // người đang phụ trách (xem InboxView.tsx#membersById).
+  const membersPromise = getShopMembers();
   // undefined = không có ?conversationId (đa số trường hợp) — InboxView bỏ
   // qua hẳn bước mở thẳng hội thoại khi giá trị resolve ra undefined.
   const initialConversationPromise = conversationId
@@ -94,6 +100,8 @@ export default async function MultiPagesPage({
         conversationTagsPromise={conversationTagsPromise}
         aiAssistantSettingsPromise={aiAssistantSettingsPromise}
         initialConversationPromise={initialConversationPromise}
+        membersPromise={membersPromise}
+        myUserId={user.id}
       />
     );
   }
@@ -135,6 +143,8 @@ export default async function MultiPagesPage({
       conversationTagsPromise={conversationTagsPromise}
       aiAssistantSettingsPromise={aiAssistantSettingsPromise}
       initialConversationPromise={initialConversationPromise}
+      membersPromise={membersPromise}
+      myUserId={user.id}
     />
   );
 }

@@ -106,6 +106,10 @@ export interface Conversation {
   // — khác hẳn botActive=false (Page chưa hề bật bot). Chỉ có ý nghĩa khi
   // botActive=true.
   botPaused?: boolean;
+  // Nhân viên đang phụ trách hội thoại (id User) — undefined = chưa ai nhận.
+  // Chỉ lưu id; tên/avatar tra từ danh sách thành viên Shop (xem
+  // InboxView.tsx#membersById), không nhân bản vào từng hội thoại.
+  assigneeId?: string;
   messages: ConversationMessage[];
   // Còn tin nhắn cũ hơn chưa tải hay không — dùng để quyết định có tải thêm
   // khi cuộn lên đầu khung chat hay không.

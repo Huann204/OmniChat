@@ -39,6 +39,28 @@ export async function markConversationRead(conversationId: string, isRead = true
   }
 }
 
+// Phân công (userId) / bỏ phân công (null) người phụ trách 1 hội thoại — xem
+// server/src/controllers/conversationAssignment.controller.ts. Lỗi nghiệp vụ
+// (người nhận không có quyền với Page...) trả message rõ để toast.
+export async function assignConversation(
+  conversationId: string,
+  userId: string | null
+): Promise<{ error?: string }> {
+  const token = await getSessionToken();
+  if (!token) return { error: "Chưa đăng nhập" };
+
+  try {
+    await apiFetch(`/conversations/${conversationId}/assign`, {
+      method: "PATCH",
+      headers: await authHeaders(token),
+      body: JSON.stringify({ userId }),
+    });
+    return {};
+  } catch (err) {
+    return { error: err instanceof ApiError ? err.message : "Không phân công được" };
+  }
+}
+
 interface RawMessage {
   id: string;
   sender: "customer" | "page";
@@ -117,7 +139,11 @@ export async function getOlderMessages(
 export async function getMoreConversations(
   pageIds: string[],
   before?: string,
-  beforeId?: string
+  beforeId?: string,
+  // Lọc theo người phụ trách: "me" = giao cho chính mình, "unassigned" = chưa
+  // ai nhận, bỏ trống = tất cả — lọc ở SERVER (không lọc client trên số đã
+  // tải sẵn) vì danh sách phân trang, mỗi trang chỉ có vài hội thoại.
+  assigned?: "me" | "unassigned"
 ): Promise<{ conversations: Conversation[]; hasMore: boolean }> {
   const token = await getSessionToken();
   if (!token || pageIds.length === 0) return { conversations: [], hasMore: false };
@@ -128,6 +154,7 @@ export async function getMoreConversations(
       params.set("before", before);
       params.set("beforeId", beforeId);
     }
+    if (assigned) params.set("assigned", assigned);
     const data = await apiFetch<{
       success: boolean;
       hasMore: boolean;

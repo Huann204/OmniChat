@@ -23,6 +23,18 @@ import { ZaloFriendListModal } from "./ZaloFriendListModal";
 import { ZaloFriendRequestsModal } from "./ZaloFriendRequestsModal";
 import { ZaloGroupListModal } from "./ZaloGroupListModal";
 import type { ZaloPageOption } from "./ZaloPageSelect";
+import type { ShopMember } from "@/types/shopMember";
+import { MemberAvatar } from "./AssigneePicker";
+
+// "all" = mọi hội thoại, "me" = giao cho chính mình, "unassigned" = chưa ai
+// nhận — khớp tham số `assigned` của API (xem actions/conversation.ts).
+export type AssignedFilter = "all" | "me" | "unassigned";
+
+const ASSIGNED_FILTER_TABS: { value: AssignedFilter; label: string }[] = [
+  { value: "all", label: "Tất cả" },
+  { value: "me", label: "Của tôi" },
+  { value: "unassigned", label: "Chưa phân công" },
+];
 
 // Mirror ngưỡng cuộn của MessageThread.tsx (LOAD_MORE_SCROLL_THRESHOLD) —
 // khác chiều: đây là cuộn XUỐNG cuối (tải hội thoại cũ hơn), không phải cuộn
@@ -86,6 +98,12 @@ interface ConversationListProps {
     conversationId: string,
     preview: { name: string; avatarUrl?: string; pageId: string }
   ) => void;
+  // Phân công — members để hiện avatar người đang phụ trách trên từng hội
+  // thoại; assignedFilter/onAssignedFilterChange cho 3 tab lọc ở đầu danh
+  // sách. Không truyền onAssignedFilterChange thì không hiện tab.
+  members?: ShopMember[];
+  assignedFilter?: AssignedFilter;
+  onAssignedFilterChange?: (filter: AssignedFilter) => void;
 }
 
 export function ConversationList({
@@ -102,6 +120,9 @@ export function ConversationList({
   loadingMore,
   zaloPages = [],
   onOpenConversation,
+  members,
+  assignedFilter = "all",
+  onAssignedFilterChange,
 }: ConversationListProps) {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [addFriendOpen, setAddFriendOpen] = React.useState(false);
@@ -246,6 +267,29 @@ export function ConversationList({
         )}
       </div>
 
+      {/* Tab lọc theo người phụ trách — ẩn khi đang gõ tìm kiếm (tìm kiếm
+          luôn xuyên suốt toàn bộ hội thoại, không áp bộ lọc này). */}
+      {onAssignedFilterChange && !search && (
+        <div className="flex items-center gap-1.5 border-b border-slate-100 px-3 py-2">
+          {ASSIGNED_FILTER_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => onAssignedFilterChange(tab.value)}
+              aria-pressed={assignedFilter === tab.value}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-semibold transition-colors cursor-pointer",
+                assignedFilter === tab.value
+                  ? "bg-primary text-white"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <ZaloAddFriendModal
         open={addFriendOpen}
         onClose={() => setAddFriendOpen(false)}
@@ -282,7 +326,13 @@ export function ConversationList({
         className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {conversations.length === 0 && (
-          <p className="mt-10 text-center text-sm text-slate-400">Chưa có hội thoại nào</p>
+          <p className="mt-10 text-center text-sm text-slate-400">
+            {assignedFilter === "me" && !search
+              ? "Chưa có hội thoại nào giao cho bạn"
+              : assignedFilter === "unassigned" && !search
+                ? "Không còn hội thoại nào chưa phân công"
+                : "Chưa có hội thoại nào"}
+          </p>
         )}
 
         {conversations.map((conversation, index) => {
@@ -292,6 +342,9 @@ export function ConversationList({
           const page = pagesById?.[conversation.pageId];
           const channelMeta =
             CHANNEL_META_BY_TYPE[conversation.type as keyof typeof CHANNEL_META_BY_TYPE];
+          const assignee = conversation.assigneeId
+            ? members?.find((m) => m.user.id === conversation.assigneeId)
+            : undefined;
 
           return (
             <button
@@ -441,8 +494,19 @@ export function ConversationList({
                     </div>
                   )}
 
+                  {assignee && (
+                    <span className="ml-auto shrink-0" title={`Phụ trách: ${assignee.user.name}`}>
+                      <MemberAvatar member={assignee.user} size="xs" />
+                    </span>
+                  )}
+
                   {page && channelMeta && (
-                    <channelMeta.icon className="ml-auto h-3.5 w-3.5 shrink-0 rounded-full object-cover" />
+                    <channelMeta.icon
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0 rounded-full object-cover",
+                        assignee ? "ml-1" : "ml-auto"
+                      )}
+                    />
                   )}
                 </div>
               </div>
