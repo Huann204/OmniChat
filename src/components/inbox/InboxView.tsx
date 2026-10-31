@@ -5,6 +5,7 @@ import { io, type Socket } from "socket.io-client";
 import { BsChatSquareTextFill } from "react-icons/bs";
 import { generateAiSuggestions } from "@/app/actions/aiAssistant";
 import {
+  assignConversation,
   getMoreConversations,
   getOlderMessages,
   markConversationRead,
@@ -26,9 +27,10 @@ import type { Bot } from "@/types/bot";
 import type { Conversation, ConversationMessage } from "@/types/conversation";
 import type { ConversationTag } from "@/types/conversationTag";
 import type { QuickReply } from "@/types/quickReply";
+import type { ShopMember } from "@/types/shopMember";
 import { cn } from "@/lib/utils";
 import { InboxIconRail } from "./InboxIconRail";
-import { ConversationList } from "./ConversationList";
+import { ConversationList, type AssignedFilter } from "./ConversationList";
 import { ChatHeader } from "./ChatHeader";
 import { MessageThread, ZALO_CHANNEL_TYPE, type ReplyTarget } from "./MessageThread";
 import { QuickTagBar } from "./QuickTagBar";
@@ -49,6 +51,9 @@ interface NewMessageEvent {
     lastMessage?: string;
     lastMessageAt: string;
     isRead: boolean;
+    // Người đang phụ trách (id User) — null = chưa ai; undefined chỉ khi server
+    // cũ chưa gửi field này (coi như không đổi).
+    assigneeId?: string | null;
   };
   message: {
     id: string;
@@ -76,6 +81,12 @@ interface NewMessageEvent {
   };
 }
 
+interface ConversationAssignedEvent {
+  conversationId: string;
+  assigneeId: string | null;
+  assignedBy: string;
+}
+
 interface MessageReactionEvent {
   conversationId: string;
   messageId: string;
@@ -83,6 +94,24 @@ interface MessageReactionEvent {
 }
 
 import LivechatLoading from "@/app/(app)/livechat/loading";
+
+// "all" = không lọc — khớp tham số assigned của API (xem getMoreConversations).
+function toApiFilter(filter: AssignedFilter): "me" | "unassigned" | undefined {
+  return filter === "all" ? undefined : filter;
+}
+
+// Hội thoại (theo người phụ trách hiện tại) có thuộc bộ lọc đang chọn không —
+// dùng để quyết định thêm/bỏ hội thoại khỏi danh sách khi có thay đổi realtime
+// (đồng nhất với điều kiện lọc phía server, xem listConversations).
+function matchesAssignedFilter(
+  assigneeId: string | undefined,
+  filter: AssignedFilter,
+  myUserId: string
+): boolean {
+  if (filter === "me") return assigneeId === myUserId;
+  if (filter === "unassigned") return !assigneeId;
+  return true;
+}
 
 interface InboxViewProps {
   bot: Bot;
@@ -117,6 +146,12 @@ interface InboxViewProps {
   // thoại cũ bị trang phân trang bỏ lại phía sau) nên tự ghép thêm vào đầu
   // danh sách nếu chưa có, xem effect bên dưới.
   initialConversationPromise?: Promise<Conversation | undefined>;
+  // Nhân viên của Shop — chọn người phụ trách và tra tên/avatar người đang
+  // phụ trách từng hội thoại (xem AssigneePicker.tsx, ConversationList.tsx).
+  membersPromise: Promise<ShopMember[]>;
+  // Id User của chính người đang xem — để lọc "Của tôi", nhận biết hội thoại
+  // vừa được giao cho mình, và không tự thông báo cho chính thao tác của mình.
+  myUserId: string;
 }
 
 export function InboxView(props: InboxViewProps) {
@@ -137,6 +172,8 @@ function InboxViewInner({
   conversationTagsPromise,
   aiAssistantSettingsPromise,
   initialConversationPromise,
+  membersPromise,
+  myUserId,
 }: InboxViewProps) {
   // Giải mã Promise dữ liệu song song qua React 19 `use()` API — chỉ 1 nguồn
   // duy nhất (Promise), không còn nhánh giá trị trực tiếp cũ (không có caller
@@ -145,6 +182,7 @@ function InboxViewInner({
   const quickReplies = React.use(quickRepliesPromise);
   const conversationTags = React.use(conversationTagsPromise);
   const aiAssistantSettings = React.use(aiAssistantSettingsPromise);
+  const members = React.use(membersPromise);
   const initialConversation = initialConversationPromise ? React.use(initialConversationPromise) : undefined;
 
   // Ghép sẵn initialConversation (nếu có) vào đầu danh sách NGAY LÚC KHỞI TẠO
@@ -158,6 +196,7 @@ function InboxViewInner({
   );
   const [hasMoreConversations, setHasMoreConversations] = React.useState(initialData.hasMore);
   const [isLoadingMoreConversations, setIsLoadingMoreConversations] = React.useState(false);
+  const [assignedFilter, setAssignedFilter] = React.useState<AssignedFilter>("all");
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   // null = không đang tìm kiếm (hiện `conversations` bình thường) — khác
@@ -182,12 +221,51 @@ function InboxViewInner({
     activeIdRef.current = activeId;
   }, [activeId]);
 
+  // Cùng lý do với activeIdRef: socket handler (effect chỉ chạy lại khi đổi
+  // Page) cần đọc được bộ lọc phân công + danh sách hội thoại MỚI NHẤT.
+  const assignedFilterRef = React.useRef<AssignedFilter>("all");
+  const conversationsRef = React.useRef<Conversation[]>([]);
+  React.useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+  // Chặn kết quả về muộn của lần lọc cũ ghi đè lần lọc mới hơn (đổi tab nhanh).
+  const filterRequestIdRef = React.useRef(0);
+
   // Tìm hội thoại theo tên khách — debounce 400ms sau khi ngừng gõ mới gọi
   // API (tránh gọi liên tục theo từng ký tự), tìm xuyên suốt TOÀN BỘ hội
   // thoại của các Page đang xem chứ không chỉ trong số đã tải sẵn. Dùng hàm
   // xử lý sự kiện thường (không phải useEffect) — chỉ chạy đúng lúc người
   // dùng thật sự gõ, không chạy dư 1 lần lúc mount như effect theo dõi
   // `search` sẽ bị.
+  // Nạp lại TRANG ĐẦU theo bộ lọc phân công — lọc ở server vì danh sách phân
+  // trang (mỗi trang vài hội thoại), lọc client trên số đã tải sẽ thiếu. Giữ lại
+  // hội thoại đang mở dở nếu nó không nằm trong kết quả (cùng lý do với nhánh
+  // xoá ô tìm kiếm bên dưới), không để cuộc chat đang xem biến mất giữa chừng.
+  async function loadFirstPage(filter: AssignedFilter) {
+    const requestId = ++filterRequestIdRef.current;
+    const { conversations: fresh, hasMore } = await getMoreConversations(
+      pageIds,
+      undefined,
+      undefined,
+      toApiFilter(filter)
+    );
+    if (filterRequestIdRef.current !== requestId) return;
+    setConversations((prev) => {
+      const currentActiveId = activeIdRef.current;
+      if (!currentActiveId || fresh.some((c) => c.id === currentActiveId)) return fresh;
+      const stillActive = prev.find((c) => c.id === currentActiveId);
+      return stillActive ? [stillActive, ...fresh] : fresh;
+    });
+    setHasMoreConversations(hasMore);
+  }
+
+  function handleAssignedFilterChange(filter: AssignedFilter) {
+    if (filter === assignedFilter) return;
+    setAssignedFilter(filter);
+    assignedFilterRef.current = filter;
+    void loadFirstPage(filter);
+  }
+
   const searchDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchRequestIdRef = React.useRef(0);
 
@@ -203,7 +281,12 @@ function InboxViewInner({
       setIsSearching(false);
       const requestId = ++searchRequestIdRef.current;
       void (async () => {
-        const { conversations: fresh, hasMore } = await getMoreConversations(pageIds);
+        const { conversations: fresh, hasMore } = await getMoreConversations(
+          pageIds,
+          undefined,
+          undefined,
+          toApiFilter(assignedFilterRef.current)
+        );
         if (searchRequestIdRef.current !== requestId) return;
         setConversations((prev) => {
           // Trang đầu mới tải có thể KHÔNG chứa hội thoại đang mở chat dở
@@ -313,7 +396,14 @@ function InboxViewInner({
       // âm thanh không gây rối màn hình như toast. .catch() bỏ qua lỗi
       // NotAllowedError nếu trình duyệt chặn autoplay do chưa có tương tác
       // nào của người dùng trong trang.
-      if (payload.message.sender === "customer") {
+      // Hội thoại đã giao cho ĐỒNG NGHIỆP khác thì không báo âm thanh/toast cho
+      // mình — giảm ồn là lý do chính của việc phân công. Chưa ai nhận hoặc giao
+      // cho chính mình thì vẫn báo như thường (chấm chưa đọc trong danh sách vẫn
+      // hiện cho mọi người).
+      const incomingAssigneeId = payload.conversation.assigneeId ?? undefined;
+      const assignedToSomeoneElse = !!incomingAssigneeId && incomingAssigneeId !== myUserId;
+
+      if (payload.message.sender === "customer" && !assignedToSomeoneElse) {
         notificationSoundRef.current?.play().catch(() => { });
       }
 
@@ -344,6 +434,11 @@ function InboxViewInner({
         const index = prev.findIndex((c) => c.id === payload.conversationId);
 
         if (index === -1) {
+          // Đang lọc "Của tôi"/"Chưa phân công" mà hội thoại mới này không thuộc
+          // bộ lọc -> không chen vào danh sách đang xem.
+          if (!matchesAssignedFilter(incomingAssigneeId, assignedFilterRef.current, myUserId)) {
+            return prev;
+          }
           // Nhánh này chạy cho CẢ 2 trường hợp: khách nhắn lần đầu (hội
           // thoại thật sự mới), LẪN 1 hội thoại đã có từ trước nhưng chưa
           // được tải vào danh sách (nằm ở trang sau, do danh sách hội thoại
@@ -368,6 +463,7 @@ function InboxViewInner({
             // qua thao tác thủ công trong QuickTagBar, không phải qua
             // socket "new_message" (không liên quan tới việc gửi/nhận tin).
             tags: [],
+            assigneeId: incomingAssigneeId,
             lastSeenLabel: "",
             timeLabel: formatTimeLabel(payload.conversation.lastMessageAt),
             lastMessageAt: payload.conversation.lastMessageAt,
@@ -397,6 +493,19 @@ function InboxViewInner({
         updated.timeLabel = formatTimeLabel(payload.conversation.lastMessageAt);
         updated.lastMessageAt = payload.conversation.lastMessageAt;
         updated.isRead = isActive;
+        // Server luôn gửi assigneeId hiện tại trong payload — cập nhật theo (kể cả
+        // vừa được tự chia theo vòng xoay ngay lượt tin này). null = đã bỏ phân công.
+        if (payload.conversation.assigneeId !== undefined) {
+          updated.assigneeId = incomingAssigneeId;
+        }
+        // Đổi người phụ trách khiến hội thoại rời bộ lọc đang xem -> gỡ khỏi danh
+        // sách, trừ khi đang mở xem nó.
+        if (
+          !matchesAssignedFilter(updated.assigneeId, assignedFilterRef.current, myUserId) &&
+          !isActive
+        ) {
+          return prev.filter((_, i) => i !== index);
+        }
 
         const rest = prev.filter((_, i) => i !== index);
         return [updated, ...rest];
@@ -443,7 +552,7 @@ function InboxViewInner({
         ) {
           void fetchAiSuggestions(payload.conversationId);
         }
-      } else if (payload.message.sender === "customer") {
+      } else if (payload.message.sender === "customer" && !assignedToSomeoneElse) {
         // Chỉ báo toast cho tin của KHÁCH (không phải echo tin mình gửi) và
         // KHÔNG phải hội thoại đang mở sẵn (đỡ làm phiền khi đang xem đúng
         // hội thoại đó rồi) — bấm vào toast để mở thẳng hội thoại.
@@ -475,6 +584,48 @@ function InboxViewInner({
             : c
         )
       );
+    });
+
+    // Có người phân công/đổi/bỏ phân công 1 hội thoại (kể cả chính tab này, đã
+    // cập nhật lạc quan ở handleAssign — set lại cùng giá trị nên vô hại).
+    socket.on("conversation_assigned", (payload: ConversationAssignedEvent) => {
+      const filter = assignedFilterRef.current;
+      const newAssigneeId = payload.assigneeId ?? undefined;
+      const known = conversationsRef.current.find((c) => c.id === payload.conversationId);
+
+      setConversations((prev) => {
+        const index = prev.findIndex((c) => c.id === payload.conversationId);
+        if (index === -1) return prev;
+        const updated = { ...prev[index], assigneeId: newAssigneeId };
+        // Rời bộ lọc đang xem -> gỡ khỏi danh sách (trừ hội thoại đang mở).
+        if (
+          !matchesAssignedFilter(newAssigneeId, filter, myUserId) &&
+          payload.conversationId !== activeIdRef.current
+        ) {
+          return prev.filter((_, i) => i !== index);
+        }
+        return prev.map((c, i) => (i === index ? updated : c));
+      });
+
+      // Hội thoại vừa VÀO bộ lọc đang xem (VD đang ở tab "Của tôi" và được đồng
+      // nghiệp giao cho mình) mà chưa có trong danh sách -> nạp lại trang đầu để
+      // nó hiện ra, thay vì phải F5.
+      if (filter !== "all" && matchesAssignedFilter(newAssigneeId, filter, myUserId) && !known) {
+        void loadFirstPage(filter);
+      }
+
+      // Báo cho người được giao biết (trừ khi chính mình tự giao cho mình).
+      if (newAssigneeId === myUserId && payload.assignedBy !== myUserId) {
+        const conversationId = payload.conversationId;
+        toast({
+          title: "Bạn được phân công hội thoại mới",
+          description: known?.customerName ?? "Bấm để mở",
+          avatarUrl: known?.customerAvatarUrl,
+          onClick: () => handleSelect(conversationId),
+          isMessage: true,
+        });
+        notificationSoundRef.current?.play().catch(() => { });
+      }
     });
 
     return () => {
@@ -548,6 +699,37 @@ function InboxViewInner({
         if (previous !== undefined) {
           setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, isRead: previous! } : c)));
         }
+      }
+    });
+  }
+
+  // Phân công (userId) / bỏ phân công (null) — cập nhật lạc quan trước để UI
+  // phản hồi tức thì, rollback + báo lỗi nếu server từ chối (VD người nhận không
+  // có quyền với Page này, xem conversationAssignment.controller.ts).
+  function handleAssign(conversationId: string, userId: string | null) {
+    let previous: string | undefined;
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id !== conversationId) return c;
+        previous = c.assigneeId;
+        return { ...c, assigneeId: userId ?? undefined };
+      })
+    );
+    void assignConversation(conversationId, userId).then((result) => {
+      if (result.error) {
+        toast.error(result.error);
+        setConversations((prev) =>
+          prev.map((c) => (c.id === conversationId ? { ...c, assigneeId: previous } : c))
+        );
+        return;
+      }
+      if (userId === null) {
+        toast.success("Đã bỏ phân công");
+      } else if (userId === myUserId) {
+        toast.success("Bạn đã nhận hội thoại này");
+      } else {
+        const name = members.find((m) => m.user.id === userId)?.user.name;
+        toast.success(name ? `Đã giao cho ${name}` : "Đã phân công");
       }
     });
   }
@@ -822,7 +1004,8 @@ function InboxViewInner({
       const { conversations: more, hasMore } = await getMoreConversations(
         pageIds,
         oldest.lastMessageAt,
-        oldest.id
+        oldest.id,
+        toApiFilter(assignedFilter)
       );
       setConversations((prev) => {
         // Lọc bỏ hội thoại đã có sẵn trong `prev` — có thể trùng với trang
@@ -904,6 +1087,9 @@ function InboxViewInner({
           hasMore={searchResults ? false : hasMoreConversations}
           onLoadMore={searchResults ? undefined : handleLoadMoreConversations}
           loadingMore={searchResults ? false : isLoadingMoreConversations}
+          members={members}
+          assignedFilter={assignedFilter}
+          onAssignedFilterChange={handleAssignedFilterChange}
         />
 
         {activeConversation ? (
@@ -914,6 +1100,9 @@ function InboxViewInner({
               onToggleCustomerInfo={() => setShowCustomerInfo((v) => !v)}
               showCustomerInfo={showCustomerInfo}
               onToggleRead={handleToggleRead}
+              members={members}
+              myUserId={myUserId}
+              onAssign={handleAssign}
             />
             <MessageThread
               messages={activeConversation.messages}

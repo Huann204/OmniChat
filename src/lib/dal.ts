@@ -229,6 +229,7 @@ export interface RawConversation {
   isRead: boolean;
   botActive?: boolean;
   botPaused?: boolean;
+  assigneeId?: string;
   tags: ConversationTag[];
   hasMoreMessages: boolean;
   messages: RawMessage[];
@@ -249,6 +250,7 @@ export function mapRawConversations(raw: RawConversation[]): Conversation[] {
     isRead: c.isRead,
     botActive: c.botActive,
     botPaused: c.botPaused,
+    assigneeId: c.assigneeId,
     hasMoreMessages: c.hasMoreMessages,
     messages: c.messages.map((m) => {
       const { kind, text, attachmentUrls, linkPreview } = messageKindAndContent(m.text, m.attachments);
